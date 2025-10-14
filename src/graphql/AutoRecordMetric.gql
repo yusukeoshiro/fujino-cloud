@@ -1,0 +1,6 @@
+mutation AutoRecordMetricMutate($data: AutoRecordMetric!) {
+	autoRecordMetric(data: $data) {
+		id
+		value
+	}
+}

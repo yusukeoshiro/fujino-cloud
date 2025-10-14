@@ -1,0 +1,9 @@
+mutation CreatePerformanceAssessmentParticipant($data: PerformanceAssessmentParticipantCreate!) {
+	createPerformanceAssessmentParticipant(data: $data) {
+		id
+		email
+		number
+		fullName
+		orgUniqueToken
+	}
+}

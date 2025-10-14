@@ -1,0 +1,13 @@
+mutation CreatePerformanceAssessmentWrapper($data: PerformanceAssessmentWrapperCreate!) {
+	createPerformanceAssessmentWrapper(data: $data) {
+		id
+		name
+		date
+		spreadsheetUrl
+		description
+		referenceLevel
+		ready
+		exported
+		participantsCount
+	}
+}
