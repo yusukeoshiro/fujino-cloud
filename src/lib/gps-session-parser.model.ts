@@ -39,6 +39,8 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 
 	gamePointParser?: GamePointParser;
 
+	orgUniqueToken?: string;
+
 	constructor(params: GpsCore & SessionMeta, gamePointParser?: GamePointParser) {
 		this.gamePointParser = gamePointParser;
 

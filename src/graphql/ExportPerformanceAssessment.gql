@@ -1,0 +1,5 @@
+mutation ExportPerformanceAssessment($performanceAssessmentId: ID!) {
+	exportPerformanceAssessment(data: { id: $performanceAssessmentId }) {
+		id
+	}
+}
