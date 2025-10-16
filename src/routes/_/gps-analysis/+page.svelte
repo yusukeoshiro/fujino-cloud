@@ -1,27 +1,53 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	let { iframeUrl } = data;
+
 	// columns to display (left-to-right)
+
+	const HEADER_COLS = ['氏名'];
+
 	const DISPLAY_COLS = [
-		'Duration (min)',
-		'Total Distance (m)',
-		'Total Distance/min (m/min)',
-		'Max Speed (km/h)',
-		'No. of HSR (times)',
-		'HSR Distance (m)',
-		'No. of Sprint (times)',
-		'Sprint Distance (m)',
-		'Speed Zone 1 Distance (m)',
-		'Speed Zone 3 Distance (m)',
-		'Speed Zone 4 Distance (m)',
-		'Speed Zone 5 Distance (m)',
-		'Acceleration Zone 4 Entry Count (times)',
-		'Acceleration Zone 5 Entry Count (times)',
-		'Acceleration Zone 6 Entry Count (times)',
-		'Deceleration Zone 4 Entry Count (times)',
-		'Deceleration Zone 5 Entry Count (times)',
-		'Deceleration Zone 6 Entry Count (times)',
-		'No. of Exp. Acc. (times)',
-		'No. of Exp. Dec. (times)'
+		// 'タイプ',
+		// '日付',
+		// '開始時刻',
+		// '終了時刻',
+		// '氏名',
+		// '生年月日',
+		'継続時間(分)',
+		'総走行距離(m)',
+		'1分当たり距離(m/min)',
+		'最高速度(km/h)',
+		// 'HSR回数',
+		// 'HSR距離(m)',
+
+		'高強度距離(m)',
+		'高強度割合',
+
+		'スプリント回数',
+		'スプリント距離(m)',
+		'Z1距離(m)',
+		'ウォーキング割合',
+
+		// 'Z3距離(m)',
+		// 'Z4距離(m)',
+		// 'Z5距離(m)',
+		// '加速Z4回数',
+		'加速Z5回数',
+		'加速Z6回数',
+		'加速合計回数',
+		'爆発的加速回数',
+		// '減速Z4回数',
+		'減速Z5回数',
+		'減速Z6回数',
+		'減速合計回数',
+		'爆発的減速回数',
+		// 'トレーニングスコア消費',
 	];
+
+	const FOOTER_COLS = ['トレーニングスコア消費'];
 
 	function fmt(v: unknown): string {
 		if (v === null || v === undefined || v === '') return '—';
@@ -35,7 +61,8 @@
 		rows: number;
 		headers: string[];
 		records: Array<Record<string, unknown>>;
-	} | null = null;
+	} | null = $state(null);
+
 	let error: string | null = null;
 	let fileInput: HTMLInputElement;
 
@@ -86,13 +113,25 @@
 	const hideTeamAverage = true;
 
 	// ✅ compute rows reactively (no {#let})
-	let rows: Array<Record<string, unknown>> = [];
-	$: rows =
+
+	// let rows: Array<Record<string, unknown>> = [];
+	let rows = $derived(
 		result && Array.isArray(result.records)
 			? hideTeamAverage
 				? result.records.filter((r) => r['Player Name'] !== 'Team Average')
 				: result.records
-			: [];
+			: [],
+	);
+	// $: rows =
+	// 	result && Array.isArray(result.records)
+	// 		? hideTeamAverage
+	// 			? result.records.filter((r) => r['Player Name'] !== 'Team Average')
+	// 			: result.records
+	// 		: [];
+
+	onMount(() => {
+		console.log({ iframeUrl, data });
+	});
 </script>
 
 <h1 class="mb-4 text-xl font-semibold">GPSデータの分析</h1>
@@ -141,9 +180,9 @@
 				<table class="min-w-full border-collapse">
 					<thead class="sticky top-0 z-10 bg-gray-50">
 						<tr>
-							<th class="px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700">
+							<!-- <th class="px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700">
 								Player Name
-							</th>
+							</th> -->
 							{#each DISPLAY_COLS as col}
 								<th
 									class="px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700"
@@ -156,9 +195,9 @@
 					<tbody>
 						{#each rows as row, i}
 							<tr class="{i % 2 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/50">
-								<td class="px-3 py-2 text-sm font-medium text-gray-900">
+								<!-- <td class="px-3 py-2 text-sm font-medium text-gray-900">
 									{fmt(row['Player Name'])}
-								</td>
+								</td> -->
 								{#each DISPLAY_COLS as col}
 									<td class="px-3 py-2 text-sm text-gray-900 tabular-nums">
 										{fmt(row[col])}
@@ -178,6 +217,15 @@
 		<button class=" rounded-2xl bg-gray-500 px-5 py-3 text-white">アップロード</button>
 	</div>
 {/if}
+
+<!-- <iframe
+	src={iframeUrl}
+	frameborder="0"
+	height="600"
+	allowtransparency
+	class="w-full"
+	title="GPS Data Analysis"
+></iframe> -->
 
 <style>
 	.tabular-nums {
