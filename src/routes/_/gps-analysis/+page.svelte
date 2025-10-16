@@ -49,6 +49,21 @@
 
 	const FOOTER_COLS = ['トレーニングスコア消費'];
 
+	// ✅ combined columns (left → middle → right)
+	const COLUMNS = [...HEADER_COLS, ...DISPLAY_COLS, ...FOOTER_COLS];
+
+	// ✅ sticky helpers for left/right pinned columns
+	const stickyLeft =
+		'sticky left-0 z-20 bg-gray-50 after:absolute after:inset-y-0 after:-right-px after:w-px after:bg-gray-200';
+	const stickyRight =
+		'sticky right-0 z-20 bg-gray-50 before:absolute before:inset-y-0 before:-left-px before:w-px before:bg-gray-200';
+
+	function colStickyClass(col: string) {
+		if (HEADER_COLS.includes(col)) return stickyLeft;
+		if (FOOTER_COLS.includes(col)) return stickyRight;
+		return '';
+	}
+
 	function fmt(v: unknown): string {
 		if (v === null || v === undefined || v === '') return '—';
 		if (typeof v === 'number' && Number.isFinite(v)) return v.toLocaleString();
@@ -113,8 +128,6 @@
 	const hideTeamAverage = true;
 
 	// ✅ compute rows reactively (no {#let})
-
-	// let rows: Array<Record<string, unknown>> = [];
 	let rows = $derived(
 		result && Array.isArray(result.records)
 			? hideTeamAverage
@@ -122,12 +135,6 @@
 				: result.records
 			: [],
 	);
-	// $: rows =
-	// 	result && Array.isArray(result.records)
-	// 		? hideTeamAverage
-	// 			? result.records.filter((r) => r['Player Name'] !== 'Team Average')
-	// 			: result.records
-	// 		: [];
 
 	onMount(() => {
 		console.log({ iframeUrl, data });
@@ -180,27 +187,29 @@
 				<table class="min-w-full border-collapse">
 					<thead class="sticky top-0 z-10 bg-gray-50">
 						<tr>
-							<!-- <th class="px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700">
-								Player Name
-							</th> -->
-							{#each DISPLAY_COLS as col}
+							{#each COLUMNS as col}
 								<th
-									class="px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700"
+									class={'px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700 ' +
+										colStickyClass(col)}
 								>
-									{col}
+									<nobr>
+										{col}
+									</nobr>
 								</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each rows as row, i}
-							<tr class="{i % 2 ? 'bg-white' : 'bg-gray-50/50'} hover:bg-blue-50/50">
-								<!-- <td class="px-3 py-2 text-sm font-medium text-gray-900">
-									{fmt(row['Player Name'])}
-								</td> -->
-								{#each DISPLAY_COLS as col}
-									<td class="px-3 py-2 text-sm text-gray-900 tabular-nums">
-										{fmt(row[col])}
+							<tr class="{i % 2 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50">
+								{#each COLUMNS as col}
+									<td
+										class={'bg-inherit px-3 py-2 text-sm text-gray-900 tabular-nums ' +
+											colStickyClass(col)}
+									>
+										<nobr>
+											{fmt(row[col])}
+										</nobr>
 									</td>
 								{/each}
 							</tr>
