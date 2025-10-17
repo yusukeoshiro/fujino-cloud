@@ -9,7 +9,7 @@
 <iframe
 	src={data.iframeUrl}
 	frameborder="0"
-	height="600"
+	height="1000"
 	allowtransparency
 	title="Embedded content"
 	class=" w-full"

@@ -17,12 +17,8 @@ export const load: PageServerLoad = async () => {
 
 	const iframeUrl = METABASE_SITE_URL + '/embed/dashboard/' + token + '#bordered=true&titled=true';
 
-	console.log('=====');
-	console.log({ iframeUrl });
-
 	// Whatever you return here becomes `data` in the page
 	return {
 		iframeUrl,
-		now: new Date().toISOString(),
 	};
 };
