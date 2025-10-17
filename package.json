@@ -31,6 +31,7 @@
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-svelte": "^3.12.4",
         "firebase": "^12.4.0",
+        "firebase-admin": "^13.5.0",
         "globals": "^16.4.0",
         "houdini": "^1.5.10",
         "houdini-svelte": "^2.1.20",
