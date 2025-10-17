@@ -7,6 +7,7 @@
 	} from 'firebase/auth';
 	import { auth } from '$lib/firebase';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 
 	const loginWithGoogle = () => {
 		const provider = new GoogleAuthProvider();
@@ -58,19 +59,19 @@
 	}
 
 	onMount(() => {
-		const unsubscribe = onAuthStateChanged(auth, (user) => {
+		const unsubscribe = onAuthStateChanged(auth, async (user) => {
 			if (user) {
+				const idToken = await user.getIdToken();
+				await fetch('/api/session', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ idToken }),
+				});
+
 				console.log('✅ Logged in as:', user.email);
-				// --------------------------------------------------
-				// PLACEHOLDER: You can write what to do after login
-				// e.g. navigate('/dashboard'), call backend, etc.
-				// --------------------------------------------------
+				await goto('/_');
 			} else {
 				console.log('🚪 User logged out or not authenticated');
-				// --------------------------------------------------
-				// PLACEHOLDER: You can write what to do after logout
-				// e.g. show login screen, clear session, etc.
-				// --------------------------------------------------
 			}
 		});
 
