@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { sampleResult } from './utils/sample-data.util';
 	import { COLUMNS, FOOTER_COLS, HEADER_COLS } from './utils/headers.util';
+	import { goto } from '$app/navigation';
 
 	// columns to display (left-to-right)
 
@@ -23,6 +24,8 @@
 
 	let isOver = $state(false);
 	let uploading = $state(false);
+	let committing = $state(false); // ✅ NEW
+
 	let result: {
 		rows: number;
 		headers: string[];
@@ -32,6 +35,13 @@
 	let error: string | null = $state(null);
 	let fileInput: HTMLInputElement | null = $state(null);
 	let lastFile: File | null = $state(null);
+
+	// ✅ post-commit hook (write your logic here)
+	function onCommitSuccess() {
+		// e.g., show toast / navigate / reset
+		// result = null; lastFile = null;
+		goto('/_/');
+	}
 
 	async function uploadFile(file: File) {
 		if (!file) return;
@@ -88,18 +98,18 @@
 			error = '先にファイルを選択してください。';
 			return;
 		}
-		uploading = true;
+		committing = true; // ✅ start spinner
 		error = null;
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
 			const res = await fetch('/api/commit', { method: 'POST', body: fd });
 			if (!res.ok) throw new Error(await res.text());
-			// optional: toast / navigate / clear state
+			onCommitSuccess(); // ✅ your hook
 		} catch (e: any) {
 			error = e?.message ?? 'Commit failed';
 		} finally {
-			uploading = false;
+			committing = false; // ✅ stop spinner
 		}
 	}
 
@@ -148,10 +158,32 @@
 
 		{#if result}
 			<h1 class=" text-xl font-bold">CSV解析結果</h1>
+			<h2 class="text-lg">Fitogetherの形式を認識しました。</h2>
 		{/if}
 
 		{#if uploading}
-			<p class="mt-4">アップロード中…</p>
+			<p class="mt-4 flex items-center gap-2">
+				<!-- inline spinner -->
+				<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+					<circle
+						cx="12"
+						cy="12"
+						r="10"
+						stroke="currentColor"
+						stroke-width="4"
+						fill="none"
+						opacity="0.25"
+					/>
+					<path
+						d="M22 12a10 10 0 0 1-10 10"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="4"
+						stroke-linecap="round"
+					/>
+				</svg>
+				アップロード中…
+			</p>
 		{/if}
 
 		{#if error}
@@ -209,11 +241,35 @@
 
 			<div class="mt-4 flex flex-col items-center">
 				<button
-					class="rounded-2xl bg-gray-500 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
+					class="flex items-center gap-2 rounded-2xl bg-gray-500 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
 					on:click={commitUpload}
-					disabled={!lastFile || uploading}
+					disabled={!lastFile || uploading || committing}
+					aria-busy={committing}
 				>
-					このデータをアップロードする
+					{#if committing}
+						<!-- inline spinner -->
+						<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+							<circle
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								stroke-width="4"
+								fill="none"
+								opacity="0.25"
+							/>
+							<path
+								d="M22 12a10 10 0 0 1-10 10"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="4"
+								stroke-linecap="round"
+							/>
+						</svg>
+						コミット中…
+					{:else}
+						このデータをアップロードする
+					{/if}
 				</button>
 			</div>
 		{/if}
