@@ -6,6 +6,7 @@
 	import { currentMembers } from '$lib/stores/members.store';
 	import { onMount, type Snippet } from 'svelte';
 	import type { PageData } from './$types';
+	import { page } from '$app/state';
 
 	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
 
@@ -47,8 +48,13 @@
 				<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-28" />
 			</a>
 
-			{#if $currentMembers.length > 0}
-				<a href="/_/gps-analysis" class="text-gray-600 hover:text-gray-900"> GPSデータの分析 </a>
+			{#if $currentMembers.length > 0 && page.params.oid}
+				<a
+					href={`/_/orgs/${page.params.oid}/gps-analysis`}
+					class="text-gray-600 hover:text-gray-900"
+				>
+					GPSデータの分析
+				</a>
 			{/if}
 		</div>
 
@@ -74,6 +80,18 @@
 			{/if}
 		</div>
 	</div>
+
+	{#if $currentMembers.length >= 2 && page.params.oid == null}
+		<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
+			<div class="flex gap-2">
+				{#each $currentMembers as member}
+					<a href={`/_/orgs/${member.orgId}`}>
+						{member.name}
+					</a>
+				{/each}
+			</div>
+		</div>
+	{/if}
 </div>
 
 <div class="p-3">
