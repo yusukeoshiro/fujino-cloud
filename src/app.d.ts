@@ -1,4 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
+
+import type { MemberDto } from './lib/services/member.dto';
+
 // for information about these interfaces
 declare global {
 	namespace App {
@@ -8,7 +11,7 @@ declare global {
 				email: string | null;
 				name: string | null;
 				picture: string | null;
-				role?: string;
+				members: MemberDto[];
 			} | null;
 		}
 

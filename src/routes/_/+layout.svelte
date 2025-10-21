@@ -4,9 +4,10 @@
 	import { onAuthStateChanged, signOut } from 'firebase/auth';
 	import { goto } from '$app/navigation';
 	import { currentMembers } from '$lib/stores/members.store';
-	import { onMount } from 'svelte';
+	import { onMount, type Snippet } from 'svelte';
+	import type { PageData } from './$types';
 
-	let { children } = $props();
+	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
 
 	async function logout() {
 		try {
@@ -22,6 +23,10 @@
 	}
 
 	onMount(() => {
+		if (data.members) {
+			currentMembers.set(data.members);
+		}
+
 		const unsubscribe = onAuthStateChanged(auth, async (user) => {
 			if (user) {
 			} else {

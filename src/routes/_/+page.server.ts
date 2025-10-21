@@ -1,25 +1,8 @@
-// src/routes/dashboard/+page.server.ts
-import { register } from 'module';
-import type { MemberDto } from '../../lib/services/member.dto';
-import { memberService } from '../../lib/services/member.service';
-import type { PageServerLoad } from './$types';
+import type { PageServerLoad, RequestEvent } from './$types';
 import jwt from 'jsonwebtoken';
-import { currentMembers } from '../../lib/stores/members.store';
 
-export const load: PageServerLoad = async (event) => {
-	let members: MemberDto[] = [];
-
-	if (event.locals.user) {
-		console.log('trying to get my members,', event.locals.user.uid);
-		try {
-			members = await memberService.listByUserId(event.locals.user.uid);
-			currentMembers.set(members);
-		} catch (error) {
-			console.error('get failed', error.message);
-		}
-	}
-
-	if (members.length === 0) {
+export const load: PageServerLoad = async (event: RequestEvent) => {
+	if ((event.locals.user?.members || []).length === 0) {
 		return { iframeUrl: '' };
 	}
 
