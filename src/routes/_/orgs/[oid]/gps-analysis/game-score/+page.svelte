@@ -4,7 +4,7 @@
 		type GameScoreColumn,
 		type GameScoreValues,
 		entriesFromValuesMap,
-		valuesMapFromEntries
+		valuesMapFromEntries,
 	} from './columns';
 
 	let { data }: { data: PageData } = $props();
@@ -22,15 +22,37 @@
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
 
-	const updateCellValue = (column: GameScoreColumn, value: string) => {
+	const updateCellValue = (column: GameScoreColumn, value: string, target?: HTMLElement) => {
+		const sanitized = sanitizeInput(value);
+
+		if (!isValidNumericInput(sanitized)) {
+			if (target) {
+				target.textContent = values[column.key] ?? '';
+				restoreCaretToEnd(target);
+			}
+			return;
+		}
+
 		values = {
 			...values,
-			[column.key]: sanitizeInput(value)
+			[column.key]: sanitized,
 		};
+
+		if (target) {
+			restoreCaretToEnd(target);
+		}
 	};
 
 	const sanitizeInput = (value: string) =>
-		value.replace(/\u00a0/g, ' ').replace(/\r/g, '').replace(/\n/g, '').replace(/\t/g, ' ');
+		value
+			.replace(/\u00a0/g, ' ')
+			.replace(/\r/g, '')
+			.replace(/\n/g, '')
+			.replace(/\t/g, ' ')
+			.trim();
+
+	const numericPattern = /^-?\d*(?:\.\d*)?$/;
+	const isValidNumericInput = (value: string) => value === '' || numericPattern.test(value);
 
 	const focusCell = (colIndex: number, opts: { select?: boolean } = {}) => {
 		if (typeof document === 'undefined') return;
@@ -130,6 +152,19 @@
 		const column = columns[activeColumn];
 		return column ? column.label : '';
 	};
+
+	const restoreCaretToEnd = (node: HTMLElement) => {
+		if (typeof window === 'undefined') return;
+		requestAnimationFrame(() => {
+			const selection = window.getSelection();
+			if (!selection) return;
+			const range = document.createRange();
+			range.selectNodeContents(node);
+			range.collapse(false);
+			selection.removeAllRanges();
+			selection.addRange(range);
+		});
+	};
 	const saveChanges = async () => {
 		saving = true;
 		notification = null;
@@ -138,12 +173,12 @@
 			const response = await fetch('/api/game-score', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					orgId,
-					values: entriesFromValuesMap(values)
-				})
+					values: entriesFromValuesMap(values),
+				}),
 			});
 
 			if (!response.ok) {
@@ -159,13 +194,13 @@
 
 			notification = {
 				text: payload?.message ?? 'ゲームスコアを保存しました。',
-				tone: 'success'
+				tone: 'success',
 			};
 		} catch (error) {
 			console.error('Failed to save game score', error);
 			notification = {
 				text: '保存に失敗しました。接続状況を確認してください。',
-				tone: 'error'
+				tone: 'error',
 			};
 		} finally {
 			saving = false;
@@ -188,7 +223,9 @@
 		</div>
 		<div class="header-actions">
 			<button type="submit" class="primary" disabled={saving}>
-				{saving ? '保存中...' : '保存する'}
+				<nobr>
+					{saving ? '保存中...' : '保存する'}
+				</nobr>
 			</button>
 		</div>
 	</div>
@@ -234,8 +271,11 @@
 								spellcheck={false}
 								onfocus={(event) => handleFocus(event, colIndex)}
 								oninput={(event) =>
-									updateCellValue(column, (event.currentTarget as HTMLElement).textContent ?? '')
-								}
+									updateCellValue(
+										column,
+										(event.currentTarget as HTMLElement).textContent ?? '',
+										event.currentTarget as HTMLElement,
+									)}
 								onkeydown={(event) => handleKeydown(event as KeyboardEvent, colIndex)}
 								onpaste={(event) => handlePaste(event as ClipboardEvent, colIndex)}
 							>
@@ -250,7 +290,8 @@
 
 	<div class="status-bar">
 		<div>
-			<strong>選択セル:</strong> {currentCellLabel() || 'なし'}
+			<strong>選択セル:</strong>
+			{currentCellLabel() || 'なし'}
 		</div>
 		<div>
 			<strong>最終保存:</strong>
@@ -261,8 +302,15 @@
 
 <style>
 	.game-score-page {
-		font-family: 'Inter', 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Hiragino Sans',
-			'Yu Gothic', sans-serif;
+		font-family:
+			'Inter',
+			'Roboto',
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			'Hiragino Sans',
+			'Yu Gothic',
+			sans-serif;
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
