@@ -700,7 +700,7 @@
 											<span class="font-semibold">{day.label}</span>
 											<button
 												type="button"
-												class="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100 cursor-pointer"
+												class="cursor-pointer rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100"
 												onclick={(event) => {
 													event.stopPropagation();
 													openAddEvent(day.iso);
@@ -751,7 +751,7 @@
 													</div>
 
 													<button
-														class="text-xs cursor-pointer text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
+														class="cursor-pointer text-xs text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
 														onclick={(e) => {
 															e.stopPropagation();
 															removeEvent(event.id, day.iso);
@@ -781,7 +781,7 @@
 											role="textbox"
 											tabindex="0"
 											spellcheck={false}
-											class="absolute inset-0 flex items-center justify-end bg-white px-2 text-right ring-2 ring-indigo-200 outline-none"
+											class="absolute inset-0 flex items-center justify-end bg-white py-2 px-6 text-right ring-2 ring-indigo-200 outline-none"
 											style="min-height:100%;"
 											data-budget-index={index}
 											bind:this={budgetEditorEl}
@@ -794,7 +794,7 @@
 								{:else}
 									<button
 										type="button"
-										class="absolute inset-0 flex w-full items-center justify-end px-2 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
+										class="absolute inset-0 flex w-full items-center justify-end py-2 px-6 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
 										class:bg-blue-50={selectedBudgetIndex === index}
 										data-budget-index={index}
 										tabindex={selectedBudgetIndex === index ? 0 : -1}
