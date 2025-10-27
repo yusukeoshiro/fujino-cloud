@@ -24,13 +24,12 @@
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
 
-	const updateCellValue = (column: GameScoreColumn, value: string, target?: HTMLElement) => {
+	const updateCellValue = (column: GameScoreColumn, value: string, _target?: HTMLElement) => {
 		const sanitized = sanitizeInput(value);
 
 		if (!isValidNumericInput(sanitized)) {
-			if (target) {
-				target.textContent = values[column.key] ?? '';
-				restoreCaretToEnd(target);
+			if (_target) {
+				_target.textContent = values[column.key] ?? '';
 			}
 			return;
 		}
@@ -39,10 +38,6 @@
 			...values,
 			[column.key]: sanitized,
 		};
-
-		if (target) {
-			restoreCaretToEnd(target);
-		}
 	};
 
 	const sanitizeInput = (value: string) =>
@@ -63,58 +58,6 @@
 			selectAllOnNextFocus = opts.select ?? true;
 			cell.focus();
 		}
-	};
-
-	const handleKeydown = (event: KeyboardEvent, colIndex: number) => {
-		const { key, shiftKey } = event;
-		const lastColumnIndex = columns.length - 1;
-
-		const goTo = (targetCol: number) => {
-			if (targetCol < 0 || targetCol > lastColumnIndex) return;
-			focusCell(targetCol, { select: true });
-		};
-
-		switch (key) {
-			case 'ArrowRight':
-			case 'ArrowDown':
-				event.preventDefault();
-				goTo(Math.min(colIndex + 1, lastColumnIndex));
-				break;
-			case 'ArrowLeft':
-			case 'ArrowUp':
-				event.preventDefault();
-				goTo(Math.max(colIndex - 1, 0));
-				break;
-			case 'Enter':
-				event.preventDefault();
-				goTo(shiftKey ? Math.max(colIndex - 1, 0) : Math.min(colIndex + 1, lastColumnIndex));
-				break;
-		}
-	};
-
-	const handlePaste = (event: ClipboardEvent, colIndex: number) => {
-		const text = event.clipboardData?.getData('text/plain');
-		if (!text) return;
-
-		const matrix = parseClipboard(text);
-		if (!matrix) return;
-
-		event.preventDefault();
-		const flattened = matrix.flat();
-		if (!flattened.length) return;
-
-		const updated = { ...values };
-		let pointer = colIndex;
-
-		for (const value of flattened) {
-			if (pointer >= columns.length) break;
-			const column = columns[pointer];
-			updated[column.key] = sanitizeInput(value);
-			pointer += 1;
-		}
-
-		values = updated;
-		focusCell(Math.min(pointer - 1, columns.length - 1), { select: true });
 	};
 
 	const parseClipboard = (text: string) => {
@@ -293,65 +236,93 @@
 								role="textbox"
 								aria-label={column.label}
 								data-cell={`${colIndex}`}
-								contenteditable="true"
+								contenteditable="plaintext-only"
 								tabindex="0"
 								spellcheck={false}
 								onfocus={(event) => {
 									handleFocus(event, colIndex);
-									// remember original value when edit starts
-									editOriginal[column.key] =
-										(event.currentTarget as HTMLElement).textContent?.trim() ?? '';
+									// capture original value exactly as shown
+									editOriginal[column.key] = (event.currentTarget as HTMLElement).textContent ?? '';
 								}}
 								onblur={async (event) => {
-									if (committing) return; // skip duplicate save after keyboard commit
+									if (committing) return;
 									const el = event.currentTarget as HTMLElement;
 									const next = sanitizeInput(el.textContent ?? '');
-									const prev = editOriginal[column.key] ?? '';
+									const prev = sanitizeInput(editOriginal[column.key] ?? '');
 									if (next !== prev) {
-										updateCellValue(column, next, el);
+										updateCellValue(column, next);
+										committing = true;
 										await saveChanges();
+										committing = false;
 										editOriginal[column.key] = next;
 									}
+									activeColumn = null;
+								}}
+								onpaste={async (event) => {
+									event.preventDefault();
+									const text = event.clipboardData?.getData('text/plain');
+									const matrix = text && parseClipboard(text);
+									if (!matrix) return;
+									const flattened = matrix.flat();
+									if (!flattened.length) return;
+
+									let changed = false;
+									flattened.forEach((value, offset) => {
+										const idx = colIndex + offset;
+										if (idx >= columns.length) return;
+										const col = columns[idx];
+										const next = sanitizeInput(value);
+										const prev = sanitizeInput(editOriginal[col.key] ?? values[col.key] ?? '');
+										if (next !== prev) {
+											values = { ...values, [col.key]: next };
+											editOriginal[col.key] = next;
+											changed = true;
+										}
+									});
+
+									if (changed) {
+										committing = true;
+										await saveChanges();
+										committing = false;
+									}
+
+									const lastIndex = Math.min(colIndex + flattened.length - 1, columns.length - 1);
+									focusCell(lastIndex, { select: true });
 								}}
 								onkeydown={async (event) => {
-									// confirm only on navigation/enter, ignore IME composition Enter
 									const navKeys = ['Enter', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
-									if (navKeys.includes(event.key) && !(event as any).isComposing) {
-										event.preventDefault();
+									if (!navKeys.includes(event.key) || (event as any).isComposing) return;
 
-										const el = event.currentTarget as HTMLElement;
-										const nextVal = sanitizeInput(el.textContent ?? '');
-										const prevVal = editOriginal[column.key] ?? '';
+									event.preventDefault();
 
-										if (nextVal !== prevVal) {
-											updateCellValue(column, nextVal, el);
-											committing = true;
-											await saveChanges();
-											committing = false;
-											editOriginal[column.key] = nextVal;
-										}
+									const el = event.currentTarget as HTMLElement;
+									const next = sanitizeInput(el.textContent ?? '');
+									const prev = sanitizeInput(editOriginal[column.key] ?? '');
 
-										// move focus after commit
-										const last = columns.length - 1;
-										let next = colIndex;
-										if (event.key === 'Enter' || event.key === 'ArrowRight')
-											next = Math.min(colIndex + 1, last);
-										if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
-											next = Math.max(colIndex - 1, 0);
-										if (event.key === 'ArrowDown') next = Math.min(colIndex + 1, last);
-										focusCell(next, { select: true });
+									if (next !== prev) {
+										updateCellValue(column, next);
+										committing = true;
+										await saveChanges();
+										committing = false;
+										editOriginal[column.key] = next;
 									}
+
+									const last = columns.length - 1;
+									let nextIdx = colIndex;
+									if (event.key === 'Enter' || event.key === 'ArrowRight')
+										nextIdx = Math.min(colIndex + 1, last);
+									if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
+										nextIdx = Math.max(colIndex - 1, 0);
+									if (event.key === 'ArrowDown') nextIdx = Math.min(colIndex + 1, last);
+
+									focusCell(nextIdx, { select: true });
 								}}
 								oninput={(event) => {
-									// live update local state for display/validation, but don't save yet
-									updateCellValue(
-										column,
-										(event.currentTarget as HTMLElement).textContent ?? '',
-										event.currentTarget as HTMLElement,
-									);
+									// update local state only; do not modify DOM here
+									updateCellValue(column, (event.currentTarget as HTMLElement).textContent ?? '');
 								}}
 							>
-								{values[column.key] || ''}
+								{values[column.key] ?? ''}
 							</div>
 						</td>
 					{/each}
