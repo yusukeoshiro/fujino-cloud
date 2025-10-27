@@ -781,7 +781,7 @@
 											role="textbox"
 											tabindex="0"
 											spellcheck={false}
-											class="absolute inset-0 flex items-center justify-end bg-white py-2 px-6 text-right ring-2 ring-indigo-200 outline-none"
+											class="absolute inset-0 flex items-center justify-end bg-white px-6 py-2 text-right ring-2 ring-indigo-200 outline-none"
 											style="min-height:100%;"
 											data-budget-index={index}
 											bind:this={budgetEditorEl}
@@ -794,7 +794,7 @@
 								{:else}
 									<button
 										type="button"
-										class="absolute inset-0 flex w-full items-center justify-end py-2 px-6 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
+										class="absolute inset-0 flex w-full items-center justify-end px-6 py-2 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
 										class:bg-blue-50={selectedBudgetIndex === index}
 										data-budget-index={index}
 										tabindex={selectedBudgetIndex === index ? 0 : -1}
