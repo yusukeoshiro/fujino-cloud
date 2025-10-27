@@ -1,44 +1,21 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { ActionData, PageData } from './$types';
+	import type { PageData } from './$types';
 	import type { GameScoreColumn, GameScoreValues } from './columns';
 
-	let { data, form }: { data: PageData; form?: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	const columns: GameScoreColumn[] = data.columns;
+	const orgId = data.orgId;
 
 	const cloneValues = (incoming: GameScoreValues): GameScoreValues => ({ ...incoming });
 
 	let values = $state<GameScoreValues>(cloneValues(data.values));
 	let saving = $state(false);
-	const serializedValues = $derived(JSON.stringify(values));
 	let lastSavedToken = $state<string | null>(null);
 	type Banner = { text: string; tone: 'success' | 'error' } | null;
 	let notification = $state<Banner>(null);
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
-
-	$effect(() => {
-		if (form?.values && form?.savedAt && form.savedAt !== lastSavedToken) {
-			values = cloneValues(form.values);
-			lastSavedToken = form.savedAt;
-			notification = {
-				text: form.message ?? 'ゲームスコアを保存しました。',
-				tone: 'success'
-			};
-		} else if (form && !form.values && form.message) {
-			notification = { text: form.message, tone: 'error' };
-		}
-	});
-
-	const enhanceSubmit = (formElement: HTMLFormElement) =>
-		enhance(formElement, () => {
-			saving = true;
-			return async ({ update }) => {
-				await update({ reset: false, invalidateAll: false });
-				saving = false;
-			};
-		});
 
 	const updateCellValue = (column: GameScoreColumn, value: string) => {
 		values = {
@@ -148,9 +125,55 @@
 		const column = columns[activeColumn];
 		return column ? column.label : '';
 	};
+	const saveChanges = async () => {
+		saving = true;
+		notification = null;
+
+		try {
+			const response = await fetch('/api/game-score', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					orgId,
+					values
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('API error');
+			}
+
+			const payload = await response.json();
+			if (payload?.values) {
+				values = cloneValues(payload.values);
+			}
+			const savedAt = payload?.savedAt ?? new Date().toISOString();
+			lastSavedToken = savedAt;
+
+			notification = {
+				text: payload?.message ?? 'ゲームスコアを保存しました。',
+				tone: 'success'
+			};
+		} catch (error) {
+			console.error('Failed to save game score', error);
+			notification = {
+				text: '保存に失敗しました。接続状況を確認してください。',
+				tone: 'error'
+			};
+		} finally {
+			saving = false;
+		}
+	};
+
+	const handleSubmit = async (event: SubmitEvent) => {
+		event.preventDefault();
+		await saveChanges();
+	};
 </script>
 
-<form method="POST" use:enhanceSubmit class="game-score-page">
+<form class="game-score-page" onsubmit={handleSubmit}>
 	<div class="page-header">
 		<div>
 			<h1>ゲームスコアの管理</h1>
@@ -229,8 +252,6 @@
 			{lastSavedToken ? new Date(lastSavedToken).toLocaleString() : 'まだ保存されていません'}
 		</div>
 	</div>
-
-	<input type="hidden" name="payload" value={serializedValues} />
 </form>
 
 <style>
