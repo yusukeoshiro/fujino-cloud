@@ -239,7 +239,7 @@
 	</div>
 
 	<!-- Banner -->
-	{#if notification}
+	<!-- {#if notification}
 		<div
 			class={`rounded-lg border px-3 py-2 font-medium ${
 				notification.tone === 'error'
@@ -249,7 +249,7 @@
 		>
 			{notification.text}
 		</div>
-	{/if}
+	{/if} -->
 
 	<!-- Hints -->
 	<ul class="flex flex-wrap gap-4 text-sm text-slate-600">
@@ -268,11 +268,11 @@
 					{#each columns as column}
 						<th class="border border-slate-200 text-left align-bottom">
 							<div class="px-2 py-2 font-semibold text-slate-800">{column.label}</div>
-							{#if column.metricDefinitionId}
+							<!-- {#if column.metricDefinitionId}
 								<div class="px-2 pb-2 font-mono text-[0.7rem] text-slate-500">
 									{column.metricDefinitionId}
 								</div>
-							{/if}
+							{/if} -->
 						</th>
 					{/each}
 				</tr>
