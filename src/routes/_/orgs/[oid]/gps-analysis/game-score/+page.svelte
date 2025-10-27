@@ -1,6 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { GameScoreColumn, GameScoreValues } from './columns';
+	import {
+		type GameScoreColumn,
+		type GameScoreValues,
+		entriesFromValuesMap,
+		valuesMapFromEntries
+	} from './columns';
 
 	let { data }: { data: PageData } = $props();
 
@@ -137,7 +142,7 @@
 				},
 				body: JSON.stringify({
 					orgId,
-					values
+					values: entriesFromValuesMap(values)
 				})
 			});
 
@@ -147,7 +152,7 @@
 
 			const payload = await response.json();
 			if (payload?.values) {
-				values = cloneValues(payload.values);
+				values = valuesMapFromEntries(payload.values);
 			}
 			const savedAt = payload?.savedAt ?? new Date().toISOString();
 			lastSavedToken = savedAt;

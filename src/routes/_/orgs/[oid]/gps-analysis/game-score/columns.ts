@@ -1,4 +1,5 @@
 import { DISPLAY_COLS, FOOTER_COLS } from '../upload/utils/headers.util';
+import type { GameScoreValueEntry } from '$lib/services/game-score.service';
 
 export type ColumnSection = 'display' | 'footer';
 
@@ -53,3 +54,33 @@ export const GAME_SCORE_COLUMNS: GameScoreColumn[] = [
 
 export const createEmptyValues = (): GameScoreValues =>
 	Object.fromEntries(GAME_SCORE_COLUMNS.map((column) => [column.key, '']));
+
+const metricKeyMap = new Map(
+	GAME_SCORE_COLUMNS.map((column) => [column.metricDefinitionId ?? column.key, column.key])
+);
+
+export const valuesMapFromEntries = (entries?: GameScoreValueEntry[] | null): GameScoreValues => {
+	const values = createEmptyValues();
+	if (!entries) return values;
+
+	for (const entry of entries) {
+		if (!entry || !entry.metricDefinitionId) continue;
+		const key = metricKeyMap.get(entry.metricDefinitionId);
+		if (!key) continue;
+		values[key] = entry.value === undefined || entry.value === null ? '' : entry.value.toString();
+	}
+
+	return values;
+};
+
+export const entriesFromValuesMap = (values: GameScoreValues): GameScoreValueEntry[] =>
+	GAME_SCORE_COLUMNS.map((column) => {
+		const metricDefinitionId = column.metricDefinitionId ?? column.key;
+		const rawValue = values[column.key];
+		const numericValue =
+			rawValue === '' || rawValue === undefined || rawValue === null ? 0 : Number(rawValue);
+		return {
+			metricDefinitionId,
+			value: Number.isFinite(numericValue) ? numericValue : 0
+		};
+	});
