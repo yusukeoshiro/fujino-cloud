@@ -11,6 +11,8 @@
 
 	const columns: GameScoreColumn[] = data.columns;
 	const orgId = data.orgId;
+	let editOriginal: Record<string, string> = {};
+	let committing = false;
 
 	const cloneValues = (incoming: GameScoreValues): GameScoreValues => ({ ...incoming });
 
@@ -294,15 +296,60 @@
 								contenteditable="true"
 								tabindex="0"
 								spellcheck={false}
-								onfocus={(event) => handleFocus(event, colIndex)}
-								oninput={(event) =>
+								onfocus={(event) => {
+									handleFocus(event, colIndex);
+									// remember original value when edit starts
+									editOriginal[column.key] =
+										(event.currentTarget as HTMLElement).textContent?.trim() ?? '';
+								}}
+								onblur={async (event) => {
+									if (committing) return; // skip duplicate save after keyboard commit
+									const el = event.currentTarget as HTMLElement;
+									const next = sanitizeInput(el.textContent ?? '');
+									const prev = editOriginal[column.key] ?? '';
+									if (next !== prev) {
+										updateCellValue(column, next, el);
+										await saveChanges();
+										editOriginal[column.key] = next;
+									}
+								}}
+								onkeydown={async (event) => {
+									// confirm only on navigation/enter, ignore IME composition Enter
+									const navKeys = ['Enter', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
+									if (navKeys.includes(event.key) && !(event as any).isComposing) {
+										event.preventDefault();
+
+										const el = event.currentTarget as HTMLElement;
+										const nextVal = sanitizeInput(el.textContent ?? '');
+										const prevVal = editOriginal[column.key] ?? '';
+
+										if (nextVal !== prevVal) {
+											updateCellValue(column, nextVal, el);
+											committing = true;
+											await saveChanges();
+											committing = false;
+											editOriginal[column.key] = nextVal;
+										}
+
+										// move focus after commit
+										const last = columns.length - 1;
+										let next = colIndex;
+										if (event.key === 'Enter' || event.key === 'ArrowRight')
+											next = Math.min(colIndex + 1, last);
+										if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
+											next = Math.max(colIndex - 1, 0);
+										if (event.key === 'ArrowDown') next = Math.min(colIndex + 1, last);
+										focusCell(next, { select: true });
+									}
+								}}
+								oninput={(event) => {
+									// live update local state for display/validation, but don't save yet
 									updateCellValue(
 										column,
 										(event.currentTarget as HTMLElement).textContent ?? '',
 										event.currentTarget as HTMLElement,
-									)}
-								onkeydown={(event) => handleKeydown(event as KeyboardEvent, colIndex)}
-								onpaste={(event) => handlePaste(event as ClipboardEvent, colIndex)}
+									);
+								}}
 							>
 								{values[column.key] || ''}
 							</div>
@@ -311,23 +358,5 @@
 				</tr>
 			</tbody>
 		</table>
-	</div>
-
-	<!-- Status bar -->
-	<div
-		class="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between"
-	>
-		<div>
-			<span class="font-semibold">選択セル:</span>
-			<span class="ml-1">{currentCellLabel() || 'なし'}</span>
-		</div>
-		<div>
-			<span class="font-semibold">最終保存:</span>
-			<span class="ml-1"
-				>{lastSavedToken
-					? new Date(lastSavedToken).toLocaleString()
-					: 'まだ保存されていません'}</span
-			>
-		</div>
 	</div>
 </form>
