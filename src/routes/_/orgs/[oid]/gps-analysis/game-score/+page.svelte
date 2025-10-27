@@ -213,59 +213,84 @@
 	};
 </script>
 
-<form class="game-score-page" onsubmit={handleSubmit}>
-	<div class="page-header">
+<form
+	class="mx-auto flex max-w-screen-2xl flex-col gap-4 px-4 py-6 text-slate-900"
+	onsubmit={handleSubmit}
+>
+	<!-- Header -->
+	<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1>ゲームスコアの管理</h1>
-			<p>
+			<h1 class="text-xl font-semibold">ゲームスコアの管理</h1>
+			<p class="text-slate-600">
 				チーム全体のゲームスコアをExcelライクに調整できます。コピー＆ペーストや矢印キーでの移動に対応し、数値をまとめて更新できます。
 			</p>
 		</div>
-		<div class="header-actions">
-			<button type="submit" class="primary" disabled={saving}>
-				<nobr>
-					{saving ? '保存中...' : '保存する'}
-				</nobr>
+		<div class="flex items-center gap-2">
+			<button
+				type="submit"
+				class="rounded-lg bg-blue-600 px-3 py-2 text-white disabled:bg-slate-400"
+				disabled={saving}
+			>
+				<span class="whitespace-nowrap">{saving ? '保存中...' : '保存する'}</span>
 			</button>
 		</div>
 	</div>
 
+	<!-- Banner -->
 	{#if notification}
-		<div class={`banner ${notification.tone === 'error' ? 'error' : 'success'}`}>
+		<div
+			class={`rounded-lg border px-3 py-2 font-medium ${
+				notification.tone === 'error'
+					? 'border-red-300 bg-red-50 text-red-700'
+					: 'border-emerald-300 bg-emerald-50 text-emerald-700'
+			}`}
+		>
 			{notification.text}
 		</div>
 	{/if}
 
-	<ul class="hints">
+	<!-- Hints -->
+	<ul class="flex flex-wrap gap-4 text-sm text-slate-600">
 		<li>Enter / 矢印キーでセル移動</li>
 		<li>Ctrl / Command + V で複数セル貼り付け</li>
 		<li>すべての値がチーム共通で保存されます</li>
 	</ul>
 
-	<div class="table-wrapper">
-		<table>
-			<thead>
+	<!-- Table -->
+	<div
+		class="max-h-[calc(100vh-320px)] overflow-auto rounded-xl border border-slate-300 shadow-inner"
+	>
+		<table class="w-full min-w-[720px] border-collapse text-sm [font-variant-numeric:tabular-nums]">
+			<thead class="sticky top-0 z-10 bg-slate-50">
 				<tr>
 					{#each columns as column}
-						<th scope="col">
-							<div>{column.label}</div>
+						<th class="border border-slate-200 text-left align-bottom">
+							<div class="px-2 py-2 font-semibold text-slate-800">{column.label}</div>
 							{#if column.metricDefinitionId}
-								<div class="column-id">{column.metricDefinitionId}</div>
+								<div class="px-2 pb-2 font-mono text-[0.7rem] text-slate-500">
+									{column.metricDefinitionId}
+								</div>
 							{/if}
 						</th>
 					{/each}
 				</tr>
 			</thead>
+
 			<tbody>
 				<tr>
 					{#each columns as column, colIndex}
-						<td class:selected={activeColumn === colIndex}>
+						<td
+							class={`min-w-[130px] border border-slate-200 p-0 align-top ${
+								activeColumn === colIndex
+									? 'outline outline-2 -outline-offset-2 outline-blue-600'
+									: ''
+							}`}
+						>
 							<div
-								class="cell-editor numeric"
+								class="min-h-[38px] cursor-text px-2 py-2 text-right outline-none focus:bg-indigo-50"
 								role="textbox"
 								aria-label={column.label}
 								data-cell={`${colIndex}`}
-								data-placeholder="0"
 								contenteditable="true"
 								tabindex="0"
 								spellcheck={false}
@@ -288,205 +313,21 @@
 		</table>
 	</div>
 
-	<div class="status-bar">
+	<!-- Status bar -->
+	<div
+		class="flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 sm:flex-row sm:items-center sm:justify-between"
+	>
 		<div>
-			<strong>選択セル:</strong>
-			{currentCellLabel() || 'なし'}
+			<span class="font-semibold">選択セル:</span>
+			<span class="ml-1">{currentCellLabel() || 'なし'}</span>
 		</div>
 		<div>
-			<strong>最終保存:</strong>
-			{lastSavedToken ? new Date(lastSavedToken).toLocaleString() : 'まだ保存されていません'}
+			<span class="font-semibold">最終保存:</span>
+			<span class="ml-1"
+				>{lastSavedToken
+					? new Date(lastSavedToken).toLocaleString()
+					: 'まだ保存されていません'}</span
+			>
 		</div>
 	</div>
 </form>
-
-<style>
-	.game-score-page {
-		font-family:
-			'Inter',
-			'Roboto',
-			system-ui,
-			-apple-system,
-			BlinkMacSystemFont,
-			'Hiragino Sans',
-			'Yu Gothic',
-			sans-serif;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1.5rem;
-		color: #0f172a;
-	}
-
-	.page-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	h1 {
-		margin: 0 0 0.25rem;
-		font-size: 1.4rem;
-	}
-
-	p {
-		margin: 0;
-		color: #475569;
-	}
-
-	.header-actions {
-		display: flex;
-		gap: 0.75rem;
-		align-items: center;
-	}
-
-	button {
-		border-radius: 8px;
-		padding: 0.55rem 1.2rem;
-		font-size: 0.95rem;
-		border: 1px solid transparent;
-		cursor: pointer;
-	}
-
-	button.primary {
-		background: #2563eb;
-		color: #fff;
-		border-color: #1d4ed8;
-	}
-
-	button.primary:disabled {
-		background: #94a3b8;
-		border-color: #94a3b8;
-		cursor: not-allowed;
-	}
-
-	.banner {
-		padding: 0.75rem 1rem;
-		border-radius: 8px;
-		font-weight: 500;
-	}
-
-	.banner.success {
-		background: #ecfdf5;
-		color: #047857;
-		border: 1px solid #6ee7b7;
-	}
-
-	.banner.error {
-		background: #fef2f2;
-		color: #b91c1c;
-		border: 1px solid #fecaca;
-	}
-
-	.hints {
-		display: flex;
-		gap: 1.5rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: 0.9rem;
-		color: #475569;
-	}
-
-	.table-wrapper {
-		border: 1px solid #cbd5f5;
-		border-radius: 12px;
-		overflow: auto;
-		box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.4);
-		max-height: calc(100vh - 320px);
-	}
-
-	table {
-		border-collapse: collapse;
-		width: max-content;
-		min-width: 100%;
-		font-size: 0.9rem;
-		font-variant-numeric: tabular-nums;
-	}
-
-	th,
-	td {
-		border: 1px solid #e2e8f0;
-		padding: 0;
-		background: #fff;
-	}
-
-	thead th {
-		position: sticky;
-		top: 0;
-		background: #f8fafc;
-		font-weight: 600;
-		text-align: left;
-		padding: 0.45rem;
-	}
-
-	.column-id {
-		font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
-		font-size: 0.7rem;
-		color: #64748b;
-		margin-top: 0.15rem;
-	}
-
-	td {
-		min-width: 130px;
-	}
-
-	td.selected {
-		outline: 2px solid #2563eb;
-		outline-offset: -2px;
-	}
-
-	.cell-editor {
-		padding: 0.4rem 0.5rem;
-		min-height: 38px;
-		outline: none;
-		cursor: text;
-	}
-
-	.cell-editor.numeric {
-		text-align: right;
-	}
-
-	.cell-editor:focus {
-		background: #eef2ff;
-	}
-
-	.cell-editor:empty::before {
-		content: attr(data-placeholder);
-		color: #cbd5f5;
-		pointer-events: none;
-	}
-
-	.status-bar {
-		display: flex;
-		justify-content: space-between;
-		padding: 0.75rem 1rem;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		background: #f8fafc;
-		color: #334155;
-		font-size: 0.9rem;
-	}
-
-	@media (max-width: 960px) {
-		.page-header {
-			flex-direction: column;
-			align-items: flex-start;
-		}
-
-		.header-actions {
-			width: 100%;
-			justify-content: flex-start;
-		}
-
-		.table-wrapper {
-			max-height: none;
-		}
-
-		.status-bar {
-			flex-direction: column;
-			gap: 0.5rem;
-		}
-	}
-</style>
