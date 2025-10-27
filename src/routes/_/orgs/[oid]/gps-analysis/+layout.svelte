@@ -41,7 +41,7 @@
 						page.url.pathname.includes('/upload') ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'
 					}`}
 			>
-				GPSデータのアップロード
+				日次GPSデータのアップロード
 			</a>
 		</li>
 	</ul>
