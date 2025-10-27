@@ -28,7 +28,7 @@ export type TrainingKeyEvent = {
 const DEFAULT_CONFIG: TrainingBudgetConfig = {
 	orgId: '',
 	startMonth: 4,
-	weekStartsOn: 0
+	weekStartsOn: 0,
 };
 
 const budgetId = (orgId: string, allocatedOn: string) => `${orgId}_${allocatedOn}`;
@@ -51,14 +51,19 @@ class TrainingBudgetService {
 		const payload = {
 			startMonth: config.startMonth ?? DEFAULT_CONFIG.startMonth,
 			weekStartsOn: config.weekStartsOn ?? DEFAULT_CONFIG.weekStartsOn,
-			orgId
+			orgId,
 		};
 		await this.configCollection.doc(orgId).set(payload, { merge: true });
 		return payload;
 	}
 
-	async listYearBudgets(orgId: string, year: number, startMonth: number): Promise<WeeklyTrainingBudget[]> {
-		const { start, end } = getCalendarYearRange(year, startMonth);
+	async listYearBudgets(
+		orgId: string,
+		year: number,
+		startMonth: number,
+		weekStartsOn: number,
+	): Promise<WeeklyTrainingBudget[]> {
+		const { start, end } = getCalendarYearRange(year, startMonth, weekStartsOn);
 		const docs = await this.budgetCollection
 			.where('orgId', '==', orgId)
 			.where('allocatedOn', '>=', start.toISODate())
@@ -72,8 +77,13 @@ class TrainingBudgetService {
 		});
 	}
 
-	async listYearEvents(orgId: string, year: number, startMonth: number): Promise<TrainingKeyEvent[]> {
-		const { start, end } = getCalendarYearRange(year, startMonth);
+	async listYearEvents(
+		orgId: string,
+		year: number,
+		startMonth: number,
+		weekStartsOn: number,
+	): Promise<TrainingKeyEvent[]> {
+		const { start, end } = getCalendarYearRange(year, startMonth, weekStartsOn);
 		const docs = await this.eventCollection
 			.where('orgId', '==', orgId)
 			.where('eventDate', '>=', start.toISODate())
@@ -123,7 +133,7 @@ class TrainingBudgetService {
 				id: docId,
 				orgId,
 				eventDate: event.eventDate,
-				eventName: event.eventName.trim()
+				eventName: event.eventName.trim(),
 			});
 		}
 
@@ -154,7 +164,7 @@ class TrainingBudgetService {
 					orgId,
 					allocatedOn,
 					expiresOn: date.plus({ days: 6 }).toISODate()!,
-					budget: entry.budget
+					budget: entry.budget,
 				};
 			})
 			.filter((item): item is WeeklyTrainingBudget => Boolean(item));
@@ -166,7 +176,7 @@ class TrainingBudgetService {
 			id: event.id ?? `temp-${randomUUID()}`,
 			orgId,
 			eventDate: event.eventDate,
-			eventName: event.eventName
+			eventName: event.eventName,
 		}));
 
 		await this.saveEvents(orgId, sanitizedEvents, deletedEventIds);
@@ -174,8 +184,8 @@ class TrainingBudgetService {
 
 	async getYearSnapshot(orgId: string, year: number) {
 		const config = await this.getConfig(orgId);
-		const budgets = await this.listYearBudgets(orgId, year, config.startMonth);
-		const events = await this.listYearEvents(orgId, year, config.startMonth);
+		const budgets = await this.listYearBudgets(orgId, year, config.startMonth, config.weekStartsOn);
+		const events = await this.listYearEvents(orgId, year, config.startMonth, config.weekStartsOn);
 		return { config, budgets, events };
 	}
 }

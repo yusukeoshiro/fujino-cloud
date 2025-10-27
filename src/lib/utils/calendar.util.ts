@@ -3,9 +3,17 @@ import { DateTime } from 'luxon';
 export const getCalendarYearStart = (year: number, startMonth: number) =>
 	DateTime.fromObject({ year, month: startMonth, day: 1 }).startOf('day');
 
-export const getCalendarYearRange = (year: number, startMonth: number) => {
-	const start = getCalendarYearStart(year, startMonth);
-	const end = start.plus({ year: 1 });
+export const getCalendarYearRange = (
+	year: number,
+	startMonth: number,
+	weekStartsOn: number
+) => {
+	const startOfYear = getCalendarYearStart(year, startMonth);
+	const start = alignToWeekStart(startOfYear, weekStartsOn);
+
+	const nextYearStart = getCalendarYearStart(year + 1, startMonth);
+	const end = alignToWeekStart(nextYearStart, weekStartsOn).plus({ weeks: 1 });
+
 	return { start, end };
 };
 

@@ -5,7 +5,8 @@ import { DateTime } from 'luxon';
 
 export const GET: RequestHandler = async ({ url }) => {
 	const orgId = url.searchParams.get('orgId');
-	const yearParam = Number(url.searchParams.get('year'));
+	const yearParamStr = url.searchParams.get('year');
+	const yearParam = yearParamStr ? Number(yearParamStr) : undefined;
 
 	if (!orgId) {
 		return json({ message: 'orgId is required' }, { status: 400 });

@@ -12,8 +12,10 @@ export const load: PageServerLoad = async ({ params, url }) => {
 	const config = await trainingBudgetService.getConfig(orgId);
 	const today = DateTime.now();
 	const currentYearFromConfig = today.month >= config.startMonth ? today.year : today.year - 1;
-	const requestedYear = Number(url.searchParams.get('year'));
-	const year = Number.isFinite(requestedYear) ? requestedYear : currentYearFromConfig;
+	const yearParam = url.searchParams.get('year');
+	const parsedYear = yearParam ? Number(yearParam) : undefined;
+	const year =
+		parsedYear !== undefined && Number.isFinite(parsedYear) ? parsedYear : currentYearFromConfig;
 
 	const { budgets, events } = await trainingBudgetService.getYearSnapshot(orgId, year);
 
@@ -23,6 +25,6 @@ export const load: PageServerLoad = async ({ params, url }) => {
 		config,
 		budgets,
 		events,
-		today: today.toISODate()
+		today: today.toISODate(),
 	};
 };
