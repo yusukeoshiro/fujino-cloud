@@ -24,7 +24,7 @@
 	let loadingYear = $state(false);
 	let notification = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
 
-	const weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+	const weekDayLabels = ['月', '火', '水', '木', '金', '土', '日'];
 	const rotatedWeekdayLabels = $derived(
 		weekDayLabels.map(
 			(_, index) => weekDayLabels[(index + config.weekStartsOn) % weekDayLabels.length],
@@ -57,13 +57,13 @@
 	}));
 
 	const weekStartOptions = [
-		{ value: 0, label: 'Mon' },
-		{ value: 1, label: 'Tue' },
-		{ value: 2, label: 'Wed' },
-		{ value: 3, label: 'Thu' },
-		{ value: 4, label: 'Fri' },
-		{ value: 5, label: 'Sat' },
-		{ value: 6, label: 'Sun' },
+		{ value: 0, label: '月' },
+		{ value: 1, label: '火' },
+		{ value: 2, label: '水' },
+		{ value: 3, label: '木' },
+		{ value: 4, label: '金' },
+		{ value: 5, label: '土' },
+		{ value: 6, label: '日' },
 	];
 
 	$effect(() => {
@@ -128,7 +128,7 @@
 				const isAltMonth = (((monthIndex - startMonthIndex) % 2) + 2) % 2 === 1;
 				return {
 					iso,
-					label: date.toFormat('MM/dd'),
+					label: date.toFormat('M月d日'),
 					isCurrentYear: date >= start && date < end,
 					isToday: iso === todayIso,
 					events: eventMap[iso] ?? [],
@@ -393,6 +393,9 @@
 	}
 
 	function handleAddEventKeydown(event: KeyboardEvent, date: string) {
+		// Do not treat Enter during IME composition as submission
+		if (event.isComposing) return;
+
 		switch (event.key) {
 			case 'Enter':
 				event.preventDefault();
@@ -404,7 +407,6 @@
 				break;
 		}
 	}
-
 	function removeEvent(eventId: string, eventDate: string) {
 		const event = events.find((item) => item.id === eventId);
 		if (!event) return;
@@ -475,7 +477,7 @@
 			deletedEventIds = new Set();
 
 			if (showToast) {
-				notification = { text: 'トレーニングバジェットを保存しました。', tone: 'success' };
+				notification = { text: 'トレーニング予算を保存しました。', tone: 'success' };
 			}
 		} catch (error) {
 			console.error(error);
@@ -561,28 +563,37 @@
 	}
 </script>
 
-<section class="budget-page">
-	<header class="page-header">
+<section class="mx-auto flex max-w-screen-2xl flex-col gap-4 px-4 py-6 text-slate-900">
+	<!-- Header -->
+	<header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1>トレーニングバジェット管理</h1>
-			<p>年間の週次バジェットと重要イベントを一元管理します。</p>
+			<h1 class="text-xl font-semibold">トレーニング予算管理</h1>
+			<p class="text-slate-600">年間の週次予算と重要イベントを一元管理します。</p>
 		</div>
-		<div class="primary-actions">
+		<div class="flex items-center gap-2">
 			<button
 				type="button"
-				class="ghost"
+				class="rounded-lg border border-slate-300 px-3 py-2 text-slate-800"
 				onclick={() => void changeYear(-1)}
 				disabled={loadingYear}
 			>
 				← 前年度
 			</button>
-			<span class="year-display">{currentYear}年度</span>
-			<button type="button" class="ghost" onclick={() => void changeYear(1)} disabled={loadingYear}>
-				次年度 →
-			</button>
+
+			<span class="font-semibold">{currentYear}年度</span>
+
 			<button
 				type="button"
-				class="primary"
+				class="rounded-lg border border-slate-300 px-3 py-2 text-slate-800"
+				onclick={() => void changeYear(1)}
+				disabled={loadingYear}
+			>
+				次年度 →
+			</button>
+
+			<button
+				type="button"
+				class="rounded-lg bg-blue-600 px-3 py-2 text-white disabled:bg-slate-400"
 				onclick={() => void queuePersist({ showToast: true })}
 				disabled={saving || autoSaving}
 			>
@@ -591,18 +602,30 @@
 		</div>
 	</header>
 
-	<div class="config-panel">
+	<!-- Config -->
+	<div class="flex flex-col gap-3 sm:flex-row">
 		<div>
-			<label for="start-month">年度開始月</label>
-			<select id="start-month" bind:value={config.startMonth} onchange={() => queuePersist()}>
+			<label for="start-month" class="mb-1 block text-sm text-slate-700">年度開始月</label>
+			<select
+				id="start-month"
+				bind:value={config.startMonth}
+				onchange={() => queuePersist()}
+				class="rounded-lg border border-slate-300 px-2 py-1"
+			>
 				{#each monthOptions as option}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>
 		</div>
+
 		<div>
-			<label for="week-start">週の開始曜日</label>
-			<select id="week-start" bind:value={config.weekStartsOn} onchange={() => queuePersist()}>
+			<label for="week-start" class="mb-1 block text-sm text-slate-700">週の開始曜日</label>
+			<select
+				id="week-start"
+				bind:value={config.weekStartsOn}
+				onchange={() => queuePersist()}
+				class="rounded-lg border border-slate-300 px-2 py-1"
+			>
 				{#each weekStartOptions as option}
 					<option value={option.value}>{option.label}</option>
 				{/each}
@@ -610,465 +633,184 @@
 		</div>
 	</div>
 
+	<!-- Notification -->
 	{#if notification}
-		<div class={`banner ${notification.tone}`}>
+		<div
+			class="rounded-lg border px-3 py-2 font-medium"
+			class:bg-emerald-50={notification.tone === 'success'}
+			class:text-emerald-700={notification.tone === 'success'}
+			class:border-emerald-300={notification.tone === 'success'}
+			class:bg-red-50={notification.tone === 'error'}
+			class:text-red-700={notification.tone === 'error'}
+			class:border-red-300={notification.tone === 'error'}
+		>
 			{notification.text}
 		</div>
 	{/if}
 
-	<div class="calendar-wrapper">
-		<table class="calendar-table">
-			<thead>
-				<tr>
-					<th class="week-label">Week</th>
-					{#each rotatedWeekdayLabels as label}
-						<th>{label}</th>
-					{/each}
-					<th class="budget-column">予算</th>
-				</tr>
-			</thead>
-			<tbody>
-				{#each weeks as week, index}
-					<tr>
-						<th class="week-label">W{week.index}</th>
-						{#each week.days as day}
-							<td
-								class="day-cell"
-								class:today={day.isToday}
-								class:outside={!day.isCurrentYear}
-								class:month-alt={day.isAltMonth}
-							>
-								<div class="day-wrapper">
-									<div class="day-header">
-										<span class="day-label">{day.label}</span>
-										<button
-											type="button"
-											class="add-event-button"
-											onclick={(event) => {
-												event.stopPropagation();
-												openAddEvent(day.iso);
-											}}
-										>
-											＋
-										</button>
-									</div>
+	<!-- Calendar -->
+	<div class="overflow-hidden rounded-xl border border-slate-300">
+		<div class="max-h-[70vh] overflow-auto">
+			<table class="w-full min-w-[1100px] table-fixed border-collapse text-sm">
+				<colgroup>
+					<col class="w-16" />
+					<col span="7" class="w-[70px]" />
+					<col class="w-20" />
+				</colgroup>
 
-									{#if addEventFor === day.iso}
-										<div class="event-popover" role="dialog" tabindex="-1">
-											<input
-												type="text"
-												placeholder="イベント名"
-												bind:value={addEventDraft}
-												bind:this={addEventInputEl}
-												onkeydown={(event) =>
-													handleAddEventKeydown(event as KeyboardEvent, day.iso)}
-											/>
-											<div class="popover-actions">
-												<button
-													type="button"
-													class="primary"
-													onclick={() => submitAddEvent(day.iso)}
-												>
-													追加
-												</button>
-												<button type="button" class="ghost" onclick={cancelAddEvent}>
-													キャンセル
-												</button>
-											</div>
-										</div>
+				<thead class="sticky top-0 z-20 bg-white shadow-sm">
+					<tr>
+						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">週#</th>
+						{#each rotatedWeekdayLabels as label}
+							<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">{label}</th>
+						{/each}
+						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
+							<nobr>予算 </nobr><br />
+							<small><nobr> (100が実践と同等の負荷)</nobr> </small>
+						</th>
+					</tr>
+				</thead>
+
+				<tbody>
+					{#each weeks as week, index}
+						<tr class="border-b border-slate-200 last:border-0">
+							<th
+								class="sticky left-0 border-r border-slate-200 bg-slate-50 px-2 py-2 whitespace-nowrap text-slate-800"
+							>
+								W{week.index}
+							</th>
+
+							{#each week.days as day}
+								<td
+									class={`relative h-[100px] p-0 align-top transition-colors hover:bg-slate-200
+									`}
+								>
+									{#if day.isToday}
+										<div class=" absolute h-full w-full bg-indigo-200"></div>
 									{/if}
 
-									<div class="day-body">
-										{#if day.events.length}
-											<ul class="events-list">
-												{#each day.events.slice(0, 3) as event}
-													<li class="event-chip">
-														<button
-															type="button"
-															class="event-chip-main"
-															onclick={() => openAddEvent(day.iso)}
-														>
-															{event.eventName}
-														</button>
-														<button
-															type="button"
-															class="event-chip-delete"
-															onclick={(eventClick) => {
-																eventClick.stopPropagation();
-																removeEvent(event.id, day.iso);
-															}}
-														>
-															✕
-														</button>
-													</li>
-												{/each}
-												{#if day.events.length > 3}
-													<li class="event-chip more">
-														<span>+{day.events.length - 3}</span>
-													</li>
-												{/if}
-											</ul>
+									<div
+										class=" group absolute flex h-full w-full flex-col gap-1 p-2"
+										class:bg-white={day.isCurrentYear && !day.isAltMonth && !day.isToday}
+										class:bg-slate-50={day.isCurrentYear && day.isAltMonth && !day.isToday}
+										class:bg-slate-100={!day.isCurrentYear && !day.isToday}
+										class:text-slate-400={!day.isCurrentYear}
+									>
+										<div class="flex items-center justify-between">
+											<span class="font-semibold">{day.label}</span>
+											<button
+												type="button"
+												class="rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100 cursor-pointer"
+												onclick={(event) => {
+													event.stopPropagation();
+													openAddEvent(day.iso);
+												}}
+											>
+												＋
+											</button>
+										</div>
+
+										{#if addEventFor === day.iso}
+											<div
+												class="absolute top-10 right-2 z-50 flex flex-col gap-2 rounded-md border border-slate-300 bg-white p-2 shadow-md"
+											>
+												<input
+													type="text"
+													placeholder="イベント名"
+													bind:value={addEventDraft}
+													bind:this={addEventInputEl}
+													class="rounded border border-slate-300 px-2 py-1"
+													onkeydown={(event) =>
+														handleAddEventKeydown(event as KeyboardEvent, day.iso)}
+												/>
+												<div class="flex justify-end gap-1">
+													<button
+														class="rounded bg-blue-600 px-2 py-1 text-white"
+														onclick={() => submitAddEvent(day.iso)}
+													>
+														追加
+													</button>
+													<button
+														class="rounded border border-slate-300 px-2 py-1"
+														onclick={cancelAddEvent}
+													>
+														キャンセル
+													</button>
+												</div>
+											</div>
 										{/if}
+
+										<ul class="flex flex-1 flex-col gap-1 overflow-y-auto">
+											{#each day.events.slice(0, 3) as event}
+												<li class="group flex items-center gap-1">
+													<div
+														class="flex-1 rounded-full bg-slate-100 px-2 py-1 text-left text-xs"
+														title={event.eventName}
+													>
+														{event.eventName}
+													</div>
+
+													<button
+														class="text-xs cursor-pointer text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
+														onclick={(e) => {
+															e.stopPropagation();
+															removeEvent(event.id, day.iso);
+														}}
+													>
+														✕
+													</button>
+												</li>
+											{/each}
+											{#if day.events.length > 3}
+												<li
+													class="rounded-full bg-slate-100 px-2 py-0.5 text-center text-xs text-slate-700"
+												>
+													+{day.events.length - 3}
+												</li>
+											{/if}
+										</ul>
 									</div>
-								</div>
+								</td>
+							{/each}
+
+							<td class="relative w-full p-0 align-top">
+								{#if editingBudgetIndex === index}
+									<div class="absolute inset-0">
+										<div
+											contenteditable="true"
+											role="textbox"
+											tabindex="0"
+											spellcheck={false}
+											class="absolute inset-0 flex items-center justify-end bg-white px-2 text-right ring-2 ring-indigo-200 outline-none"
+											style="min-height:100%;"
+											data-budget-index={index}
+											bind:this={budgetEditorEl}
+											oninput={(ev) => handleEditorInput(ev)}
+											onkeydown={(ev) => handleEditorKeydown(ev as KeyboardEvent, index)}
+											onpaste={(ev) => handleEditorPaste(ev as ClipboardEvent, index)}
+											onblur={() => void commitEditing('stay')}
+										></div>
+									</div>
+								{:else}
+									<button
+										type="button"
+										class="absolute inset-0 flex w-full items-center justify-end px-2 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
+										class:bg-blue-50={selectedBudgetIndex === index}
+										data-budget-index={index}
+										tabindex={selectedBudgetIndex === index ? 0 : -1}
+										onclick={() => handleBudgetCellClick(index)}
+										ondblclick={() => void startEditing(index, { selectMode: 'all' })}
+										onkeydown={(ev) => handleSelectionKeydown(ev as KeyboardEvent, index)}
+										onpaste={(ev) => handleSelectionPaste(ev as ClipboardEvent, index)}
+									>
+										{budgetsMap[week.startIso] ?? ''}
+									</button>
+								{/if}
 							</td>
-						{/each}
-						<td class="budget-cell">
-							{#if editingBudgetIndex === index}
-								<div
-									class="budget-editor editing"
-									contenteditable="true"
-									role="textbox"
-									tabindex="0"
-									spellcheck={false}
-									data-budget-index={index}
-									bind:this={budgetEditorEl}
-									oninput={(event) => handleEditorInput(event)}
-									onkeydown={(event) => handleEditorKeydown(event as KeyboardEvent, index)}
-									onpaste={(event) => handleEditorPaste(event as ClipboardEvent, index)}
-									onblur={() => void commitEditing('stay')}
-								></div>
-							{:else}
-								<button
-									type="button"
-									class={`budget-display ${selectedBudgetIndex === index ? 'selected' : ''}`}
-									data-budget-index={index}
-									tabindex={selectedBudgetIndex === index ? 0 : -1}
-									onclick={() => handleBudgetCellClick(index)}
-									ondblclick={() => void startEditing(index, { selectMode: 'all' })}
-									onkeydown={(event) => handleSelectionKeydown(event as KeyboardEvent, index)}
-									onpaste={(event) => handleSelectionPaste(event as ClipboardEvent, index)}
-								>
-									<span>{budgetsMap[week.startIso] ?? ''}</span>
-								</button>
-							{/if}
-						</td>
-					</tr>
-				{/each}
-			</tbody>
-		</table>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	</div>
 </section>
-
-<style lang="scss">
-	.budget-page {
-		font-family:
-			'Inter',
-			'Roboto',
-			system-ui,
-			-apple-system,
-			BlinkMacSystemFont,
-			'Hiragino Sans',
-			'Yu Gothic',
-			sans-serif;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1.5rem;
-		color: #0f172a;
-	}
-
-	.page-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	.primary-actions {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-	}
-
-	.year-display {
-		font-weight: 600;
-	}
-
-	button {
-		border-radius: 8px;
-		padding: 0.55rem 1.2rem;
-		font-size: 0.95rem;
-		border: 1px solid transparent;
-		cursor: pointer;
-	}
-
-	button.primary {
-		background: #2563eb;
-		color: #fff;
-		border-color: #1d4ed8;
-	}
-
-	button.primary:disabled {
-		background: #94a3b8;
-		border-color: #94a3b8;
-		cursor: not-allowed;
-	}
-
-	button.ghost {
-		background: transparent;
-		border-color: #cbd5f5;
-		color: #1e293b;
-	}
-
-	.config-panel {
-		display: flex;
-		gap: 1rem;
-	}
-
-	.config-panel select {
-		padding: 0.4rem 0.6rem;
-		border-radius: 8px;
-		border: 1px solid #cbd5f5;
-	}
-
-	.banner {
-		padding: 0.75rem 1rem;
-		border-radius: 8px;
-		font-weight: 500;
-	}
-
-	.banner.success {
-		background: #ecfdf5;
-		color: #047857;
-		border: 1px solid #6ee7b7;
-	}
-
-	.banner.error {
-		background: #fef2f2;
-		color: #b91c1c;
-		border: 1px solid #fecaca;
-	}
-
-	.calendar-wrapper {
-		border: 1px solid #cbd5f5;
-		border-radius: 12px;
-		overflow: auto;
-	}
-
-	.calendar-table {
-		width: max-content;
-		min-width: 100%;
-		border-collapse: collapse;
-		font-size: 0.9rem;
-	}
-
-	th,
-	td {
-		border: 1px solid #e2e8f0;
-		padding: 0;
-		vertical-align: top;
-	}
-
-	.week-label {
-		background: #f8fafc;
-		white-space: nowrap;
-		padding: 0.5rem;
-	}
-
-	.day-cell {
-		position: relative;
-		width: 150px;
-		height: 100px;
-		background: #fff;
-	}
-
-	.day-cell.month-alt {
-		background: #f9fafb;
-	}
-
-	.day-cell.outside {
-		background: #f1f5f9;
-		color: #94a3b8;
-	}
-
-	.day-cell.month-alt.outside {
-		background: #e2e8f0;
-	}
-
-	.day-cell.today {
-		box-shadow: inset 0 0 0 2px #6366f1;
-	}
-
-	.day-wrapper {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-		padding: 0.45rem 0.5rem 0.35rem;
-		gap: 0.35rem;
-	}
-
-	.day-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 0.25rem;
-	}
-
-	.day-label {
-		font-weight: 600;
-	}
-
-	.add-event-button {
-		background: #1e293b;
-		color: #fff;
-		border: none;
-		padding: 0.1rem 0.45rem;
-		border-radius: 999px;
-		font-size: 0.75rem;
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 0.15s ease;
-	}
-
-	.day-cell:hover .add-event-button {
-		opacity: 1;
-		pointer-events: auto;
-	}
-
-	.event-popover {
-		position: absolute;
-		top: 2.2rem;
-		right: 0.5rem;
-		z-index: 10;
-		background: #fff;
-		border: 1px solid #cbd5f5;
-		border-radius: 8px;
-		padding: 0.5rem;
-		box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
-		width: 190px;
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-	}
-
-	.event-popover input {
-		padding: 0.35rem 0.45rem;
-		border-radius: 6px;
-		border: 1px solid #cbd5f5;
-	}
-
-	.popover-actions {
-		display: flex;
-		gap: 0.4rem;
-		justify-content: flex-end;
-	}
-
-	.day-body {
-		flex: 1;
-		overflow-y: auto;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.events-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-	}
-
-	.event-chip {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-	}
-
-	.event-chip-main {
-		flex: 1;
-		text-align: left;
-		background: #f1f5f9;
-		border: none;
-		border-radius: 999px;
-		padding: 0.25rem 0.4rem;
-		cursor: pointer;
-		font-size: 0.75rem;
-		transition: background 0.15s ease;
-	}
-
-	.event-chip-main:hover {
-		background: #e2e8f0;
-	}
-
-	.event-chip-delete {
-		background: transparent;
-		border: none;
-		color: #dc2626;
-		cursor: pointer;
-		padding: 0;
-		font-size: 0.75rem;
-		opacity: 0;
-		transition: opacity 0.15s ease;
-	}
-
-	.event-chip:hover .event-chip-delete {
-		opacity: 1;
-	}
-
-	.event-chip.more {
-		justify-content: center;
-		color: #1e293b;
-	}
-
-	.event-chip.more span {
-		display: inline-block;
-		background: #f1f5f9;
-		border-radius: 999px;
-		padding: 0.2rem 0.5rem;
-	}
-
-	.budget-cell {
-		min-width: 130px;
-	}
-
-	.budget-display {
-		width: 100%;
-		min-height: 38px;
-		padding: 0.4rem 0.5rem;
-		border-radius: 6px;
-		background: transparent;
-		border: none;
-		text-align: right;
-		cursor: pointer;
-	}
-
-	.budget-display:hover {
-		background: #f1f5f9;
-	}
-
-	.budget-display.selected,
-	.budget-display:focus-visible {
-		outline: 2px solid #2563eb;
-		outline-offset: -2px;
-	}
-
-	.budget-editor {
-		min-height: 38px;
-		padding: 0.4rem 0.5rem;
-		border-radius: 6px;
-		background: #fff;
-		text-align: right;
-		outline: none;
-	}
-
-	.budget-editor.editing {
-		box-shadow: 0 0 0 2px #c7d2fe;
-	}
-
-	@media (max-width: 960px) {
-		.page-header {
-			flex-direction: column;
-			align-items: flex-start;
-		}
-
-		.primary-actions {
-			flex-wrap: wrap;
-		}
-
-		.config-panel {
-			flex-direction: column;
-		}
-	}
-</style>

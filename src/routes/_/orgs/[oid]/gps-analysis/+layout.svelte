@@ -10,7 +10,7 @@
 		<a href={`/_/orgs/${page.params.oid}/gps-analysis/game-score`}> ゲームスコアの管理 </a>
 	</div>
 	<div>
-		<a href={`/_/orgs/${page.params.oid}/gps-analysis/budget`}> トレーニングバジェットの管理 </a>
+		<a href={`/_/orgs/${page.params.oid}/gps-analysis/budget`}> トレーニング予算の管理 </a>
 	</div>
 	<div>
 		<a href={`/_/orgs/${page.params.oid}/gps-analysis/upload`}> GPSデータのアップロード </a>
