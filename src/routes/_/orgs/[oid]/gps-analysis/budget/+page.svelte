@@ -5,7 +5,7 @@
 	import type {
 		TrainingBudgetConfig,
 		TrainingKeyEvent,
-		WeeklyTrainingBudget
+		WeeklyTrainingBudget,
 	} from '$lib/services/training-budget.service';
 	import { alignToWeekStart, getCalendarYearRange } from '$lib/utils/calendar.util';
 
@@ -20,21 +20,20 @@
 	let events = $state<TrainingKeyEvent[]>([...data.events]);
 	let deletedEventIds = $state<Set<string>>(new Set());
 	let saving = $state(false);
+	let autoSaving = $state(false);
 	let loadingYear = $state(false);
 	let notification = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
-	let selectedDate = $state<string>(todayIso);
-	let draftEventName = $state('');
 
 	const weekDayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 	const rotatedWeekdayLabels = $derived(
 		weekDayLabels.map(
-			(_, index) => weekDayLabels[(index + config.weekStartsOn) % weekDayLabels.length]
-		)
+			(_, index) => weekDayLabels[(index + config.weekStartsOn) % weekDayLabels.length],
+		),
 	);
 
 	const eventsByDate = $derived(groupEvents(events));
 	const weeks = $derived(
-		buildWeeks(currentYear, config.weekStartsOn, config.startMonth, eventsByDate)
+		buildWeeks(currentYear, config.weekStartsOn, config.startMonth, eventsByDate),
 	);
 
 	let selectedBudgetIndex = $state<number | null>(null);
@@ -44,7 +43,28 @@
 	let editingSelectMode: 'all' | 'end' = 'all';
 	let budgetEditorEl = $state<HTMLElement | null>(null);
 
+	let addEventFor = $state<string | null>(null);
+	let addEventDraft = $state('');
+	let addEventInputEl = $state<HTMLInputElement | null>(null);
+
+	let saveQueue: Promise<void> = Promise.resolve();
+
 	const numericPattern = /^-?\d*(?:\.\d*)?$/;
+
+	const monthOptions = Array.from({ length: 12 }).map((_, index) => ({
+		value: index + 1,
+		label: `${index + 1}月`,
+	}));
+
+	const weekStartOptions = [
+		{ value: 0, label: 'Mon' },
+		{ value: 1, label: 'Tue' },
+		{ value: 2, label: 'Wed' },
+		{ value: 3, label: 'Thu' },
+		{ value: 4, label: 'Fri' },
+		{ value: 5, label: 'Sat' },
+		{ value: 6, label: 'Sun' },
+	];
 
 	$effect(() => {
 		if (!weeks.length) {
@@ -53,8 +73,15 @@
 			editingDraft = '';
 			return;
 		}
-		if (selectedBudgetIndex === null || selectedBudgetIndex >= weeks.length) {
-			selectedBudgetIndex = 0;
+
+		if (selectedBudgetIndex !== null && selectedBudgetIndex >= weeks.length) {
+			selectedBudgetIndex = null;
+		}
+
+		if (editingBudgetIndex !== null && !weeks[editingBudgetIndex]) {
+			editingBudgetIndex = null;
+			editingDraft = '';
+			editingOriginalValue = '';
 		}
 	});
 
@@ -70,17 +97,14 @@
 		return Object.fromEntries(list.map((item) => [item.allocatedOn, item.budget.toString()]));
 	}
 
-	function formatDate(dateIso: string) {
-		return DateTime.fromISO(dateIso).toFormat('yyyy/MM/dd (ccc)');
-	}
-
 	function buildWeeks(
 		year: number,
 		weekStartsOn: number,
 		startMonth: number,
-		eventMap: Record<string, TrainingKeyEvent[]>
+		eventMap: Record<string, TrainingKeyEvent[]>,
 	) {
 		const { start, end } = getCalendarYearRange(year, startMonth, weekStartsOn);
+		const startMonthIndex = start.year * 12 + (start.month - 1);
 		let cursor = alignToWeekStart(start, weekStartsOn);
 		const result: Array<{
 			index: number;
@@ -91,6 +115,7 @@
 				isCurrentYear: boolean;
 				isToday: boolean;
 				events: TrainingKeyEvent[];
+				isAltMonth: boolean;
 			}>;
 		}> = [];
 		let index = 0;
@@ -99,12 +124,15 @@
 			const days = Array.from({ length: 7 }, (_, dayIndex) => {
 				const date = cursor.plus({ days: dayIndex });
 				const iso = date.toISODate()!;
+				const monthIndex = date.year * 12 + (date.month - 1);
+				const isAltMonth = (((monthIndex - startMonthIndex) % 2) + 2) % 2 === 1;
 				return {
 					iso,
 					label: date.toFormat('MM/dd'),
 					isCurrentYear: date >= start && date < end,
 					isToday: iso === todayIso,
-					events: eventMap[iso] ?? []
+					events: eventMap[iso] ?? [],
+					isAltMonth,
 				};
 			});
 			result.push({ index: index + 1, startIso, days });
@@ -115,7 +143,12 @@
 	}
 
 	const sanitizeInput = (value: string) =>
-		value.replace(/\u00a0/g, ' ').replace(/\r/g, '').replace(/\n/g, '').replace(/\t/g, ' ').trim();
+		value
+			.replace(/\u00a0/g, ' ')
+			.replace(/\r/g, '')
+			.replace(/\n/g, '')
+			.replace(/\t/g, ' ')
+			.trim();
 
 	function updateBudgetValue(weekStart: string, rawValue: string) {
 		const sanitized = sanitizeInput(rawValue);
@@ -124,7 +157,7 @@
 		}
 		budgetsMap = {
 			...budgetsMap,
-			[weekStart]: sanitized
+			[weekStart]: sanitized,
 		};
 	}
 
@@ -133,9 +166,7 @@
 		if (rows.length && rows[rows.length - 1].trim() === '') {
 			rows.pop();
 		}
-		return rows
-			.flatMap((row) => row.split('\t'))
-			.map((value) => sanitizeInput(value));
+		return rows.flatMap((row) => row.split('\t')).map((value) => sanitizeInput(value));
 	}
 
 	function handleBudgetCellClick(index: number) {
@@ -156,7 +187,7 @@
 
 	async function startEditing(
 		index: number,
-		options: { initialValue?: string; selectMode?: 'all' | 'end' } = {}
+		options: { initialValue?: string; selectMode?: 'all' | 'end' } = {},
 	) {
 		if (!weeks[index]) return;
 		const week = weeks[index];
@@ -165,7 +196,7 @@
 		const initial =
 			options.initialValue !== undefined
 				? sanitizeInput(options.initialValue)
-				: budgetsMap[week.startIso] ?? '';
+				: (budgetsMap[week.startIso] ?? '');
 		if (initial && !numericPattern.test(initial)) {
 			return;
 		}
@@ -197,6 +228,7 @@
 		editingDraft = '';
 		editingOriginalValue = '';
 		budgetEditorEl = null;
+		queuePersist();
 		let nextIndex = index;
 		if (direction === 'down') {
 			nextIndex = Math.min(index + 1, weeks.length - 1);
@@ -244,18 +276,14 @@
 			case 'Backspace':
 				event.preventDefault();
 				updateBudgetValue(weeks[index].startIso, '');
+				queuePersist();
 				break;
 			case 'Tab':
 				event.preventDefault();
 				selectBudgetCell(Math.min(index + (event.shiftKey ? -1 : 1), lastIndex));
 				break;
 			default:
-				if (
-					key.length === 1 &&
-					!event.metaKey &&
-					!event.ctrlKey &&
-					!event.altKey
-				) {
+				if (key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
 					const initial = sanitizeInput(key);
 					if (initial === '' && key.trim() !== '') return;
 					if (initial && !numericPattern.test(initial)) return;
@@ -276,6 +304,7 @@
 			if (!targetWeek) return;
 			updateBudgetValue(targetWeek.startIso, value);
 		});
+		queuePersist();
 		selectBudgetCell(Math.min(index + values.length - 1, weeks.length - 1));
 	}
 
@@ -336,29 +365,47 @@
 				updateBudgetValue(targetWeek.startIso, value);
 			}
 		});
+		queuePersist();
 		if (values.length > 1) {
 			void commitEditing('stay');
 			selectBudgetCell(Math.min(index + values.length - 1, weeks.length - 1));
 		}
 	}
 
-	function selectDate(dateIso: string) {
-		selectedDate = dateIso;
+	function openAddEvent(date: string) {
+		addEventFor = date;
+		addEventDraft = '';
+		void tick().then(() => addEventInputEl?.focus());
 	}
 
-	function addEvent() {
-		if (!draftEventName.trim() || !selectedDate) return;
-		const newEvent: TrainingKeyEvent = {
-			id: `temp-${randomId()}`,
-			orgId,
-			eventName: draftEventName.trim(),
-			eventDate: selectedDate
-		};
-		events = [...events, newEvent];
-		draftEventName = '';
+	function cancelAddEvent() {
+		addEventFor = null;
+		addEventDraft = '';
 	}
 
-	function removeEvent(eventId: string) {
+	function submitAddEvent(date: string) {
+		const name = addEventDraft.trim();
+		if (!name) return;
+		events = [...events, { id: `temp-${randomId()}`, orgId, eventDate: date, eventName: name }];
+		addEventFor = null;
+		addEventDraft = '';
+		queuePersist();
+	}
+
+	function handleAddEventKeydown(event: KeyboardEvent, date: string) {
+		switch (event.key) {
+			case 'Enter':
+				event.preventDefault();
+				submitAddEvent(date);
+				break;
+			case 'Escape':
+				event.preventDefault();
+				cancelAddEvent();
+				break;
+		}
+	}
+
+	function removeEvent(eventId: string, eventDate: string) {
 		const event = events.find((item) => item.id === eventId);
 		if (!event) return;
 		events = events.filter((item) => item.id !== eventId);
@@ -366,6 +413,79 @@
 			const next = new Set(deletedEventIds);
 			next.add(event.id);
 			deletedEventIds = next;
+		}
+		addEventFor = null;
+		queuePersist();
+	}
+
+	function queuePersist(options: { showToast?: boolean } = {}) {
+		saveQueue = saveQueue
+			.then(() => persistChanges(options))
+			.catch((error) => {
+				console.error('Failed to save training budget', error);
+			});
+		return saveQueue;
+	}
+
+	async function persistChanges({ showToast = false }: { showToast?: boolean } = {}) {
+		if (!weeks.length) return;
+
+		if (showToast) {
+			saving = true;
+			notification = null;
+		} else {
+			autoSaving = true;
+		}
+
+		try {
+			const payload = {
+				orgId,
+				year: currentYear,
+				config: {
+					startMonth: config.startMonth,
+					weekStartsOn: config.weekStartsOn,
+				},
+				budgets: weeks.map((week) => ({
+					allocatedOn: week.startIso,
+					value: budgetsMap[week.startIso] ?? '',
+				})),
+				events: events.map((event) => ({
+					id: event.id.startsWith('temp-') ? undefined : event.id,
+					eventDate: event.eventDate,
+					eventName: event.eventName,
+				})),
+				deletedEventIds: Array.from(deletedEventIds),
+			};
+
+			const response = await fetch('/api/training-budget', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(payload),
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to save training budget');
+			}
+
+			const data = await response.json();
+			config.startMonth = data.config.startMonth;
+			config.weekStartsOn = data.config.weekStartsOn;
+			budgetsMap = mapBudgets(data.budgets);
+			events = data.events;
+			deletedEventIds = new Set();
+
+			if (showToast) {
+				notification = { text: 'トレーニングバジェットを保存しました。', tone: 'success' };
+			}
+		} catch (error) {
+			console.error(error);
+			notification = { text: '保存に失敗しました。', tone: 'error' };
+		} finally {
+			if (showToast) {
+				saving = false;
+			} else {
+				autoSaving = false;
+			}
 		}
 	}
 
@@ -377,10 +497,9 @@
 	async function loadYear(year: number) {
 		try {
 			loadingYear = true;
-			const response = await fetch(
-				`/api/training-budget?orgId=${orgId}&year=${year}`,
-				{ method: 'GET' }
-			);
+			const response = await fetch(`/api/training-budget?orgId=${orgId}&year=${year}`, {
+				method: 'GET',
+			});
 			if (!response.ok) {
 				throw new Error('Failed to load year data');
 			}
@@ -394,14 +513,11 @@
 			editingBudgetIndex = null;
 			editingDraft = '';
 			editingOriginalValue = '';
+			addEventFor = null;
 			const { start } = getCalendarYearRange(year, config.startMonth, config.weekStartsOn);
-			selectedDate = start.toISODate()!;
 			notification = null;
 			await tick();
-			selectedBudgetIndex = weeks.length ? 0 : null;
-			if (selectedBudgetIndex !== null) {
-				await focusBudgetButton(selectedBudgetIndex);
-			}
+			selectedBudgetIndex = null;
 		} catch (error) {
 			console.error(error);
 			notification = { text: '年度データの取得に失敗しました。', tone: 'error' };
@@ -409,72 +525,6 @@
 			loadingYear = false;
 		}
 	}
-
-	async function saveAll() {
-		saving = true;
-		notification = null;
-
-		try {
-			const payload = {
-				orgId,
-				year: currentYear,
-				config: {
-					startMonth: config.startMonth,
-					weekStartsOn: config.weekStartsOn
-				},
-				budgets: weeks.map((week) => ({
-					allocatedOn: week.startIso,
-					value: budgetsMap[week.startIso] ?? ''
-				})),
-				events: events.map((event) => ({
-					id: event.id.startsWith('temp-') ? undefined : event.id,
-					eventDate: event.eventDate,
-					eventName: event.eventName
-				})),
-				deletedEventIds: Array.from(deletedEventIds)
-			};
-
-			const response = await fetch('/api/training-budget', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload)
-			});
-
-			if (!response.ok) {
-				throw new Error('Failed to save training budget');
-			}
-
-			const data = await response.json();
-			config.startMonth = data.config.startMonth;
-			config.weekStartsOn = data.config.weekStartsOn;
-			budgetsMap = mapBudgets(data.budgets);
-			events = data.events;
-			deletedEventIds = new Set();
-			editingBudgetIndex = null;
-			editingDraft = '';
-			notification = { text: 'トレーニングバジェットを保存しました。', tone: 'success' };
-		} catch (error) {
-			console.error(error);
-			notification = { text: '保存に失敗しました。', tone: 'error' };
-		} finally {
-			saving = false;
-		}
-	}
-
-	const monthOptions = Array.from({ length: 12 }).map((_, index) => ({
-		value: index + 1,
-		label: `${index + 1}月`
-	}));
-
-	const weekStartOptions = [
-		{ value: 0, label: 'Mon' },
-		{ value: 1, label: 'Tue' },
-		{ value: 2, label: 'Wed' },
-		{ value: 3, label: 'Thu' },
-		{ value: 4, label: 'Fri' },
-		{ value: 5, label: 'Sat' },
-		{ value: 6, label: 'Sun' }
-	];
 
 	function focusBudgetButton(index: number | null) {
 		if (index === null) return Promise.resolve();
@@ -518,15 +568,25 @@
 			<p>年間の週次バジェットと重要イベントを一元管理します。</p>
 		</div>
 		<div class="primary-actions">
-			<button type="button" class="ghost" onclick={() => void changeYear(-1)} disabled={loadingYear}>
+			<button
+				type="button"
+				class="ghost"
+				onclick={() => void changeYear(-1)}
+				disabled={loadingYear}
+			>
 				← 前年度
 			</button>
 			<span class="year-display">{currentYear}年度</span>
 			<button type="button" class="ghost" onclick={() => void changeYear(1)} disabled={loadingYear}>
 				次年度 →
 			</button>
-			<button type="button" class="primary" onclick={() => void saveAll()} disabled={saving}>
-				{saving ? '保存中...' : '保存する'}
+			<button
+				type="button"
+				class="primary"
+				onclick={() => void queuePersist({ showToast: true })}
+				disabled={saving || autoSaving}
+			>
+				{saving ? '保存中...' : autoSaving ? '自動保存中...' : '保存する'}
 			</button>
 		</div>
 	</header>
@@ -534,7 +594,7 @@
 	<div class="config-panel">
 		<div>
 			<label for="start-month">年度開始月</label>
-			<select id="start-month" bind:value={config.startMonth}>
+			<select id="start-month" bind:value={config.startMonth} onchange={() => queuePersist()}>
 				{#each monthOptions as option}
 					<option value={option.value}>{option.label}</option>
 				{/each}
@@ -542,7 +602,7 @@
 		</div>
 		<div>
 			<label for="week-start">週の開始曜日</label>
-			<select id="week-start" bind:value={config.weekStartsOn}>
+			<select id="week-start" bind:value={config.weekStartsOn} onchange={() => queuePersist()}>
 				{#each weekStartOptions as option}
 					<option value={option.value}>{option.label}</option>
 				{/each}
@@ -573,28 +633,94 @@
 						<th class="week-label">W{week.index}</th>
 						{#each week.days as day}
 							<td
-								class:selected-date={selectedDate === day.iso}
+								class="day-cell"
 								class:today={day.isToday}
 								class:outside={!day.isCurrentYear}
-								onclick={() => selectDate(day.iso)}
+								class:month-alt={day.isAltMonth}
 							>
-								<div class="day-label">{day.label}</div>
-								{#if day.events.length}
-									<ul class="events-list">
-										{#each day.events.slice(0, 2) as event}
-											<li>{event.eventName}</li>
-										{/each}
-										{#if day.events.length > 2}
-											<li>+{day.events.length - 2}</li>
+								<div class="day-wrapper">
+									<div class="day-header">
+										<span class="day-label">{day.label}</span>
+										<button
+											type="button"
+											class="add-event-button"
+											onclick={(event) => {
+												event.stopPropagation();
+												openAddEvent(day.iso);
+											}}
+										>
+											＋
+										</button>
+									</div>
+
+									{#if addEventFor === day.iso}
+										<div class="event-popover" role="dialog" tabindex="-1">
+											<input
+												type="text"
+												placeholder="イベント名"
+												bind:value={addEventDraft}
+												bind:this={addEventInputEl}
+												onkeydown={(event) =>
+													handleAddEventKeydown(event as KeyboardEvent, day.iso)}
+											/>
+											<div class="popover-actions">
+												<button
+													type="button"
+													class="primary"
+													onclick={() => submitAddEvent(day.iso)}
+												>
+													追加
+												</button>
+												<button type="button" class="ghost" onclick={cancelAddEvent}>
+													キャンセル
+												</button>
+											</div>
+										</div>
+									{/if}
+
+									<div class="day-body">
+										{#if day.events.length}
+											<ul class="events-list">
+												{#each day.events.slice(0, 3) as event}
+													<li class="event-chip">
+														<button
+															type="button"
+															class="event-chip-main"
+															onclick={() => openAddEvent(day.iso)}
+														>
+															{event.eventName}
+														</button>
+														<button
+															type="button"
+															class="event-chip-delete"
+															onclick={(eventClick) => {
+																eventClick.stopPropagation();
+																removeEvent(event.id, day.iso);
+															}}
+														>
+															✕
+														</button>
+													</li>
+												{/each}
+												{#if day.events.length > 3}
+													<li class="event-chip more">
+														<span>+{day.events.length - 3}</span>
+													</li>
+												{/if}
+											</ul>
 										{/if}
-									</ul>
-								{/if}
+									</div>
+								</div>
 							</td>
 						{/each}
 						<td class="budget-cell">
 							{#if editingBudgetIndex === index}
 								<div
-									class="budget-editor editing" contenteditable="true" role="textbox" tabindex="0" spellcheck={false}
+									class="budget-editor editing"
+									contenteditable="true"
+									role="textbox"
+									tabindex="0"
+									spellcheck={false}
 									data-budget-index={index}
 									bind:this={budgetEditorEl}
 									oninput={(event) => handleEditorInput(event)}
@@ -622,47 +748,19 @@
 			</tbody>
 		</table>
 	</div>
-
-	<section class="events-panel">
-		<div class="events-header">
-			<h2>重要イベント</h2>
-			<p>{formatDate(selectedDate)}</p>
-		</div>
-		<ul class="event-items">
-			{#if eventsByDate[selectedDate]?.length}
-				{#each eventsByDate[selectedDate] as event}
-					<li>
-						<span>{event.eventName}</span>
-						<button type="button" class="link-button" onclick={() => removeEvent(event.id)}>
-							削除
-						</button>
-					</li>
-				{/each}
-			{:else}
-				<li class="empty">この日の登録はありません。</li>
-			{/if}
-		</ul>
-		<div class="event-form">
-			<input
-				type="text"
-				placeholder="イベント名を入力"
-				bind:value={draftEventName}
-				onkeydown={(event) => {
-					if (event.key === 'Enter') {
-						event.preventDefault();
-						addEvent();
-					}
-				}}
-			/>
-			<button type="button" onclick={addEvent}>追加</button>
-		</div>
-	</section>
 </section>
 
-<style>
+<style lang="scss">
 	.budget-page {
-		font-family: 'Inter', 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Hiragino Sans',
-			'Yu Gothic', sans-serif;
+		font-family:
+			'Inter',
+			'Roboto',
+			system-ui,
+			-apple-system,
+			BlinkMacSystemFont,
+			'Hiragino Sans',
+			'Yu Gothic',
+			sans-serif;
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
@@ -758,41 +856,167 @@
 	th,
 	td {
 		border: 1px solid #e2e8f0;
-		padding: 0.5rem;
+		padding: 0;
 		vertical-align: top;
 	}
 
 	.week-label {
 		background: #f8fafc;
 		white-space: nowrap;
+		padding: 0.5rem;
+	}
+
+	.day-cell {
+		position: relative;
+		width: 150px;
+		height: 100px;
+		background: #fff;
+	}
+
+	.day-cell.month-alt {
+		background: #f9fafb;
+	}
+
+	.day-cell.outside {
+		background: #f1f5f9;
+		color: #94a3b8;
+	}
+
+	.day-cell.month-alt.outside {
+		background: #e2e8f0;
+	}
+
+	.day-cell.today {
+		box-shadow: inset 0 0 0 2px #6366f1;
+	}
+
+	.day-wrapper {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		padding: 0.45rem 0.5rem 0.35rem;
+		gap: 0.35rem;
+	}
+
+	.day-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.25rem;
 	}
 
 	.day-label {
 		font-weight: 600;
 	}
 
-	td.today {
-		background: #eef2ff;
+	.add-event-button {
+		background: #1e293b;
+		color: #fff;
+		border: none;
+		padding: 0.1rem 0.45rem;
+		border-radius: 999px;
+		font-size: 0.75rem;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.15s ease;
 	}
 
-	td.outside {
-		background: #f8fafc;
-		color: #94a3b8;
+	.day-cell:hover .add-event-button {
+		opacity: 1;
+		pointer-events: auto;
 	}
 
-	td.selected-date {
-		outline: 2px solid #7c3aed;
-		outline-offset: -2px;
+	.event-popover {
+		position: absolute;
+		top: 2.2rem;
+		right: 0.5rem;
+		z-index: 10;
+		background: #fff;
+		border: 1px solid #cbd5f5;
+		border-radius: 8px;
+		padding: 0.5rem;
+		box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
+		width: 190px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+
+	.event-popover input {
+		padding: 0.35rem 0.45rem;
+		border-radius: 6px;
+		border: 1px solid #cbd5f5;
+	}
+
+	.popover-actions {
+		display: flex;
+		gap: 0.4rem;
+		justify-content: flex-end;
+	}
+
+	.day-body {
+		flex: 1;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.events-list {
 		list-style: none;
 		padding: 0;
-		margin: 0.35rem 0 0;
+		margin: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 0.2rem;
+		gap: 0.25rem;
+	}
+
+	.event-chip {
+		display: flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.event-chip-main {
+		flex: 1;
+		text-align: left;
+		background: #f1f5f9;
+		border: none;
+		border-radius: 999px;
+		padding: 0.25rem 0.4rem;
+		cursor: pointer;
 		font-size: 0.75rem;
+		transition: background 0.15s ease;
+	}
+
+	.event-chip-main:hover {
+		background: #e2e8f0;
+	}
+
+	.event-chip-delete {
+		background: transparent;
+		border: none;
+		color: #dc2626;
+		cursor: pointer;
+		padding: 0;
+		font-size: 0.75rem;
+		opacity: 0;
+		transition: opacity 0.15s ease;
+	}
+
+	.event-chip:hover .event-chip-delete {
+		opacity: 1;
+	}
+
+	.event-chip.more {
+		justify-content: center;
+		color: #1e293b;
+	}
+
+	.event-chip.more span {
+		display: inline-block;
+		background: #f1f5f9;
+		border-radius: 999px;
+		padding: 0.2rem 0.5rem;
 	}
 
 	.budget-cell {
@@ -831,64 +1055,6 @@
 
 	.budget-editor.editing {
 		box-shadow: 0 0 0 2px #c7d2fe;
-	}
-
-	.events-panel {
-		border: 1px solid #cbd5f5;
-		border-radius: 12px;
-		padding: 1rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-	}
-
-	.events-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: baseline;
-	}
-
-	.event-items {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.event-items li {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 0.4rem 0.6rem;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-	}
-
-	.event-items li.empty {
-		justify-content: center;
-		color: #94a3b8;
-		border-style: dashed;
-	}
-
-	.link-button {
-		background: transparent;
-		border: none;
-		color: #dc2626;
-		cursor: pointer;
-	}
-
-	.event-form {
-		display: flex;
-		gap: 0.5rem;
-	}
-
-	.event-form input {
-		flex: 1;
-		padding: 0.5rem 0.6rem;
-		border-radius: 8px;
-		border: 1px solid #cbd5f5;
 	}
 
 	@media (max-width: 960px) {
