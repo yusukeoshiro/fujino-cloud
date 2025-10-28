@@ -2,15 +2,12 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { trainingBudgetService } from '$lib/services/training-budget.service';
 import { DateTime } from 'luxon';
+import { requireOrgAccess } from '../utils/require-org-access.util';
 
-export const GET: RequestHandler = async ({ url }) => {
-	const orgId = url.searchParams.get('orgId');
-	const yearParamStr = url.searchParams.get('year');
+export const GET: RequestHandler = async (event) => {
+	const orgId = requireOrgAccess(event);
+	const yearParamStr = event.url.searchParams.get('year');
 	const yearParam = yearParamStr ? Number(yearParamStr) : undefined;
-
-	if (!orgId) {
-		return json({ message: 'orgId is required' }, { status: 400 });
-	}
 
 	const config = await trainingBudgetService.getConfig(orgId);
 	const resolvedYear = resolveCalendarYear(yearParam, config.startMonth);
@@ -26,7 +23,6 @@ export const GET: RequestHandler = async ({ url }) => {
 };
 
 type SavePayload = {
-	orgId?: string;
 	year?: number;
 	config?: {
 		startMonth: number;
@@ -37,16 +33,14 @@ type SavePayload = {
 	deletedEventIds?: string[];
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async (event) => {
+	const orgId = requireOrgAccess(event);
+
 	let body: SavePayload;
 	try {
-		body = await request.json();
+		body = (await event.request.json()) as SavePayload;
 	} catch (err) {
 		return json({ message: 'Invalid JSON payload' }, { status: 400 });
-	}
-
-	if (!body.orgId) {
-		return json({ message: 'orgId is required' }, { status: 400 });
 	}
 
 	const config = body.config
@@ -69,7 +63,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	);
 
 	await trainingBudgetService.saveYearSnapshot({
-		orgId: body.orgId,
+		orgId,
 		config,
 		budgets: budgetsToSave,
 		budgetDatesToDelete: datesToDelete,
@@ -77,9 +71,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		deletedEventIds: body.deletedEventIds ?? []
 	});
 
-	const configDoc = await trainingBudgetService.getConfig(body.orgId);
+	const configDoc = await trainingBudgetService.getConfig(orgId);
 	const resolvedYear = resolveCalendarYear(body.year, configDoc.startMonth);
-	const snapshot = await trainingBudgetService.getYearSnapshot(body.orgId, resolvedYear);
+	const snapshot = await trainingBudgetService.getYearSnapshot(orgId, resolvedYear);
 
 	return json({
 		ok: true,

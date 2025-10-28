@@ -4,29 +4,34 @@ import {
 	gameScoreService,
 	type GameScoreValueEntry
 } from '$lib/services/game-score.service';
+import { requireOrgAccess } from '../utils/require-org-access.util';
 
 type GameScorePayload = {
-	orgId?: string;
 	values?: GameScoreValueEntry[];
 };
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async (event) => {
+	const orgId = requireOrgAccess(event);
+
 	let body: GameScorePayload | null = null;
 	try {
-		body = (await request.json()) as GameScorePayload;
+		body = (await event.request.json()) as GameScorePayload;
 	} catch {
 		// ignore parse errors
 	}
 
-	if (!body?.orgId || !Array.isArray(body.values)) {
-		return json({ ok: false, message: 'orgId と values は必須です。' }, { status: 400 });
+	if (!body?.values || !Array.isArray(body.values)) {
+		return json({ ok: false, message: 'values は配列で指定してください。' }, { status: 400 });
 	}
 
 	const sanitizedValues = sanitizeEntries(body.values);
-	const saved = await gameScoreService.upsert(body.orgId, sanitizedValues);
+	const saved = await gameScoreService.upsert(orgId, sanitizedValues);
 	const savedAt = new Date().toISOString();
 
-	console.log('Received /api/game-score payload:', body);
+	console.log('Received /api/orgs/[oid]/game-score payload:', {
+		orgId,
+		values: sanitizedValues
+	});
 
 	return json(
 		{

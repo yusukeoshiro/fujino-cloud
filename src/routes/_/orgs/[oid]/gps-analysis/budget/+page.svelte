@@ -441,7 +441,6 @@
 
 		try {
 			const payload = {
-				orgId,
 				year: currentYear,
 				config: {
 					startMonth: config.startMonth,
@@ -459,7 +458,7 @@
 				deletedEventIds: Array.from(deletedEventIds),
 			};
 
-			const response = await fetch('/api/training-budget', {
+			const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/training-budget`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),
@@ -499,9 +498,12 @@
 	async function loadYear(year: number) {
 		try {
 			loadingYear = true;
-			const response = await fetch(`/api/training-budget?orgId=${orgId}&year=${year}`, {
-				method: 'GET',
-			});
+			const response = await fetch(
+				`/api/orgs/${encodeURIComponent(orgId)}/training-budget?year=${year}`,
+				{
+					method: 'GET',
+				},
+			);
 			if (!response.ok) {
 				throw new Error('Failed to load year data');
 			}

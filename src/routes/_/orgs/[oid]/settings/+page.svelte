@@ -35,10 +35,10 @@
 		isSaving = true;
 		banner = null;
 		try {
-			const response = await fetch('/api/device-token', {
+			const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/device-token`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ orgId, token: trimmed }),
+				body: JSON.stringify({ token: trimmed }),
 			});
 			const result = await response.json();
 			if (!response.ok || !result?.success) {
@@ -64,10 +64,8 @@
 		isDeleting = true;
 		banner = null;
 		try {
-			const response = await fetch('/api/device-token', {
+			const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/device-token`, {
 				method: 'DELETE',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ orgId }),
 			});
 			const result = await response.json();
 			if (!response.ok || !result?.success) {
