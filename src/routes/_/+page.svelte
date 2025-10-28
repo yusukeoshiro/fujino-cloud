@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { currentMembers } from '../../lib/stores/members.store';
+	import { currentMembers } from '$lib/stores/members.store';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 </script>

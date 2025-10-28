@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { COLUMNS, FOOTER_COLS, HEADER_COLS } from './utils/headers.util';
 
+	const orgId = page.params.oid;
 	const stickyLeft =
 		'sticky left-0 z-20 bg-gray-50 after:absolute after:inset-y-0 after:-right-px after:w-px after:bg-gray-200';
 	const stickyRight =
@@ -42,6 +44,10 @@
 
 	async function uploadFile(file: File) {
 		if (!file) return;
+		if (!orgId) {
+			error = '組織IDが特定できません。';
+			return;
+		}
 		error = null;
 		result = null;
 		uploading = true;
@@ -49,7 +55,10 @@
 			const fd = new FormData();
 			fd.append('file', file);
 
-			const res = await fetch('/api/upload', { method: 'POST', body: fd });
+			const res = await fetch(`/api/upload?orgId=${encodeURIComponent(orgId)}`, {
+				method: 'POST',
+				body: fd,
+			});
 			if (!res.ok) throw new Error(await res.text());
 			result = await res.json();
 		} catch (e: any) {
@@ -95,12 +104,19 @@
 			error = '先にファイルを選択してください。';
 			return;
 		}
+		if (!orgId) {
+			error = '組織IDが特定できません。';
+			return;
+		}
 		committing = true; // ✅ start spinner
 		error = null;
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
-			const res = await fetch('/api/commit', { method: 'POST', body: fd });
+			const res = await fetch(`/api/commit?orgId=${encodeURIComponent(orgId)}`, {
+				method: 'POST',
+				body: fd,
+			});
 			if (!res.ok) throw new Error(await res.text());
 			onCommitSuccess(); // ✅ your hook
 		} catch (e: any) {

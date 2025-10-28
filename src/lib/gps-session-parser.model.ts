@@ -1,4 +1,3 @@
-import type { GamePointParser } from './game-point-parser';
 import type { GpsCore, SessionMeta, SessionType } from './gps-core.model';
 
 export class GpsSessionParser implements GpsCore, SessionMeta {
@@ -37,12 +36,12 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 	noOfExpAcc: number;
 	noOfExpDec: number;
 
-	gamePointParser?: GamePointParser;
+	trainingBaseline?: TrainingBaseline;
 
 	orgUniqueToken?: string;
 
-	constructor(params: GpsCore & SessionMeta, gamePointParser?: GamePointParser) {
-		this.gamePointParser = gamePointParser;
+	constructor(params: GpsCore & SessionMeta, trainingBaseline?: TrainingBaseline) {
+		this.trainingBaseline = trainingBaseline;
 
 		// explicit assignment to satisfy strictPropertyInitialization
 		this.type = params.type;
@@ -98,13 +97,29 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 	}
 
 	get trainingScoreConsumption(): number | null {
-		if (!this.gamePointParser) return null;
+		const baseline = this.trainingBaseline;
+		if (!baseline) return null;
+		const { totalDistanceM, highIntensityM, accelerationCountTotal, decelerationCountTotal } =
+			baseline;
+
+		if (
+			!isFinite(totalDistanceM) ||
+			totalDistanceM <= 0 ||
+			!isFinite(highIntensityM) ||
+			highIntensityM <= 0 ||
+			!isFinite(accelerationCountTotal) ||
+			accelerationCountTotal <= 0 ||
+			!isFinite(decelerationCountTotal) ||
+			decelerationCountTotal <= 0
+		) {
+			return null;
+		}
 
 		return Math.round(
-			((this.totalDistanceM / this.gamePointParser.totalDistanceM +
-				this.highIntensityM / this.gamePointParser.highIntensityM +
-				this.accelerationCountTotal / this.gamePointParser.accelerationCountTotal +
-				this.decelerationCountTotal / this.gamePointParser.decelerationCountTotal) /
+			((this.totalDistanceM / totalDistanceM +
+				this.highIntensityM / highIntensityM +
+				this.accelerationCountTotal / accelerationCountTotal +
+				this.decelerationCountTotal / decelerationCountTotal) /
 				4) *
 				100,
 		);
@@ -172,3 +187,10 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 		// };
 	}
 }
+
+type TrainingBaseline = {
+	totalDistanceM: number;
+	highIntensityM: number;
+	accelerationCountTotal: number;
+	decelerationCountTotal: number;
+};

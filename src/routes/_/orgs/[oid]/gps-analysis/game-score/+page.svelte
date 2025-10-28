@@ -1,11 +1,18 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { GameScoreColumn, GameScoreValues } from './columns';
+	import {
+		type GameScoreColumn,
+		type GameScoreValues,
+		entriesFromValuesMap,
+		valuesMapFromEntries,
+	} from './columns';
 
 	let { data }: { data: PageData } = $props();
 
 	const columns: GameScoreColumn[] = data.columns;
 	const orgId = data.orgId;
+	let editOriginal: Record<string, string> = {};
+	let committing = false;
 
 	const cloneValues = (incoming: GameScoreValues): GameScoreValues => ({ ...incoming });
 
@@ -16,16 +23,34 @@
 	let notification = $state<Banner>(null);
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
+	let editDraft: Record<string, string> = {};
 
-	const updateCellValue = (column: GameScoreColumn, value: string) => {
+	const updateCellValue = (column: GameScoreColumn, value: string, _target?: HTMLElement) => {
+		const sanitized = sanitizeInput(value);
+
+		if (!isValidNumericInput(sanitized)) {
+			if (_target) {
+				_target.textContent = values[column.key] ?? '';
+			}
+			return;
+		}
+
 		values = {
 			...values,
-			[column.key]: sanitizeInput(value)
+			[column.key]: sanitized,
 		};
 	};
 
 	const sanitizeInput = (value: string) =>
-		value.replace(/\u00a0/g, ' ').replace(/\r/g, '').replace(/\n/g, '').replace(/\t/g, ' ');
+		value
+			.replace(/\u00a0/g, ' ')
+			.replace(/\r/g, '')
+			.replace(/\n/g, '')
+			.replace(/\t/g, ' ')
+			.trim();
+
+	const numericPattern = /^-?\d*(?:\.\d*)?$/;
+	const isValidNumericInput = (value: string) => value === '' || numericPattern.test(value);
 
 	const focusCell = (colIndex: number, opts: { select?: boolean } = {}) => {
 		if (typeof document === 'undefined') return;
@@ -34,58 +59,6 @@
 			selectAllOnNextFocus = opts.select ?? true;
 			cell.focus();
 		}
-	};
-
-	const handleKeydown = (event: KeyboardEvent, colIndex: number) => {
-		const { key, shiftKey } = event;
-		const lastColumnIndex = columns.length - 1;
-
-		const goTo = (targetCol: number) => {
-			if (targetCol < 0 || targetCol > lastColumnIndex) return;
-			focusCell(targetCol, { select: true });
-		};
-
-		switch (key) {
-			case 'ArrowRight':
-			case 'ArrowDown':
-				event.preventDefault();
-				goTo(Math.min(colIndex + 1, lastColumnIndex));
-				break;
-			case 'ArrowLeft':
-			case 'ArrowUp':
-				event.preventDefault();
-				goTo(Math.max(colIndex - 1, 0));
-				break;
-			case 'Enter':
-				event.preventDefault();
-				goTo(shiftKey ? Math.max(colIndex - 1, 0) : Math.min(colIndex + 1, lastColumnIndex));
-				break;
-		}
-	};
-
-	const handlePaste = (event: ClipboardEvent, colIndex: number) => {
-		const text = event.clipboardData?.getData('text/plain');
-		if (!text) return;
-
-		const matrix = parseClipboard(text);
-		if (!matrix) return;
-
-		event.preventDefault();
-		const flattened = matrix.flat();
-		if (!flattened.length) return;
-
-		const updated = { ...values };
-		let pointer = colIndex;
-
-		for (const value of flattened) {
-			if (pointer >= columns.length) break;
-			const column = columns[pointer];
-			updated[column.key] = sanitizeInput(value);
-			pointer += 1;
-		}
-
-		values = updated;
-		focusCell(Math.min(pointer - 1, columns.length - 1), { select: true });
 	};
 
 	const parseClipboard = (text: string) => {
@@ -125,6 +98,19 @@
 		const column = columns[activeColumn];
 		return column ? column.label : '';
 	};
+
+	const restoreCaretToEnd = (node: HTMLElement) => {
+		if (typeof window === 'undefined') return;
+		requestAnimationFrame(() => {
+			const selection = window.getSelection();
+			if (!selection) return;
+			const range = document.createRange();
+			range.selectNodeContents(node);
+			range.collapse(false);
+			selection.removeAllRanges();
+			selection.addRange(range);
+		});
+	};
 	const saveChanges = async () => {
 		saving = true;
 		notification = null;
@@ -133,12 +119,12 @@
 			const response = await fetch('/api/game-score', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					orgId,
-					values
-				})
+					values: entriesFromValuesMap(values),
+				}),
 			});
 
 			if (!response.ok) {
@@ -147,20 +133,20 @@
 
 			const payload = await response.json();
 			if (payload?.values) {
-				values = cloneValues(payload.values);
+				values = valuesMapFromEntries(payload.values);
 			}
 			const savedAt = payload?.savedAt ?? new Date().toISOString();
 			lastSavedToken = savedAt;
 
 			notification = {
 				text: payload?.message ?? 'ゲームスコアを保存しました。',
-				tone: 'success'
+				tone: 'success',
 			};
 		} catch (error) {
 			console.error('Failed to save game score', error);
 			notification = {
 				text: '保存に失敗しました。接続状況を確認してください。',
-				tone: 'error'
+				tone: 'error',
 			};
 		} finally {
 			saving = false;
@@ -173,68 +159,189 @@
 	};
 </script>
 
-<form class="game-score-page" onsubmit={handleSubmit}>
-	<div class="page-header">
+<form
+	class="mx-auto flex max-w-screen-2xl flex-col gap-4 px-4 py-6 text-slate-900"
+	onsubmit={handleSubmit}
+>
+	<!-- Header -->
+	<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1>ゲームスコアの管理</h1>
-			<p>
+			<h1 class="text-xl font-semibold">ゲームスコアの管理</h1>
+			<p class="text-slate-600">
 				チーム全体のゲームスコアをExcelライクに調整できます。コピー＆ペーストや矢印キーでの移動に対応し、数値をまとめて更新できます。
 			</p>
 		</div>
-		<div class="header-actions">
-			<button type="submit" class="primary" disabled={saving}>
-				{saving ? '保存中...' : '保存する'}
+		<div class="flex items-center gap-2">
+			<button
+				type="submit"
+				class="rounded-lg bg-blue-600 px-3 py-2 text-white disabled:bg-slate-400"
+				disabled={saving}
+			>
+				<span class="whitespace-nowrap">{saving ? '保存中...' : '保存する'}</span>
 			</button>
 		</div>
 	</div>
 
-	{#if notification}
-		<div class={`banner ${notification.tone === 'error' ? 'error' : 'success'}`}>
+	<!-- Banner -->
+	<!-- {#if notification}
+		<div
+			class={`rounded-lg border px-3 py-2 font-medium ${
+				notification.tone === 'error'
+					? 'border-red-300 bg-red-50 text-red-700'
+					: 'border-emerald-300 bg-emerald-50 text-emerald-700'
+			}`}
+		>
 			{notification.text}
 		</div>
-	{/if}
+	{/if} -->
 
-	<ul class="hints">
+	<!-- Hints -->
+	<ul class="flex flex-wrap gap-4 text-sm text-slate-600">
 		<li>Enter / 矢印キーでセル移動</li>
 		<li>Ctrl / Command + V で複数セル貼り付け</li>
 		<li>すべての値がチーム共通で保存されます</li>
 	</ul>
 
-	<div class="table-wrapper">
-		<table>
-			<thead>
+	<!-- Table -->
+	<div
+		class="max-h-[calc(100vh-320px)] overflow-auto rounded-xl border border-slate-300 shadow-inner"
+	>
+		<table class="w-full min-w-[720px] border-collapse text-sm [font-variant-numeric:tabular-nums]">
+			<thead class="sticky top-0 z-10 bg-slate-50">
 				<tr>
 					{#each columns as column}
-						<th scope="col">
-							<div>{column.label}</div>
-							{#if column.metricDefinitionId}
-								<div class="column-id">{column.metricDefinitionId}</div>
-							{/if}
+						<th class="border border-slate-200 text-left align-bottom">
+							<div class="px-2 py-2 font-semibold text-slate-800">{column.label}</div>
+							<!-- {#if column.metricDefinitionId}
+								<div class="px-2 pb-2 font-mono text-[0.7rem] text-slate-500">
+									{column.metricDefinitionId}
+								</div>
+							{/if} -->
 						</th>
 					{/each}
 				</tr>
 			</thead>
+
 			<tbody>
 				<tr>
 					{#each columns as column, colIndex}
-						<td class:selected={activeColumn === colIndex}>
+						<td
+							class={`min-w-[130px] border border-slate-200 p-0 align-top ${
+								activeColumn === colIndex ? 'outline-2 -outline-offset-2 outline-blue-600' : ''
+							}`}
+						>
 							<div
-								class="cell-editor numeric"
+								class="min-h-[38px] cursor-text px-2 py-2 pb-4 text-right outline-none focus:bg-indigo-50"
 								role="textbox"
 								aria-label={column.label}
 								data-cell={`${colIndex}`}
-								data-placeholder="0"
-								contenteditable="true"
+								contenteditable="plaintext-only"
 								tabindex="0"
 								spellcheck={false}
-								onfocus={(event) => handleFocus(event, colIndex)}
-								oninput={(event) =>
-									updateCellValue(column, (event.currentTarget as HTMLElement).textContent ?? '')
-								}
-								onkeydown={(event) => handleKeydown(event as KeyboardEvent, colIndex)}
-								onpaste={(event) => handlePaste(event as ClipboardEvent, colIndex)}
+								onfocus={(event) => {
+									handleFocus(event, colIndex);
+									const current = (event.currentTarget as HTMLElement).textContent ?? '';
+									// capture both original and draft; do NOT write to values here
+									editOriginal[column.key] = current;
+									editDraft[column.key] = current;
+								}}
+								onblur={async () => {
+									if (committing) return;
+									const next = sanitizeInput(editDraft[column.key] ?? '');
+									const prev = sanitizeInput(editOriginal[column.key] ?? '');
+									if (next !== prev) {
+										values = { ...values, [column.key]: next }; // commit once
+										committing = true;
+										await saveChanges();
+										committing = false;
+										editOriginal[column.key] = next;
+									}
+									activeColumn = null;
+								}}
+								onpaste={async (event) => {
+									event.preventDefault();
+									const text = event.clipboardData?.getData('text/plain');
+									const matrix = text && parseClipboard(text);
+									if (!matrix) return;
+
+									const flat = matrix.flat();
+									if (!flat.length) return;
+
+									let changed = false;
+									flat.forEach((v, i) => {
+										const idx = colIndex + i;
+										if (idx >= columns.length) return;
+										const key = columns[idx].key;
+										const next = sanitizeInput(v);
+										const prev = sanitizeInput(
+											(idx === colIndex ? editDraft[key] : values[key]) ?? '',
+										);
+										if (next !== prev) {
+											if (idx === colIndex) {
+												// update draft for the active cell
+												editDraft[key] = next;
+											} else {
+												// update committed values for other cells in the paste range
+												values = { ...values, [key]: next };
+											}
+											changed = true;
+										}
+									});
+
+									if (changed) {
+										// commit active cell draft too
+										if (
+											sanitizeInput(editDraft[column.key] ?? '') !==
+											sanitizeInput(editOriginal[column.key] ?? '')
+										) {
+											values = {
+												...values,
+												[column.key]: sanitizeInput(editDraft[column.key] ?? ''),
+											};
+											editOriginal[column.key] = sanitizeInput(editDraft[column.key] ?? '');
+										}
+										committing = true;
+										await saveChanges();
+										committing = false;
+									}
+
+									// move caret to last pasted cell
+									const lastIndex = Math.min(colIndex + flat.length - 1, columns.length - 1);
+									focusCell(lastIndex, { select: true });
+								}}
+								onkeydown={async (event) => {
+									const navKeys = ['Enter', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
+									if (!navKeys.includes(event.key) || (event as any).isComposing) return;
+
+									event.preventDefault();
+
+									const next = sanitizeInput(editDraft[column.key] ?? '');
+									const prev = sanitizeInput(editOriginal[column.key] ?? '');
+
+									if (next !== prev) {
+										values = { ...values, [column.key]: next }; // commit once
+										committing = true;
+										await saveChanges();
+										committing = false;
+										editOriginal[column.key] = next;
+									}
+
+									const last = columns.length - 1;
+									let nextIdx = colIndex;
+									if (event.key === 'Enter' || event.key === 'ArrowRight')
+										nextIdx = Math.min(colIndex + 1, last);
+									if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
+										nextIdx = Math.max(colIndex - 1, 0);
+									if (event.key === 'ArrowDown') nextIdx = Math.min(colIndex + 1, last);
+
+									focusCell(nextIdx, { select: true });
+								}}
+								oninput={(event) => {
+									// only update the draft; DO NOT update `values` while typing
+									editDraft[column.key] = (event.currentTarget as HTMLElement).textContent ?? '';
+								}}
 							>
-								{values[column.key] || ''}
+								{values[column.key] ?? ''}
 							</div>
 						</td>
 					{/each}
@@ -242,198 +349,4 @@
 			</tbody>
 		</table>
 	</div>
-
-	<div class="status-bar">
-		<div>
-			<strong>選択セル:</strong> {currentCellLabel() || 'なし'}
-		</div>
-		<div>
-			<strong>最終保存:</strong>
-			{lastSavedToken ? new Date(lastSavedToken).toLocaleString() : 'まだ保存されていません'}
-		</div>
-	</div>
 </form>
-
-<style>
-	.game-score-page {
-		font-family: 'Inter', 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Hiragino Sans',
-			'Yu Gothic', sans-serif;
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-		padding: 1.5rem;
-		color: #0f172a;
-	}
-
-	.page-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		gap: 1rem;
-	}
-
-	h1 {
-		margin: 0 0 0.25rem;
-		font-size: 1.4rem;
-	}
-
-	p {
-		margin: 0;
-		color: #475569;
-	}
-
-	.header-actions {
-		display: flex;
-		gap: 0.75rem;
-		align-items: center;
-	}
-
-	button {
-		border-radius: 8px;
-		padding: 0.55rem 1.2rem;
-		font-size: 0.95rem;
-		border: 1px solid transparent;
-		cursor: pointer;
-	}
-
-	button.primary {
-		background: #2563eb;
-		color: #fff;
-		border-color: #1d4ed8;
-	}
-
-	button.primary:disabled {
-		background: #94a3b8;
-		border-color: #94a3b8;
-		cursor: not-allowed;
-	}
-
-	.banner {
-		padding: 0.75rem 1rem;
-		border-radius: 8px;
-		font-weight: 500;
-	}
-
-	.banner.success {
-		background: #ecfdf5;
-		color: #047857;
-		border: 1px solid #6ee7b7;
-	}
-
-	.banner.error {
-		background: #fef2f2;
-		color: #b91c1c;
-		border: 1px solid #fecaca;
-	}
-
-	.hints {
-		display: flex;
-		gap: 1.5rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		font-size: 0.9rem;
-		color: #475569;
-	}
-
-	.table-wrapper {
-		border: 1px solid #cbd5f5;
-		border-radius: 12px;
-		overflow: auto;
-		box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.4);
-		max-height: calc(100vh - 320px);
-	}
-
-	table {
-		border-collapse: collapse;
-		width: max-content;
-		min-width: 100%;
-		font-size: 0.9rem;
-		font-variant-numeric: tabular-nums;
-	}
-
-	th,
-	td {
-		border: 1px solid #e2e8f0;
-		padding: 0;
-		background: #fff;
-	}
-
-	thead th {
-		position: sticky;
-		top: 0;
-		background: #f8fafc;
-		font-weight: 600;
-		text-align: left;
-		padding: 0.45rem;
-	}
-
-	.column-id {
-		font-family: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
-		font-size: 0.7rem;
-		color: #64748b;
-		margin-top: 0.15rem;
-	}
-
-	td {
-		min-width: 130px;
-	}
-
-	td.selected {
-		outline: 2px solid #2563eb;
-		outline-offset: -2px;
-	}
-
-	.cell-editor {
-		padding: 0.4rem 0.5rem;
-		min-height: 38px;
-		outline: none;
-		cursor: text;
-	}
-
-	.cell-editor.numeric {
-		text-align: right;
-	}
-
-	.cell-editor:focus {
-		background: #eef2ff;
-	}
-
-	.cell-editor:empty::before {
-		content: attr(data-placeholder);
-		color: #cbd5f5;
-		pointer-events: none;
-	}
-
-	.status-bar {
-		display: flex;
-		justify-content: space-between;
-		padding: 0.75rem 1rem;
-		border: 1px solid #e2e8f0;
-		border-radius: 8px;
-		background: #f8fafc;
-		color: #334155;
-		font-size: 0.9rem;
-	}
-
-	@media (max-width: 960px) {
-		.page-header {
-			flex-direction: column;
-			align-items: flex-start;
-		}
-
-		.header-actions {
-			width: 100%;
-			justify-content: flex-start;
-		}
-
-		.table-wrapper {
-			max-height: none;
-		}
-
-		.status-bar {
-			flex-direction: column;
-			gap: 0.5rem;
-		}
-	}
-</style>
