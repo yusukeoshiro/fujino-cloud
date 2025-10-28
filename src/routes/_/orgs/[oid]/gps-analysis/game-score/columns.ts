@@ -26,7 +26,7 @@ const METRIC_ID_BY_LABEL: Record<string, string> = {
 	ウォーキング割合: 'oOQMjHICxmf3nLwvDitk',
 	加速Z5回数: 'kCZxKxfA9MfWVgBmdTbo',
 	加速Z6回数: 'YR3ZEOZLTLwJk23XKVpj',
-	加速合計回数: 'd4ZtXDD8O5ZjqnI8XqX3',
+	加速合計回数: 'XYpyu5CZTDZmMY9DbfNG',
 	爆発的加速回数: 'XLp9zGyDi0PgkNHn61ln',
 	減速Z5回数: 'g60b48TuNLrtstb0dy65',
 	減速Z6回数: 'mPoLSRIgbc1IwC3fPsP9',

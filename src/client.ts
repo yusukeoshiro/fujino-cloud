@@ -1,15 +1,15 @@
 import { HoudiniClient } from '$houdini';
+import { getDeviceToken } from '$lib/stores/device-token.store';
+import { GRAPHQL_URL } from '$env/static/private';
 
 export default new HoudiniClient({
-	url: 'https://api.dev.mobili-platform.com/graphql',
+	url: GRAPHQL_URL,
 
-	// uncomment this to configure the network call (for things like authentication)
-	// for more information, please visit here: https://www.houdinigraphql.com/guides/authentication
 	fetchParams({ session }) {
+		const token = getDeviceToken();
 		return {
 			headers: {
-				// TODO this needs to be dynamic
-				Authorization: `Bearer device_c068272d24b705966f12a28a8cbed42510d8353ef124a61f06a6f782a7362cac`,
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
 			},
 		};
 	},

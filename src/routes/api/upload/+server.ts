@@ -1,17 +1,11 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { parse } from 'csv-parse/sync';
-import {
-	AutoRecordMetricMutateStore,
-	AutoRecordMetricStore,
-	CreatePerformanceAssessmentParticipantStore,
-	CreatePerformanceAssessmentWrapperStore,
-} from '$houdini';
 import { DateTime } from 'luxon';
-import { GamePointParser } from '../../../lib/game-point-parser';
-import { GpsSessionParser } from '../../../lib/gps-session-parser.model';
+import { GpsSessionParser } from '$lib/gps-session-parser.model';
+import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 
 // 1) Field → MetricDefinitionId map
-const FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
+const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'Duration (min)': 'KkLOxGTCHY2uVOMjLtQE',
 	'Total Distance (m)': 'P6Zu5epLjDOaDQq20Stx',
 	'Total Distance/min (m/min)': 'I7i8bessV96ciVnFw5IB',
@@ -34,13 +28,6 @@ const FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'No. of Exp. Dec. (times)': 'vMV5RRPagpuPxkoU8F2T',
 };
 
-const GAME_POINTS: Record<string, number> = {
-	KkLOxGTCHY2uVOMjLtQE: 98,
-	P6Zu5epLjDOaDQq20Stx: 11262,
-	I7i8bessV96ciVnFw5IB: 115,
-	Q4dPRJ2eqeNR0Bg4DI3E: 29.3,
-};
-
 // 2) number coercion (handles thousands separators)
 function coerce(value: string): string | number {
 	if (value === '') return value;
@@ -50,43 +37,20 @@ function coerce(value: string): string | number {
 }
 
 export const POST: RequestHandler = async (event) => {
-	const gamePoint = new GamePointParser({
-		durationMin: 98,
-		totalDistanceM: 11262,
-		totalDistanceMPerMin: 115,
-		maxSpeedKMH: 29.3,
+	const { request, url } = event;
+	const orgId = url.searchParams.get('orgId');
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
-		noOfHSR: 0,
-		HSRDistanceM: 0,
-		noOfSprint: 9.2,
+	const baselineDocument = await gameScoreService.getByOrgId(orgId);
+	if (!baselineDocument) {
+		throw error(404, `ゲームスコア基準値が未設定です (orgId=${orgId})`);
+	}
 
-		sprintDistanceM: 154,
-		speedZone1DistanceM: 3593,
-		speedZone3DistanceM: 0,
-		speedZone4DistanceM: 0,
-		speedZone5DistanceM: 0,
-
-		accelerationZone4EntryCount: 0,
-		accelerationZone5EntryCount: 71,
-		accelerationZone6EntryCount: 57,
-
-		decelerationZone4EntryCount: 0,
-		decelerationZone5EntryCount: 75,
-		decelerationZone6EntryCount: 79,
-
-		noOfExpAcc: 13,
-		noOfExpDec: 28,
-
-		highIntensityM: 608,
-		highIntensityRate: 0.056,
-		walkingRate: 0.319,
-		accelerationCountTotal: 129,
-		decelerationCountTotal: 146,
-	});
+	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
 
 	const parsedRows: GpsSessionParser[] = [];
-
-	const { request, url } = event;
 	// Toggle: use metricDefinitionId as keys?
 	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
 
@@ -117,14 +81,17 @@ export const POST: RequestHandler = async (event) => {
 	const headerMap = originalHeaders
 		.map((field) => ({
 			field,
-			metricDefinitionId: FIELD_TO_METRIC_ID[field] ?? '',
+			metricDefinitionId: FITOGETHER_FIELD_TO_METRIC_ID[field] ?? '',
 		}))
 		.filter((item) => item.metricDefinitionId);
 
 	rawRecords.forEach((row) => {
 		const out: Record<string, string | number> = {};
 		for (const [field, value] of Object.entries(row)) {
-			const key = useMetricIds && FIELD_TO_METRIC_ID[field] ? FIELD_TO_METRIC_ID[field]! : field;
+			const key =
+				useMetricIds && FITOGETHER_FIELD_TO_METRIC_ID[field]
+					? FITOGETHER_FIELD_TO_METRIC_ID[field]!
+					: field;
 			out[key] = coerce(value);
 		}
 
@@ -174,125 +141,22 @@ export const POST: RequestHandler = async (event) => {
 					noOfExpAcc: Number(out['No. of Exp. Acc. (times)']),
 					noOfExpDec: Number(out['No. of Exp. Dec. (times)']),
 				},
-				gamePoint,
+				trainingBaseline,
 			),
 		);
 
 		return out;
 	});
 
-	// parsedRows.forEach((r) => {
-	// 	// console.log(`${r.fullName} ${r.date} ${r.trainingScoreConsumption}`);
-	// 	console.log(r.toJson());
-	// });
-
-	// const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
-
-	// const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
-	// 	{
-	// 		data: {
-	// 			performanceAssessment: {
-	// 				name: `${dt.toFormat('yyyy-MM-dd トレーニング')}`,
-	// 				date: dt.toFormat('yyyy-MM-dd'),
-	// 				orgId: 'd4ZtXDD8O5ZjqnI8XqX3',
-	// 			},
-	// 			performanceAssessmentMetrics: [
-	// 				...headerMap.map((item, i) => {
-	// 					return {
-	// 						metricDefinitionId: item.metricDefinitionId,
-	// 						scored: false,
-	// 						displayOrder: i,
-	// 						category: 'TRAINING',
-	// 					};
-	// 				}),
-	// 				// TR Point consumption added last
-	// 				{
-	// 					metricDefinitionId: 'FSw4meWwvmxkcr4G0KvX',
-	// 					scored: false,
-	// 					displayOrder: headerMap.length,
-	// 					category: 'TRAINING',
-	// 				},
-	// 			],
-	// 			performanceAssessmentParticipants: [],
-	// 		},
-	// 	},
-	// 	{
-	// 		event,
-	// 	},
-	// );
-
-	// console.log(resultCreatePerformanceAssessment.errors);
-	// console.log(resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper);
-
-	// Final headers after remap (unique + in order)
 	const headers = Array.from(
 		new Set(
 			originalHeaders.map((field) =>
-				useMetricIds && FIELD_TO_METRIC_ID[field] ? FIELD_TO_METRIC_ID[field]! : field,
+				useMetricIds && FITOGETHER_FIELD_TO_METRIC_ID[field]
+					? FITOGETHER_FIELD_TO_METRIC_ID[field]!
+					: field,
 			),
 		),
 	);
-
-	// const createParticipant = new CreatePerformanceAssessmentParticipantStore();
-
-	// const name2Token: { [key: string]: string } = {};
-
-	// for (const record of records) {
-	// 	const participant = await createParticipant.mutate(
-	// 		{
-	// 			data: {
-	// 				orgId: 'd4ZtXDD8O5ZjqnI8XqX3',
-	// 				performanceAssessmentId:
-	// 					resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper.id,
-	// 				fullName: record['Player Name'] as string,
-	// 			},
-	// 		},
-	// 		{
-	// 			event,
-	// 		},
-	// 	);
-
-	// 	name2Token[record['Player Name']] = participant.data?.createPerformanceAssessmentParticipant
-	// 		.orgUniqueToken as string;
-	// 	console.log(`created ${record['Player Name'] as string}`);
-	// }
-
-	// console.log({ name2Token });
-
-	// const autoRecord = new AutoRecordMetricMutateStore();
-
-	// for (const record of records) {
-	// 	const keys = Object.keys(record).filter((key) => FIELD_TO_METRIC_ID[key]);
-	// 	for (const k of keys) {
-	// 		const orgUniqueToken = name2Token[record['Player Name']];
-	// 		// autoRecord.mutate({
-	// 		// 	// data: { input: {} },
-	// 		// });
-
-	// 		await autoRecord.mutate(
-	// 			// {
-	// 			// 	data: {
-	// 			// 		//
-	// 			// 	},
-	// 			// },
-	// 			{
-	// 				data: {
-	// 					orgUniqueToken: orgUniqueToken,
-	// 					metricDefinitionId: FIELD_TO_METRIC_ID[k]!,
-	// 					performanceAssessmentId:
-	// 						resultCreatePerformanceAssessment.data!.createPerformanceAssessmentWrapper.id!,
-	// 					value: record[k] as number,
-	// 					isOfficial: true,
-	// 				},
-	// 			},
-	// 			{
-	// 				event,
-	// 			},
-	// 		);
-
-	// 		console.log(`metric definition id ${k} for ${orgUniqueToken} is set to ${record[k]}`);
-	// 	}
-	// }
 
 	return new Response(
 		JSON.stringify(
@@ -308,3 +172,33 @@ export const POST: RequestHandler = async (event) => {
 		{ headers: { 'content-type': 'application/json' } },
 	);
 };
+
+const BASELINE_METRIC_IDS = {
+	totalDistanceM: 'P6Zu5epLjDOaDQq20Stx',
+	highIntensityM: 'Kn39OEkrpQCMQAtMQb5J',
+	accelerationCountTotal: 'YR3ZEOZLTLwJk23XKVpj',
+	decelerationCountTotal: 'D7aoPeenTMYu3CxfR6v7',
+} as const;
+
+function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
+	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
+
+	const requiredValues = Object.entries(BASELINE_METRIC_IDS).map(([key, metricId]) => {
+		const raw = map.get(metricId);
+		const value = typeof raw === 'number' ? raw : Number(raw);
+		if (!Number.isFinite(value) || value <= 0) {
+			throw error(
+				400,
+				`ゲームスコア基準値 ${metricId} (${key}) が無効です。orgId=${orgId}, value=${raw}`,
+			);
+		}
+		return [key, value] as const;
+	});
+
+	return Object.fromEntries(requiredValues) as {
+		totalDistanceM: number;
+		highIntensityM: number;
+		accelerationCountTotal: number;
+		decelerationCountTotal: number;
+	};
+}
