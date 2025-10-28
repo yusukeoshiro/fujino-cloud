@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "fujino-cloud"
+  },
+  "targets": {},
+  "etags": {
+    "fujino-cloud": {
+      "extensionInstances": {
+        "firestore-bigquery-export": "054bc1ae94a29b5e154424000a92839385942eb42e769eb54cfb3447f8711cbd",
+        "firestore-bigquery-export-l7be": "99d50c4c3b59e4fe9890c9a2a700c00617a75681456f55f6e7ccb919dd373ad6"
+      }
+    }
+  }
+}
