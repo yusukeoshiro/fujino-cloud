@@ -3,29 +3,33 @@ import { parse } from 'csv-parse/sync';
 import { DateTime } from 'luxon';
 import { GpsSessionParser } from '$lib/gps-session-parser.model';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
+import {
+	METRIC_DEFINITION_IDS,
+	TRAINING_BASELINE_METRICS
+} from '$lib/constants/metric-definition-ids';
 
 // 1) Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
-	'Duration (min)': 'KkLOxGTCHY2uVOMjLtQE',
-	'Total Distance (m)': 'P6Zu5epLjDOaDQq20Stx',
-	'Total Distance/min (m/min)': 'I7i8bessV96ciVnFw5IB',
-	'Max Speed (km/h)': 'Q4dPRJ2eqeNR0Bg4DI3E',
+	'Duration (min)': METRIC_DEFINITION_IDS.durationMin,
+	'Total Distance (m)': METRIC_DEFINITION_IDS.totalDistanceM,
+	'Total Distance/min (m/min)': METRIC_DEFINITION_IDS.totalDistancePerMin,
+	'Max Speed (km/h)': METRIC_DEFINITION_IDS.maxSpeedKMH,
 	'No. of HSR (times)': undefined,
 	'HSR Distance (m)': undefined,
-	'No. of Sprint (times)': 'ZfqkRYcNfvwYioquCx5h',
-	'Sprint Distance (m)': 'mVykVPzBokSZ0l4C7YhJ',
-	'Speed Zone 1 Distance (m)': '0xbH1n71xspfVRddG92Q',
-	'Speed Zone 3 Distance (m)': 'j6u2oo2CjbSngFLioS2Q',
-	'Speed Zone 4 Distance (m)': 'oKXeSMbv7zfV7WjTV4Wp',
-	'Speed Zone 5 Distance (m)': 'nulFBwmrHVrA20HPtNrp',
-	'Acceleration Zone 4 Entry Count (times)': '4Pf9FuE2agjFASX1acXF',
-	'Acceleration Zone 5 Entry Count (times)': 'kCZxKxfA9MfWVgBmdTbo',
-	'Acceleration Zone 6 Entry Count (times)': 'YR3ZEOZLTLwJk23XKVpj',
-	'Deceleration Zone 4 Entry Count (times)': 'FSmTTs8BG3fq608Zcy4F',
-	'Deceleration Zone 5 Entry Count (times)': 'g60b48TuNLrtstb0dy65',
-	'Deceleration Zone 6 Entry Count (times)': 'mPoLSRIgbc1IwC3fPsP9',
-	'No. of Exp. Acc. (times)': 'XLp9zGyDi0PgkNHn61ln',
-	'No. of Exp. Dec. (times)': 'vMV5RRPagpuPxkoU8F2T',
+	'No. of Sprint (times)': METRIC_DEFINITION_IDS.noOfSprint,
+	'Sprint Distance (m)': METRIC_DEFINITION_IDS.sprintDistanceM,
+	'Speed Zone 1 Distance (m)': METRIC_DEFINITION_IDS.speedZone1DistanceM,
+	'Speed Zone 3 Distance (m)': METRIC_DEFINITION_IDS.speedZone3DistanceM,
+	'Speed Zone 4 Distance (m)': METRIC_DEFINITION_IDS.speedZone4DistanceM,
+	'Speed Zone 5 Distance (m)': METRIC_DEFINITION_IDS.speedZone5DistanceM,
+	'Acceleration Zone 4 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone4EntryCount,
+	'Acceleration Zone 5 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
+	'Acceleration Zone 6 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
+	'Deceleration Zone 4 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone4EntryCount,
+	'Deceleration Zone 5 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone5EntryCount,
+	'Deceleration Zone 6 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone6EntryCount,
+	'No. of Exp. Acc. (times)': METRIC_DEFINITION_IDS.noOfExpAcc,
+	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.noOfExpDec,
 };
 
 // 2) number coercion (handles thousands separators)
@@ -173,17 +177,10 @@ export const POST: RequestHandler = async (event) => {
 	);
 };
 
-const BASELINE_METRIC_IDS = {
-	totalDistanceM: 'P6Zu5epLjDOaDQq20Stx',
-	highIntensityM: 'Kn39OEkrpQCMQAtMQb5J',
-	accelerationCountTotal: 'YR3ZEOZLTLwJk23XKVpj',
-	decelerationCountTotal: 'D7aoPeenTMYu3CxfR6v7',
-} as const;
-
 function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
 	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
 
-	const requiredValues = Object.entries(BASELINE_METRIC_IDS).map(([key, metricId]) => {
+	const requiredValues = Object.entries(TRAINING_BASELINE_METRICS).map(([key, metricId]) => {
 		const raw = map.get(metricId);
 		const value = typeof raw === 'number' ? raw : Number(raw);
 		if (!Number.isFinite(value) || value <= 0) {

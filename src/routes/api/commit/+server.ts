@@ -10,6 +10,7 @@ import { DateTime } from 'luxon';
 import { GpsSessionParser } from '$lib/gps-session-parser.model';
 import { FIELD_ID_MAP, trainigMetricDefinitionIds } from '$lib/training-cols';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
+import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
 
 // 2) number coercion (handles thousands separators)
 function coerce(value: string): string | number {
@@ -224,17 +225,10 @@ export const POST: RequestHandler = async (event) => {
 	return new Response(JSON.stringify({}));
 };
 
-const BASELINE_METRIC_IDS = {
-	totalDistanceM: 'P6Zu5epLjDOaDQq20Stx',
-	highIntensityM: 'Kn39OEkrpQCMQAtMQb5J',
-	accelerationCountTotal: 'YR3ZEOZLTLwJk23XKVpj',
-	decelerationCountTotal: 'D7aoPeenTMYu3CxfR6v7',
-} as const;
-
 function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
 	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
 
-	const requiredValues = Object.entries(BASELINE_METRIC_IDS).map(([key, metricId]) => {
+	const requiredValues = Object.entries(TRAINING_BASELINE_METRICS).map(([key, metricId]) => {
 		const raw = map.get(metricId);
 		const value = typeof raw === 'number' ? raw : Number(raw);
 		if (!Number.isFinite(value) || value <= 0) {
