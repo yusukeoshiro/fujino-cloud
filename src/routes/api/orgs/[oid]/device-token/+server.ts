@@ -1,10 +1,12 @@
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { deviceTokenService } from '$lib/services/device-token.service';
-import { requireOrgAccess } from '../utils/require-org-access.util';
 
 export const GET: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	const doc = await deviceTokenService.get(orgId);
 
@@ -16,7 +18,10 @@ export const GET: RequestHandler = async (event) => {
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	let body: { token?: string } = {};
 	try {
@@ -44,7 +49,10 @@ export const POST: RequestHandler = async (event) => {
 };
 
 export const DELETE: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	await deviceTokenService.delete(orgId);
 

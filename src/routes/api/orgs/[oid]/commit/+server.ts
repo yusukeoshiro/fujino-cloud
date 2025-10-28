@@ -11,7 +11,6 @@ import { GpsSessionParser } from '$lib/gps-session-parser.model';
 import { FIELD_ID_MAP, trainigMetricDefinitionIds } from '$lib/training-cols';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
-import { requireOrgAccess } from '../utils/require-org-access.util';
 
 // 2) number coercion (handles thousands separators)
 function coerce(value: string): string | number {
@@ -23,7 +22,10 @@ function coerce(value: string): string | number {
 
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
-	const orgId = requireOrgAccess(event);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	const form = await request.formData();
 	const file = form.get('file');

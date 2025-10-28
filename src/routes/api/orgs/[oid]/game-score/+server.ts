@@ -1,14 +1,16 @@
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
-import { requireOrgAccess } from '../utils/require-org-access.util';
 
 type GameScorePayload = {
 	values?: GameScoreValueEntry[];
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	let body: GameScorePayload | null = null;
 	try {

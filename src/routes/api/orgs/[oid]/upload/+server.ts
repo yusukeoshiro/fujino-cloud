@@ -7,7 +7,6 @@ import {
 	METRIC_DEFINITION_IDS,
 	TRAINING_BASELINE_METRICS,
 } from '$lib/constants/metric-definition-ids';
-import { requireOrgAccess } from '../utils/require-org-access.util';
 
 // 1) Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
@@ -43,7 +42,10 @@ function coerce(value: string): string | number {
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
 	if (!baselineDocument) {

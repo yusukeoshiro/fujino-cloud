@@ -1,11 +1,13 @@
-import { json } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { trainingBudgetService } from '$lib/services/training-budget.service';
 import { DateTime } from 'luxon';
-import { requireOrgAccess } from '../utils/require-org-access.util';
 
 export const GET: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 	const yearParamStr = event.url.searchParams.get('year');
 	const yearParam = yearParamStr ? Number(yearParamStr) : undefined;
 
@@ -34,7 +36,10 @@ type SavePayload = {
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
+	const orgId = event.params.oid;
+	if (!orgId) {
+		throw error(400, 'orgId is required');
+	}
 
 	let body: SavePayload;
 	try {
