@@ -8,9 +8,25 @@
 	import type { PageData } from './$types';
 	import { page } from '$app/state';
 
-	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
+	const menus = [
+		{
+			path: (oid: string) => `/_/orgs/${oid}/gps-analysis`,
+			label: 'GPSコンディショニング',
+		},
+		{
+			path: (oid: string) => `/_/orgs/${oid}/settings`,
+			label: '組織の設定',
+		},
+	];
 
-	async function logout() {
+	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
+	let members = $derived(data.members ?? []);
+
+	$effect(() => {
+		navigateToOnlyOrg(page.params.oid);
+	});
+
+	const logout = async () => {
 		try {
 			await signOut(auth);
 			console.log('🚪 Logged out');
@@ -21,11 +37,22 @@
 		} catch (err) {
 			console.error('Logout failed:', err);
 		}
-	}
+	};
+
+	const isActive = (href: string) => page.url.pathname.startsWith(href);
+
+	const navigateToOnlyOrg = (currentOrgId: string | null) => {
+		if (currentOrgId == null) {
+			if (members.length === 1) {
+				goto(`/_/orgs/${members[0].orgId}`);
+			}
+		}
+	};
 
 	onMount(() => {
-		if (data.members) {
-			currentMembers.set(data.members);
+		if (members) {
+			currentMembers.set(members);
+			navigateToOnlyOrg(page.params.oid);
 		}
 
 		const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -48,13 +75,19 @@
 				<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-28" />
 			</a>
 
-			{#if $currentMembers.length > 0 && page.params.oid}
-				<a
-					href={`/_/orgs/${page.params.oid}/gps-analysis`}
-					class="text-gray-600 hover:text-gray-900"
-				>
-					GPSデータの分析
-				</a>
+			{#if page.params.oid}
+				{#each menus as menu}
+					{#if $currentMembers.length > 0 && page.params.oid}
+						{#key menu.label}
+							<a
+								href={menu.path(page.params.oid)}
+								class={`border-b-2 pb-0.5 transition-colors ${isActive(menu.path(page.params.oid)) ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}
+							>
+								{menu.label}
+							</a>
+						{/key}
+					{/if}
+				{/each}
 			{/if}
 		</div>
 

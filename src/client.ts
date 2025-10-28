@@ -8,6 +8,7 @@ export default new HoudiniClient({
 	fetchParams({ session }) {
 		return {
 			headers: {
+				// TODO this needs to be dynamic
 				Authorization: `Bearer device_c068272d24b705966f12a28a8cbed42510d8353ef124a61f06a6f782a7362cac`,
 			},
 		};

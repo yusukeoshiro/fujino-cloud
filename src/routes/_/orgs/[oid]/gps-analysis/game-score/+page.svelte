@@ -23,6 +23,7 @@
 	let notification = $state<Banner>(null);
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
+	let editDraft: Record<string, string> = {};
 
 	const updateCellValue = (column: GameScoreColumn, value: string, _target?: HTMLElement) => {
 		const sanitized = sanitizeInput(value);
@@ -226,13 +227,11 @@
 					{#each columns as column, colIndex}
 						<td
 							class={`min-w-[130px] border border-slate-200 p-0 align-top ${
-								activeColumn === colIndex
-									? 'outline outline-2 -outline-offset-2 outline-blue-600'
-									: ''
+								activeColumn === colIndex ? 'outline-2 -outline-offset-2 outline-blue-600' : ''
 							}`}
 						>
 							<div
-								class="min-h-[38px] cursor-text px-2 py-2 text-right outline-none focus:bg-indigo-50"
+								class="min-h-[38px] cursor-text px-2 py-2 pb-4 text-right outline-none focus:bg-indigo-50"
 								role="textbox"
 								aria-label={column.label}
 								data-cell={`${colIndex}`}
@@ -241,16 +240,17 @@
 								spellcheck={false}
 								onfocus={(event) => {
 									handleFocus(event, colIndex);
-									// capture original value exactly as shown
-									editOriginal[column.key] = (event.currentTarget as HTMLElement).textContent ?? '';
+									const current = (event.currentTarget as HTMLElement).textContent ?? '';
+									// capture both original and draft; do NOT write to values here
+									editOriginal[column.key] = current;
+									editDraft[column.key] = current;
 								}}
-								onblur={async (event) => {
+								onblur={async () => {
 									if (committing) return;
-									const el = event.currentTarget as HTMLElement;
-									const next = sanitizeInput(el.textContent ?? '');
+									const next = sanitizeInput(editDraft[column.key] ?? '');
 									const prev = sanitizeInput(editOriginal[column.key] ?? '');
 									if (next !== prev) {
-										updateCellValue(column, next);
+										values = { ...values, [column.key]: next }; // commit once
 										committing = true;
 										await saveChanges();
 										committing = false;
@@ -263,30 +263,50 @@
 									const text = event.clipboardData?.getData('text/plain');
 									const matrix = text && parseClipboard(text);
 									if (!matrix) return;
-									const flattened = matrix.flat();
-									if (!flattened.length) return;
+
+									const flat = matrix.flat();
+									if (!flat.length) return;
 
 									let changed = false;
-									flattened.forEach((value, offset) => {
-										const idx = colIndex + offset;
+									flat.forEach((v, i) => {
+										const idx = colIndex + i;
 										if (idx >= columns.length) return;
-										const col = columns[idx];
-										const next = sanitizeInput(value);
-										const prev = sanitizeInput(editOriginal[col.key] ?? values[col.key] ?? '');
+										const key = columns[idx].key;
+										const next = sanitizeInput(v);
+										const prev = sanitizeInput(
+											(idx === colIndex ? editDraft[key] : values[key]) ?? '',
+										);
 										if (next !== prev) {
-											values = { ...values, [col.key]: next };
-											editOriginal[col.key] = next;
+											if (idx === colIndex) {
+												// update draft for the active cell
+												editDraft[key] = next;
+											} else {
+												// update committed values for other cells in the paste range
+												values = { ...values, [key]: next };
+											}
 											changed = true;
 										}
 									});
 
 									if (changed) {
+										// commit active cell draft too
+										if (
+											sanitizeInput(editDraft[column.key] ?? '') !==
+											sanitizeInput(editOriginal[column.key] ?? '')
+										) {
+											values = {
+												...values,
+												[column.key]: sanitizeInput(editDraft[column.key] ?? ''),
+											};
+											editOriginal[column.key] = sanitizeInput(editDraft[column.key] ?? '');
+										}
 										committing = true;
 										await saveChanges();
 										committing = false;
 									}
 
-									const lastIndex = Math.min(colIndex + flattened.length - 1, columns.length - 1);
+									// move caret to last pasted cell
+									const lastIndex = Math.min(colIndex + flat.length - 1, columns.length - 1);
 									focusCell(lastIndex, { select: true });
 								}}
 								onkeydown={async (event) => {
@@ -295,12 +315,11 @@
 
 									event.preventDefault();
 
-									const el = event.currentTarget as HTMLElement;
-									const next = sanitizeInput(el.textContent ?? '');
+									const next = sanitizeInput(editDraft[column.key] ?? '');
 									const prev = sanitizeInput(editOriginal[column.key] ?? '');
 
 									if (next !== prev) {
-										updateCellValue(column, next);
+										values = { ...values, [column.key]: next }; // commit once
 										committing = true;
 										await saveChanges();
 										committing = false;
@@ -318,8 +337,8 @@
 									focusCell(nextIdx, { select: true });
 								}}
 								oninput={(event) => {
-									// update local state only; do not modify DOM here
-									updateCellValue(column, (event.currentTarget as HTMLElement).textContent ?? '');
+									// only update the draft; DO NOT update `values` while typing
+									editDraft[column.key] = (event.currentTarget as HTMLElement).textContent ?? '';
 								}}
 							>
 								{values[column.key] ?? ''}
