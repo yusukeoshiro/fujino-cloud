@@ -55,7 +55,7 @@
 			const fd = new FormData();
 			fd.append('file', file);
 
-			const res = await fetch(`/api/upload?orgId=${encodeURIComponent(orgId)}`, {
+			const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/upload`, {
 				method: 'POST',
 				body: fd,
 			});
@@ -113,7 +113,7 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
-			const res = await fetch(`/api/commit?orgId=${encodeURIComponent(orgId)}`, {
+			const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/commit`, {
 				method: 'POST',
 				body: fd,
 			});

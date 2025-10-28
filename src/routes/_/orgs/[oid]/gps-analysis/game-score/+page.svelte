@@ -116,16 +116,18 @@
 		notification = null;
 
 		try {
-			const response = await fetch('/api/game-score', {
+			const response = await fetch(
+				`/api/orgs/${encodeURIComponent(orgId)}/game-score`,
+				{
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					orgId,
 					values: entriesFromValuesMap(values),
 				}),
-			});
+				},
+			);
 
 			if (!response.ok) {
 				throw new Error('API error');

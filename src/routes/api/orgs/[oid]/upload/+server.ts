@@ -1,16 +1,37 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { parse } from 'csv-parse/sync';
-import {
-	AutoRecordMetricMutateStore,
-	CreatePerformanceAssessmentParticipantStore,
-	CreatePerformanceAssessmentWrapperStore,
-	ExportPerformanceAssessmentStore,
-} from '$houdini';
 import { DateTime } from 'luxon';
 import { GpsSessionParser } from '$lib/gps-session-parser.model';
-import { FIELD_ID_MAP, trainigMetricDefinitionIds } from '$lib/training-cols';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
-import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
+import {
+	METRIC_DEFINITION_IDS,
+	TRAINING_BASELINE_METRICS,
+} from '$lib/constants/metric-definition-ids';
+import { requireOrgAccess } from '../utils/require-org-access.util';
+
+// 1) Field → MetricDefinitionId map
+const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
+	'Duration (min)': METRIC_DEFINITION_IDS.durationMin,
+	'Total Distance (m)': METRIC_DEFINITION_IDS.totalDistanceM,
+	'Total Distance/min (m/min)': METRIC_DEFINITION_IDS.totalDistancePerMin,
+	'Max Speed (km/h)': METRIC_DEFINITION_IDS.maxSpeedKMH,
+	'No. of HSR (times)': undefined,
+	'HSR Distance (m)': undefined,
+	'No. of Sprint (times)': METRIC_DEFINITION_IDS.noOfSprint,
+	'Sprint Distance (m)': METRIC_DEFINITION_IDS.sprintDistanceM,
+	'Speed Zone 1 Distance (m)': METRIC_DEFINITION_IDS.speedZone1DistanceM,
+	'Speed Zone 3 Distance (m)': METRIC_DEFINITION_IDS.speedZone3DistanceM,
+	'Speed Zone 4 Distance (m)': METRIC_DEFINITION_IDS.speedZone4DistanceM,
+	'Speed Zone 5 Distance (m)': METRIC_DEFINITION_IDS.speedZone5DistanceM,
+	'Acceleration Zone 4 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone4EntryCount,
+	'Acceleration Zone 5 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
+	'Acceleration Zone 6 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
+	'Deceleration Zone 4 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone4EntryCount,
+	'Deceleration Zone 5 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone5EntryCount,
+	'Deceleration Zone 6 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone6EntryCount,
+	'No. of Exp. Acc. (times)': METRIC_DEFINITION_IDS.noOfExpAcc,
+	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.noOfExpDec,
+};
 
 // 2) number coercion (handles thousands separators)
 function coerce(value: string): string | number {
@@ -22,24 +43,25 @@ function coerce(value: string): string | number {
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
-	const orgId = url.searchParams.get('orgId');
-	if (!orgId) {
-		throw error(400, 'orgId is required');
-	}
-
-	const form = await request.formData();
-	const file = form.get('file');
-	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
 	if (!baselineDocument) {
 		throw error(404, `ゲームスコア基準値が未設定です (orgId=${orgId})`);
 	}
+
 	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
 
 	const parsedRows: GpsSessionParser[] = [];
+	// Toggle: use metricDefinitionId as keys?
+	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
+
+	const form = await request.formData();
+	const file = form.get('file');
+	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
 
 	const text = await file.text();
+
 	const rawRecords = parse(text, {
 		columns: true,
 		skip_empty_lines: true,
@@ -47,10 +69,32 @@ export const POST: RequestHandler = async (event) => {
 		relax_column_count: true,
 	}) as Array<Record<string, string>>;
 
+	// Determine original headers from first row or CSV header line
+	const originalHeaders =
+		rawRecords.length > 0
+			? Object.keys(rawRecords[0])
+			: (text
+					.split(/\r?\n/)[0]
+					?.split(',')
+					.map((h) => h.trim()) ?? []);
+
+	// Build header map (for Excel pasting or debugging)
+	// Array of { field, metricDefinitionId }
+	const headerMap = originalHeaders
+		.map((field) => ({
+			field,
+			metricDefinitionId: FITOGETHER_FIELD_TO_METRIC_ID[field] ?? '',
+		}))
+		.filter((item) => item.metricDefinitionId);
+
 	rawRecords.forEach((row) => {
 		const out: Record<string, string | number> = {};
 		for (const [field, value] of Object.entries(row)) {
-			out[field] = coerce(value);
+			const key =
+				useMetricIds && FITOGETHER_FIELD_TO_METRIC_ID[field]
+					? FITOGETHER_FIELD_TO_METRIC_ID[field]!
+					: field;
+			out[key] = coerce(value);
 		}
 
 		// ✅ skip if same fullName already exists
@@ -71,7 +115,7 @@ export const POST: RequestHandler = async (event) => {
 					}).toJSDate(),
 
 					fullName: out['Player Name'] as string,
-					birthday: '2000-01-01',
+					birthday: '0000-00-00',
 
 					durationMin: Number(out['Duration (min)']),
 					totalDistanceM: Number(out['Total Distance (m)']),
@@ -102,127 +146,33 @@ export const POST: RequestHandler = async (event) => {
 				trainingBaseline,
 			),
 		);
+
+		return out;
 	});
 
-	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
-
-	if (parsedRows.length === 0) return new Response('File is empty.', { status: 400 });
-
-	const dt = DateTime.fromFormat(parsedRows[0].date, 'yyyy-MM-dd');
-
-	const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
-		{
-			data: {
-				performanceAssessment: {
-					name: `${dt.toFormat('yyyy-MM-dd トレーニング')}`,
-					date: dt.toFormat('yyyy-MM-dd'),
-					orgId,
-				},
-				performanceAssessmentMetrics: [
-					...trainigMetricDefinitionIds.map((metricDefinitionId, i) => {
-						return {
-							metricDefinitionId: metricDefinitionId,
-							scored: false,
-							displayOrder: i + 1,
-							category: 'TRAINING',
-						};
-					}),
-				],
-				performanceAssessmentParticipants: [],
-			},
-		},
-		{
-			event,
-		},
+	const headers = Array.from(
+		new Set(
+			originalHeaders.map((field) =>
+				useMetricIds && FITOGETHER_FIELD_TO_METRIC_ID[field]
+					? FITOGETHER_FIELD_TO_METRIC_ID[field]!
+					: field,
+			),
+		),
 	);
 
-	console.log(resultCreatePerformanceAssessment.errors);
-	console.log(resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper);
-
-	const createParticipant = new CreatePerformanceAssessmentParticipantStore();
-
-	const promises = parsedRows.map(async (record, i) => {
-		const result = await createParticipant.mutate(
+	return new Response(
+		JSON.stringify(
 			{
-				data: {
-					orgId,
-					performanceAssessmentId:
-						resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper.id,
-					fullName: record.fullName,
-					number: i + 1,
-					...(record.birthday && { birthday: record.birthday }),
-				},
+				rows: parsedRows.length,
+				headers, // keys present in each record (after remap)
+				headerMap, // [{ field, metricDefinitionId }] — easy to copy to Excel
+				records: parsedRows.map((r) => r.toJson()), // data rows (keys = either field names or metric IDs)
 			},
-			{ event },
-		);
-
-		return { record, result }; // 👈 include context
-	});
-
-	const results = await Promise.all(promises);
-
-	for (const { record, result } of results) {
-		if (result.errors) {
-			console.log(JSON.stringify(result.errors));
-		} else {
-			console.log(`participant added ${record.fullName}`);
-		}
-
-		record.orgUniqueToken = result.data?.createPerformanceAssessmentParticipant
-			.orgUniqueToken as string;
-	}
-
-	const autoRecord = new AutoRecordMetricMutateStore();
-
-	for (const record of parsedRows) {
-		const promises = Object.keys(FIELD_ID_MAP).map((key) =>
-			autoRecord
-				.mutate(
-					{
-						data: {
-							orgUniqueToken: record.orgUniqueToken!,
-							metricDefinitionId: FIELD_ID_MAP[key],
-							performanceAssessmentId:
-								resultCreatePerformanceAssessment.data!.createPerformanceAssessmentWrapper.id!,
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							value: (record as any)[key],
-							isOfficial: true,
-						},
-					},
-					{
-						event,
-					},
-				)
-				.then((r) => {
-					if (r.errors) {
-						console.log(`${record.fullName} ${key} is ERROR`);
-					} else {
-						console.log(`${record.fullName} ${key} is done with id ${r.data?.autoRecordMetric.id}`);
-					}
-				}),
-		);
-
-		await Promise.all(promises);
-	}
-
-	const exportStore = new ExportPerformanceAssessmentStore();
-	const uploadResult = await exportStore.mutate(
-		{
-			performanceAssessmentId:
-				resultCreatePerformanceAssessment.data!.createPerformanceAssessmentWrapper.id!,
-		},
-		{
-			event,
-		},
+			null,
+			2,
+		),
+		{ headers: { 'content-type': 'application/json' } },
 	);
-
-	if (uploadResult.errors) {
-		console.log(uploadResult.errors);
-	}
-
-	// hten upload
-
-	return new Response(JSON.stringify({}));
 };
 
 function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {

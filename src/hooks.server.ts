@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import { error, type Handle } from '@sveltejs/kit';
 import { adminAuth } from '$lib/admin-firebase'; // your Firebase Admin init
 import { memberService } from './lib/services/member.service';
 
@@ -29,6 +29,19 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	} else {
 		event.locals.user = null;
+	}
+
+	const oid = event.params?.oid;
+	if (oid) {
+		const user = event.locals.user;
+		if (!user) {
+			throw error(401, 'Unauthorized');
+		}
+
+		const hasAccess = user.members?.some((m) => m.orgId === oid);
+		if (!hasAccess) {
+			throw error(403, 'Forbidden: you do not have access to this organization');
+		}
 	}
 
 	// (Optional) gate server-rendered/private routes
