@@ -1,9 +1,6 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-	gameScoreService,
-	type GameScoreValueEntry
-} from '$lib/services/game-score.service';
+import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 import { requireOrgAccess } from '../utils/require-org-access.util';
 
 type GameScorePayload = {
@@ -11,7 +8,7 @@ type GameScorePayload = {
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	let body: GameScorePayload | null = null;
 	try {
@@ -30,7 +27,7 @@ export const POST: RequestHandler = async (event) => {
 
 	console.log('Received /api/orgs/[oid]/game-score payload:', {
 		orgId,
-		values: sanitizedValues
+		values: sanitizedValues,
 	});
 
 	return json(
@@ -38,9 +35,9 @@ export const POST: RequestHandler = async (event) => {
 			ok: true,
 			values: saved.values,
 			savedAt,
-			message: 'ゲームスコアを保存しました。'
+			message: 'ゲームスコアを保存しました。',
 		},
-		{ status: 200 }
+		{ status: 200 },
 	);
 };
 
@@ -51,6 +48,6 @@ const sanitizeEntries = (entries: GameScoreValueEntry[]): GameScoreValueEntry[] 
 			const numericValue = Number(entry.value);
 			return {
 				metricDefinitionId: entry.metricDefinitionId,
-				value: Number.isFinite(numericValue) ? numericValue : 0
+				value: Number.isFinite(numericValue) ? numericValue : 0,
 			};
 		});

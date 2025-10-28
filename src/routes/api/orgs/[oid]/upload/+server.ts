@@ -5,7 +5,7 @@ import { GpsSessionParser } from '$lib/gps-session-parser.model';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 import {
 	METRIC_DEFINITION_IDS,
-	TRAINING_BASELINE_METRICS
+	TRAINING_BASELINE_METRICS,
 } from '$lib/constants/metric-definition-ids';
 import { requireOrgAccess } from '../utils/require-org-access.util';
 
@@ -43,7 +43,7 @@ function coerce(value: string): string | number {
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
 	if (!baselineDocument) {

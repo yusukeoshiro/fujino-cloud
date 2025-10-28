@@ -4,19 +4,19 @@ import { deviceTokenService } from '$lib/services/device-token.service';
 import { requireOrgAccess } from '../utils/require-org-access.util';
 
 export const GET: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	const doc = await deviceTokenService.get(orgId);
 
 	return json({
 		orgId,
 		hasToken: Boolean(doc?.token),
-		updatedAt: doc?.updatedAt ?? null
+		updatedAt: doc?.updatedAt ?? null,
 	});
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	let body: { token?: string } = {};
 	try {
@@ -37,14 +37,14 @@ export const POST: RequestHandler = async (event) => {
 			success: true,
 			orgId,
 			updatedAt: payload.updatedAt,
-			message: 'デバイストークンを保存しました。'
+			message: 'デバイストークンを保存しました。',
 		},
-		{ status: 200 }
+		{ status: 200 },
 	);
 };
 
 export const DELETE: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	await deviceTokenService.delete(orgId);
 
@@ -53,8 +53,8 @@ export const DELETE: RequestHandler = async (event) => {
 			success: true,
 			orgId,
 			updatedAt: null,
-			message: 'デバイストークンを削除しました。'
+			message: 'デバイストークンを削除しました。',
 		},
-		{ status: 200 }
+		{ status: 200 },
 	);
 };

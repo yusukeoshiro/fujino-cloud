@@ -5,7 +5,7 @@ import { DateTime } from 'luxon';
 import { requireOrgAccess } from '../utils/require-org-access.util';
 
 export const GET: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 	const yearParamStr = event.url.searchParams.get('year');
 	const yearParam = yearParamStr ? Number(yearParamStr) : undefined;
 
@@ -18,7 +18,7 @@ export const GET: RequestHandler = async (event) => {
 		year: resolvedYear,
 		config: snapshot.config,
 		budgets: snapshot.budgets,
-		events: snapshot.events
+		events: snapshot.events,
 	});
 };
 
@@ -34,7 +34,7 @@ type SavePayload = {
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = requireOrgAccess(event);
+	const orgId = requireOrgAccess(event.params.oid, event.locals.user);
 
 	let body: SavePayload;
 	try {
@@ -46,20 +46,20 @@ export const POST: RequestHandler = async (event) => {
 	const config = body.config
 		? {
 				startMonth: Number(body.config.startMonth),
-				weekStartsOn: Number(body.config.weekStartsOn)
+				weekStartsOn: Number(body.config.weekStartsOn),
 			}
 		: undefined;
 
 	const budgets = (body.budgets ?? []).map((entry) => ({
 		allocatedOn: entry.allocatedOn,
-		budget: toNumber(entry.value)
+		budget: toNumber(entry.value),
 	}));
 
 	const datesToDelete = budgets
 		.filter((entry) => entry.budget === null)
 		.map((entry) => entry.allocatedOn);
 	const budgetsToSave = budgets.filter(
-		(entry): entry is { allocatedOn: string; budget: number } => entry.budget !== null
+		(entry): entry is { allocatedOn: string; budget: number } => entry.budget !== null,
 	);
 
 	await trainingBudgetService.saveYearSnapshot({
@@ -68,7 +68,7 @@ export const POST: RequestHandler = async (event) => {
 		budgets: budgetsToSave,
 		budgetDatesToDelete: datesToDelete,
 		events: body.events ?? [],
-		deletedEventIds: body.deletedEventIds ?? []
+		deletedEventIds: body.deletedEventIds ?? [],
 	});
 
 	const configDoc = await trainingBudgetService.getConfig(orgId);
@@ -79,7 +79,7 @@ export const POST: RequestHandler = async (event) => {
 		ok: true,
 		config: snapshot.config,
 		budgets: snapshot.budgets,
-		events: snapshot.events
+		events: snapshot.events,
 	});
 };
 
