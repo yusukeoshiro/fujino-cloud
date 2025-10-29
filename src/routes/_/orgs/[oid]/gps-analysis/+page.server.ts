@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import jwt from 'jsonwebtoken';
+import { env } from '$env/dynamic/private';
 
 export const load: PageServerLoad = (event) => {
 	const oid = event.params?.oid;
@@ -21,9 +22,15 @@ export const load: PageServerLoad = (event) => {
 	const normalizedDate = rawDate.toLowerCase();
 	const safeDate = allowedDateTokens.has(normalizedDate) ? normalizedDate : 'past30days~';
 
-	// NOTE: strongly recommend moving these to environment variables
-	const METABASE_SITE_URL = 'https://metabase.oshiro.app';
-	const METABASE_SECRET_KEY = 'ef93dd6872823554b5c9e87b389b346eb8c7d381532d6284d6b5b4f691071555';
+	const METABASE_SITE_URL = env.METABASE_SITE_URL;
+	const METABASE_SECRET_KEY = env.METABASE_EMBED_SECRET;
+
+	if (!METABASE_SITE_URL) {
+		throw error(500, 'Metabase site URL is not configured');
+	}
+	if (!METABASE_SECRET_KEY) {
+		throw error(500, 'Metabase embed secret is not configured');
+	}
 
 	// --- Build a minimal, safe payload. Do not pass through arbitrary params.
 	const payload = {
