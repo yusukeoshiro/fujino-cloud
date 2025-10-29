@@ -3,57 +3,33 @@
 	import { type Snippet } from 'svelte';
 
 	let { children }: { children: Snippet<[]> } = $props();
+
+	type Item = { label: string; path: string; exact?: boolean };
+
+	const base = $derived(`/_/orgs/${page.params.oid}/gps-analysis`);
+	const items: Item[] = $derived([
+		{ label: 'ダッシュボード', path: base, exact: true },
+		{ label: 'ゲームスコアの管理', path: `${base}/game-score` },
+		{ label: 'トレーニング予算の管理', path: `${base}/budget` },
+		{ label: '日次GPSデータのアップロード', path: `${base}/upload` },
+	]);
+
+	const isActive = (item: Item) =>
+		item.exact ? page.url.pathname === item.path : page.url.pathname.startsWith(item.path);
 </script>
 
 <nav class="sticky top-0 z-[60] border-b border-slate-200 bg-white">
 	<ul class="flex justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 sm:gap-6">
-		<li>
-			<a
-				href={`/_/orgs/${page.params.oid}/gps-analysis`}
-				class={`rounded-md px-3 py-1.5 transition-colors
-          ${page.url.pathname.includes('/') ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'}`}
-			>
-				ダッシュボード
-			</a>
-		</li>
-
-		<li>
-			<a
-				href={`/_/orgs/${page.params.oid}/gps-analysis/game-score`}
-				class={`rounded-md px-3 py-1.5 transition-colors
-          ${
-						page.url.pathname.includes('/game-score')
-							? 'bg-blue-600 text-white'
-							: 'hover:bg-slate-100'
-					}`}
-			>
-				ゲームスコアの管理
-			</a>
-		</li>
-
-		<li>
-			<a
-				href={`/_/orgs/${page.params.oid}/gps-analysis/budget`}
-				class={`rounded-md px-3 py-1.5 transition-colors
-          ${
-						page.url.pathname.includes('/budget') ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'
-					}`}
-			>
-				トレーニング予算の管理
-			</a>
-		</li>
-
-		<li>
-			<a
-				href={`/_/orgs/${page.params.oid}/gps-analysis/upload`}
-				class={`rounded-md px-3 py-1.5 transition-colors
-          ${
-						page.url.pathname.includes('/upload') ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'
-					}`}
-			>
-				日次GPSデータのアップロード
-			</a>
-		</li>
+		{#each items as item}
+			<li>
+				<a
+					href={item.path}
+					class={`rounded-md px-3 py-1.5 transition-colors ${isActive(item) ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'}`}
+				>
+					{item.label}
+				</a>
+			</li>
+		{/each}
 	</ul>
 </nav>
 
