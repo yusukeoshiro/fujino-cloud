@@ -1,9 +1,9 @@
 import { HoudiniClient } from '$houdini';
 import { getDeviceToken } from '$lib/stores/device-token.store';
-import { GRAPHQL_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 export default new HoudiniClient({
-	url: GRAPHQL_URL,
+	url: env.GRAPHQL_URL,
 
 	fetchParams({ session }) {
 		const token = getDeviceToken();
