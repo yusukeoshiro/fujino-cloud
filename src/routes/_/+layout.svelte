@@ -68,6 +68,18 @@
 </script>
 
 <div class="w-full bg-white shadow">
+	{#if $currentMembers.length >= 2 && page.params.oid == null}
+		<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
+			<div class="flex gap-2">
+				{#each $currentMembers as member}
+					<a href={`/_/orgs/${member.orgId}`}>
+						{member.name}
+					</a>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
 		<!-- Left: logo + links -->
 		<div class="flex items-center gap-4">
@@ -113,18 +125,6 @@
 			{/if}
 		</div>
 	</div>
-
-	{#if $currentMembers.length >= 2 && page.params.oid == null}
-		<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
-			<div class="flex gap-2">
-				{#each $currentMembers as member}
-					<a href={`/_/orgs/${member.orgId}`}>
-						{member.name}
-					</a>
-				{/each}
-			</div>
-		</div>
-	{/if}
 </div>
 
 <div class="p-3">
