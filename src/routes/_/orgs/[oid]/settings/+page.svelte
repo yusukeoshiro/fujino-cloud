@@ -1,10 +1,11 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { deviceToken, deviceTokenReady } from '$lib/stores/device-token.store';
+	import { page } from '$app/state';
 
 	let { data }: { data: PageData } = $props();
 
-	const orgId = data.orgId;
+	const orgId = page.params.oid;
 
 	const applyToken = (token: string | null) => {
 		deviceToken.set(token ?? null);

@@ -9,6 +9,16 @@
 	<ul class="flex justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 sm:gap-6">
 		<li>
 			<a
+				href={`/_/orgs/${page.params.oid}/gps-analysis`}
+				class={`rounded-md px-3 py-1.5 transition-colors
+          ${page.url.pathname.includes('/') ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'}`}
+			>
+				ダッシュボード
+			</a>
+		</li>
+
+		<li>
+			<a
 				href={`/_/orgs/${page.params.oid}/gps-analysis/game-score`}
 				class={`rounded-md px-3 py-1.5 transition-colors
           ${
