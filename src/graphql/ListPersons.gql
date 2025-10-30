@@ -1,0 +1,15 @@
+query ListPersons($orgId: ID!) {
+	listPersons(data: { conditions: { orgId: $orgId }, pageOption: { size: 1000 } }) {
+		# ...PersonsInPersonsList
+		records {
+			id
+			fullName
+			birthday
+			isAnonymous
+			kana
+			teamRank
+			sex
+			externalId
+		}
+	}
+}
