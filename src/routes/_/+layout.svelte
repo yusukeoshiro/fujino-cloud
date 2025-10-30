@@ -21,6 +21,9 @@
 
 	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
 	let members = $derived(data.members ?? []);
+	const activeOrg = $derived(
+		page.params.oid ? $currentMembers.find((member) => member.orgId === page.params.oid) : null,
+	);
 
 	$effect(() => {
 		navigateToOnlyOrg(page.params.oid);
@@ -68,18 +71,6 @@
 </script>
 
 <div class="w-full bg-white shadow">
-	{#if $currentMembers.length >= 2 && page.params.oid == null}
-		<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
-			<div class="flex gap-2">
-				{#each $currentMembers as member}
-					<a href={`/_/orgs/${member.orgId}`}>
-						{member.name}
-					</a>
-				{/each}
-			</div>
-		</div>
-	{/if}
-
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
 		<!-- Left: logo + links -->
 		<div class="flex items-center gap-4">
@@ -103,8 +94,26 @@
 			{/if}
 		</div>
 
-		<!-- Right: user info + logout -->
 		<div class="flex items-center gap-3 text-sm text-gray-700">
+			<!-- Right: org switcher + user info + logout -->
+			{#if $currentMembers.length}
+				<div class="flex items-center gap-2">
+					{#if activeOrg}
+						<div class="rounded-lg bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
+							{activeOrg.name}
+						</div>
+					{/if}
+					{#if $currentMembers.length > 1}
+						<a
+							href="/_/"
+							class="rounded-lg border border-blue-200 bg-white px-3 py-1 text-xs font-medium text-blue-700 transition hover:border-blue-400 hover:bg-blue-50"
+						>
+							組織を変更
+						</a>
+					{/if}
+				</div>
+			{/if}
+
 			{#if $currentUser}
 				<span>こんにちは、{$currentUser.displayName || $currentUser.email} さん</span>
 				<button
@@ -130,3 +139,21 @@
 <div class="p-3">
 	{@render children?.()}
 </div>
+
+{#if $currentMembers.length >= 2 && page.params.oid == null}
+	<div class="mx-auto max-w-5xl px-4 py-6">
+		<div class="rounded-xl border border-blue-100 bg-blue-50/60 p-6 text-center shadow-sm">
+			<p class="text-sm font-medium text-blue-900">組織を選択してください</p>
+			<div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+				{#each $currentMembers as member}
+					<a
+						href={`/_/orgs/${member.orgId}`}
+						class="flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-400 hover:bg-blue-50"
+					>
+						{member.name}
+					</a>
+				{/each}
+			</div>
+		</div>
+	</div>
+{/if}

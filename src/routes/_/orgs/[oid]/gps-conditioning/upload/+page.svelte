@@ -70,13 +70,9 @@
 				const contentType = res.headers.get('content-type') ?? '';
 				if (contentType.includes('application/json')) {
 					const payload = await res.json();
-					const errorDetailsPayload = Array.isArray(payload?.details)
-						? payload.details
-						: [];
+					const errorDetailsPayload = Array.isArray(payload?.details) ? payload.details : [];
 					const err = new Error(
-						typeof payload?.message === 'string'
-							? payload.message
-							: 'アップロードに失敗しました。',
+						typeof payload?.message === 'string' ? payload.message : 'アップロードに失敗しました。',
 					) as Error & { details?: unknown };
 					err.details = errorDetailsPayload;
 					throw err;
@@ -122,7 +118,10 @@
 					}
 				}
 			}
-			setError(typeof e?.message === 'string' ? e.message : 'アップロードに失敗しました。', details);
+			setError(
+				typeof e?.message === 'string' ? e.message : 'アップロードに失敗しました。',
+				details,
+			);
 		} finally {
 			uploading = false;
 		}
@@ -184,7 +183,9 @@
 			onCommitSuccess(); // ✅ your hook
 		} catch (e: any) {
 			setError(
-				typeof e?.message === 'string' ? e.message : 'コミットに失敗しました。もう一度お試しください。',
+				typeof e?.message === 'string'
+					? e.message
+					: 'コミットに失敗しました。もう一度お試しください。',
 			);
 		} finally {
 			committing = false; // ✅ stop spinner
@@ -212,57 +213,65 @@
 			errorDetails = [];
 			return;
 		}
-		const lines = message.split('\n').map((line) => line.trim()).filter(Boolean);
+		const lines = message
+			.split('\n')
+			.map((line) => line.trim())
+			.filter(Boolean);
 		const headline = lines.shift();
 		errorHeadline = headline ?? message;
 		errorDetails = [...lines, ...extraDetails];
 	}
 </script>
 
-<div class="w-full">
-		<div class="mx-auto max-w-5xl">
-			<h1 class="mb-4 text-2xl font-semibold">GPSコンディショニング</h1>
+<section class="mx-auto max-w-screen-2xl px-4 py-6 text-slate-900">
+	<header class="mb-6 space-y-2">
+		<h1 class="text-xl font-semibold">日次GPSデータのアップロード</h1>
+		<p class="text-sm text-slate-600">
+			Fitogether の CSV をアップロードしてプレビューし、取り込み前に未照合選手や重複を確認できます。
+		</p>
+	</header>
 
-		{#if !result}
-			<!-- Hot spot / dropzone -->
-			<!-- svelte-ignore a11y_click_events_have_key_events -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<!-- svelte-ignore event_directive_deprecated -->
-			<div
-				class="cursor-pointer rounded-2xl border-2 border-dashed bg-white/40 p-10
-						 text-center transition
-						 select-none hover:bg-white/70
-						 {isOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}"
-				on:drop={onDrop}
-				on:dragover={onDragOver}
-				on:dragleave={onDragLeave}
-				on:click={() => fileInput?.click()}
-			>
-				<p class="mb-2 font-medium">CSVファイルをここにドロップ</p>
-				<p class="text-sm text-gray-500">またはクリックして選択</p>
-				<input
-					bind:this={fileInput}
-					type="file"
-					accept=".csv,text/csv"
-					class="hidden"
-					on:change={onPick}
-				/>
-			</div>
-		{/if}
+	{#if !result}
+		<!-- Hot spot / dropzone -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- svelte-ignore event_directive_deprecated -->
+		<div
+			class="cursor-pointer rounded-2xl border-2 border-dashed bg-white/40 p-10 text-center transition
+						select-none hover:bg-white/70
+						{isOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}"
+			on:drop={onDrop}
+			on:dragover={onDragOver}
+			on:dragleave={onDragLeave}
+			on:click={() => fileInput?.click()}
+		>
+			<p class="mb-2 font-semibold text-slate-800">CSVファイルをここにドロップ</p>
+			<p class="text-sm text-slate-500">またはクリックして選択</p>
+			<input
+				bind:this={fileInput}
+				type="file"
+				accept=".csv,text/csv"
+				class="hidden"
+				on:change={onPick}
+			/>
+		</div>
+	{/if}
 
-		{#if result}
-			<h1 class=" text-xl font-bold">CSV解析結果</h1>
-			<h2 class="text-lg">Fitogetherの形式を認識しました。</h2>
-		{/if}
+	{#if result}
+		<div class="mt-6 space-y-1">
+			<h2 class="text-lg font-semibold">CSV解析結果</h2>
+			<p class="text-sm text-slate-600">Fitogether の形式として認識しました。</p>
+		</div>
+	{/if}
 
-		{#if uploading}
-			<p class="mt-4 flex items-center gap-2">
-				<!-- inline spinner -->
-				<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
-					<circle
-						cx="12"
-						cy="12"
-						r="10"
+	{#if uploading}
+		<p class="mt-4 flex items-center gap-2 text-sm text-slate-600">
+			<!-- inline spinner -->
+			<svg class="h-4 w-4 animate-spin text-blue-600" viewBox="0 0 24 24" aria-hidden="true">
+				<circle
+					cx="12"
+					cy="12"
+					r="10"
 						stroke="currentColor"
 						stroke-width="4"
 						fill="none"
@@ -293,24 +302,23 @@
 			</div>
 		{/if}
 
-		{#if result}
-			<div class="mt-6 space-y-4">
-				<div>
-					<p class="font-medium">サマリー</p>
-					<p>行数: {result.rows}</p>
-					<!-- <p>ヘッダー: {result.headers.join(', ')}</p> -->
-				</div>
+	{#if result}
+		<div class="mt-6 space-y-4">
+			<div>
+				<p class="font-medium text-slate-700">サマリー</p>
+				<p class="text-sm text-slate-600">行数: {result.rows}</p>
+			</div>
 
-				<!-- Data table -->
-				{#if rows.length}
-					<div class="overflow-auto rounded-xl border border-gray-200 shadow-sm">
-						<table class="min-w-full border-collapse">
-							<thead class="sticky top-0 z-10 bg-gray-50">
-								<tr>
-									{#each COLUMNS as col}
-										<th
-											class={'px-3 py-2 text-left text-sm font-semibold whitespace-nowrap text-gray-700 ' +
-												colStickyClass(col)}
+			<!-- Data table -->
+			{#if rows.length}
+				<div class="overflow-auto rounded-xl border border-slate-200 shadow-sm">
+					<table class="min-w-full border-collapse text-sm text-slate-900">
+						<thead class="sticky top-0 z-10 bg-slate-50">
+							<tr>
+								{#each COLUMNS as col}
+									<th
+										class={'px-3 py-2 text-left font-semibold whitespace-nowrap text-slate-700 ' +
+											colStickyClass(col)}
 										>
 											<nobr>
 												{col}
@@ -321,12 +329,9 @@
 							</thead>
 							<tbody>
 								{#each rows as row, i}
-									<tr class="{i % 2 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50">
+									<tr class="{i % 2 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50">
 										{#each COLUMNS as col}
-											<td
-												class={'bg-inherit px-3 py-2 text-sm text-gray-900 tabular-nums ' +
-													colStickyClass(col)}
-											>
+											<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col)}>
 												<nobr>
 													{fmt(row[col])}
 												</nobr>
@@ -338,20 +343,20 @@
 						</table>
 					</div>
 				{:else}
-					<p class="text-sm text-gray-500">No records to display.</p>
+					<p class="text-sm text-slate-500">表示できるレコードがありません。</p>
 				{/if}
 			</div>
 
-			<div class="mt-4 flex flex-col items-center">
+			<div class="mt-6 flex flex-col items-center">
 				<button
-					class="flex items-center gap-2 rounded-2xl bg-gray-500 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-50"
+					class="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-white transition disabled:cursor-not-allowed disabled:bg-slate-400"
 					on:click={commitUpload}
 					disabled={!lastFile || uploading || committing}
 					aria-busy={committing}
 				>
 					{#if committing}
 						<!-- inline spinner -->
-						<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" aria-hidden="true">
+						<svg class="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
 							<circle
 								cx="12"
 								cy="12"
@@ -375,9 +380,8 @@
 					{/if}
 				</button>
 			</div>
-		{/if}
-	</div>
-</div>
+	{/if}
+</section>
 
 <style>
 	.tabular-nums {
