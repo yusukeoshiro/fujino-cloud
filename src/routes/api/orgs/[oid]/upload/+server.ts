@@ -92,6 +92,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const parsedRows: GpsSessionParser[] = [];
 	const unmatchedPersons: Array<{ row: number; playerName: string; jerseyNo: string }> = [];
+	const seenPersons = new Set<string>();
 	// Toggle: use metricDefinitionId as keys?
 	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
 
@@ -136,34 +137,40 @@ export const POST: RequestHandler = async (event) => {
 			out[key] = coerce(value);
 		}
 
-		// ✅ skip if same fullName already exists
-		const fullNameValue = out[PLAYER_NAME_FIELD];
-		const fullName = typeof fullNameValue === 'string' ? fullNameValue : '';
-		if (parsedRows.some((r) => r.fullName === fullName)) return;
-		if (fullName === 'Team Average') return;
-
-		const jerseyValue = out[JERSEY_NO_FIELD];
-		const jerseyKey = normalizeIdentifier(
-			typeof jerseyValue === 'string' || typeof jerseyValue === 'number' ? jerseyValue : '',
-		);
-		let matchedPerson = jerseyKey ? personsByExternalId.get(jerseyKey) : undefined;
-		if (!matchedPerson) {
+			const fullNameValue = out[PLAYER_NAME_FIELD];
+			const fullName = typeof fullNameValue === 'string' ? fullNameValue : '';
+			if (fullName === 'Team Average') return;
 			const nameKey = normalizeName(fullName);
-			if (nameKey) matchedPerson = personsByFullName.get(nameKey);
-		}
-		if (!matchedPerson) {
-			unmatchedPersons.push({
-				row: rowIndex + 2,
+
+			const jerseyValue = out[JERSEY_NO_FIELD];
+			const jerseyKey = normalizeIdentifier(
+				typeof jerseyValue === 'string' || typeof jerseyValue === 'number' ? jerseyValue : '',
+			);
+			let matchedPerson = jerseyKey ? personsByExternalId.get(jerseyKey) : undefined;
+			if (!matchedPerson) {
+				if (nameKey) matchedPerson = personsByFullName.get(nameKey);
+			}
+			if (!matchedPerson) {
+				unmatchedPersons.push({
+					row: rowIndex + 2,
 				playerName: fullName || '(missing)',
 				jerseyNo:
 					typeof jerseyValue === 'string' || typeof jerseyValue === 'number'
 						? String(jerseyValue).trim() || '(missing)'
 						: '(missing)',
-			});
-			return;
-		}
-		const resolvedFullName = matchedPerson?.fullName ?? fullName;
-		const resolvedBirthday = matchedPerson?.birthday ?? '0000-00-00';
+				});
+				return;
+			}
+			const dedupeKey =
+				(matchedPerson.id && `person:${matchedPerson.id}`) ||
+				(jerseyKey && `jersey:${jerseyKey}`) ||
+				(nameKey && `name:${nameKey}`);
+			if (dedupeKey) {
+				if (seenPersons.has(dedupeKey)) return;
+				seenPersons.add(dedupeKey);
+			}
+			const resolvedFullName = matchedPerson?.fullName ?? fullName;
+			const resolvedBirthday = matchedPerson?.birthday ?? '0000-00-00';
 
 		parsedRows.push(
 			new GpsSessionParser(
