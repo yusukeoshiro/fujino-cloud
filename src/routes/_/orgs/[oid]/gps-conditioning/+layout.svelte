@@ -6,7 +6,7 @@
 
 	type Item = { label: string; path: string; exact?: boolean };
 
-	const base = $derived(`/_/orgs/${page.params.oid}/gps-analysis`);
+	const base = $derived(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	const items: Item[] = $derived([
 		{ label: 'ダッシュボード', path: base, exact: true },
 		{ label: 'ゲームスコアの管理', path: `${base}/game-score` },

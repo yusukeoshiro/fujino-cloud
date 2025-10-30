@@ -117,15 +117,15 @@
 
 		try {
 			const response = await fetch(
-				`/api/orgs/${encodeURIComponent(orgId)}/game-score`,
+				`/api/gps-conditioning/game-score/set?orgId=${encodeURIComponent(orgId)}`,
 				{
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					values: entriesFromValuesMap(values),
-				}),
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						values: entriesFromValuesMap(values),
+					}),
 				},
 			);
 

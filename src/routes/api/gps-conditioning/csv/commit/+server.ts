@@ -17,8 +17,8 @@ import {
 } from '$lib/utils/fitogether-csv-processor';
 
 export const POST: RequestHandler = async (event) => {
-	const { request } = event;
-	const orgId = event.params.oid;
+	const { request, url } = event;
+	const orgId = url.searchParams.get('orgId');
 	if (!orgId) {
 		throw error(400, 'orgId is required');
 	}
@@ -126,7 +126,7 @@ export const POST: RequestHandler = async (event) => {
 			{ event },
 		);
 
-		return { record, result }; // 👈 include context
+		return { record, result };
 	});
 
 	const results = await Promise.all(promises);
@@ -189,8 +189,6 @@ export const POST: RequestHandler = async (event) => {
 	if (uploadResult.errors) {
 		console.log(uploadResult.errors);
 	}
-
-	// hten upload
 
 	return new Response(JSON.stringify({}));
 };

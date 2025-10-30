@@ -11,7 +11,7 @@ import {
 	buildUnmatchedPersonsResponse,
 } from '$lib/utils/fitogether-csv-processor';
 
-// 1) Field → MetricDefinitionId map
+// Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'Duration (min)': METRIC_DEFINITION_IDS.durationMin,
 	'Total Distance (m)': METRIC_DEFINITION_IDS.totalDistanceM,
@@ -37,7 +37,7 @@ const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
-	const orgId = event.params.oid;
+	const orgId = url.searchParams.get('orgId');
 	if (!orgId) {
 		throw error(400, 'orgId is required');
 	}
@@ -59,7 +59,6 @@ export const POST: RequestHandler = async (event) => {
 
 	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
 
-	// Toggle: use metricDefinitionId as keys?
 	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
 
 	const form = await request.formData();
@@ -75,7 +74,6 @@ export const POST: RequestHandler = async (event) => {
 		relax_column_count: true,
 	}) as Array<Record<string, string>>;
 
-	// Determine original headers from first row or CSV header line
 	const originalHeaders =
 		rawRecords.length > 0
 			? Object.keys(rawRecords[0])
@@ -106,9 +104,9 @@ export const POST: RequestHandler = async (event) => {
 		JSON.stringify(
 			{
 				rows: parsers.length,
-				headers, // keys present in each record (after remap)
-				headerMap, // [{ field, metricDefinitionId }] — easy to copy to Excel
-				records: parsers.map((r) => r.toJson()), // data rows (keys = either field names or metric IDs)
+				headers,
+				headerMap,
+				records: parsers.map((r) => r.toJson()),
 			},
 			null,
 			2,

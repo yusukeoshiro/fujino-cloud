@@ -4,6 +4,6 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		goto(`/_/orgs/${page.params.oid}/gps-analysis`);
+		goto(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	});
 </script>

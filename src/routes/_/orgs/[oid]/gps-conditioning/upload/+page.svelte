@@ -43,7 +43,7 @@
 	function onCommitSuccess() {
 		// e.g., show toast / navigate / reset
 		// result = null; lastFile = null;
-		goto(`/_/orgs/${page.params.oid}/gps-analysis`);
+		goto(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	}
 
 	async function uploadFile(file: File) {
@@ -59,10 +59,13 @@
 			const fd = new FormData();
 			fd.append('file', file);
 
-			const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/upload`, {
-				method: 'POST',
-				body: fd,
-			});
+			const res = await fetch(
+				`/api/gps-conditioning/csv/preview?orgId=${encodeURIComponent(orgId)}`,
+				{
+					method: 'POST',
+					body: fd,
+				},
+			);
 			if (!res.ok) {
 				const contentType = res.headers.get('content-type') ?? '';
 				if (contentType.includes('application/json')) {
@@ -170,10 +173,13 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
-			const res = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/commit`, {
-				method: 'POST',
-				body: fd,
-			});
+			const res = await fetch(
+				`/api/gps-conditioning/csv/commit?orgId=${encodeURIComponent(orgId)}`,
+				{
+					method: 'POST',
+					body: fd,
+				},
+			);
 			if (!res.ok) throw new Error(await res.text());
 			onCommitSuccess(); // ✅ your hook
 		} catch (e: any) {
@@ -214,8 +220,8 @@
 </script>
 
 <div class="w-full">
-	<div class="mx-auto max-w-5xl">
-		<h1 class="mb-4 text-2xl font-semibold">GPSデータの分析</h1>
+		<div class="mx-auto max-w-5xl">
+			<h1 class="mb-4 text-2xl font-semibold">GPSコンディショニング</h1>
 
 		{#if !result}
 			<!-- Hot spot / dropzone -->
