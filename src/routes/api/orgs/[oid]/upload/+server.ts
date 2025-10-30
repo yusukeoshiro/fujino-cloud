@@ -1,13 +1,15 @@
-import { error, json, type RequestHandler } from '@sveltejs/kit';
+import { error, type RequestHandler } from '@sveltejs/kit';
 import { parse } from 'csv-parse/sync';
-import { DateTime } from 'luxon';
-import { GpsSessionParser } from '$lib/gps-session-parser.model';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 import {
 	METRIC_DEFINITION_IDS,
 	TRAINING_BASELINE_METRICS,
 } from '$lib/constants/metric-definition-ids';
 import { ListPersonsStore } from '$houdini';
+import {
+	FitogetherCsvProcessor,
+	buildUnmatchedPersonsResponse,
+} from '$lib/utils/fitogether-csv-processor';
 
 // 1) Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
@@ -33,27 +35,6 @@ const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.noOfExpDec,
 };
 
-const PLAYER_NAME_FIELD = 'Player Name';
-const JERSEY_NO_FIELD = 'Jersey No.';
-
-// 2) number coercion (handles thousands separators)
-function coerce(value: string): string | number {
-	if (value === '') return value;
-	const cleaned = value.replace(/,/g, '').trim();
-	if (!isNaN(Number(cleaned)) && /^-?\d+(\.\d+)?$/.test(cleaned)) return Number(cleaned);
-	return value;
-}
-
-const normalizeIdentifier = (value: string | number | null | undefined) => {
-	if (value === null || value === undefined) return '';
-	const raw = typeof value === 'number' ? String(value) : value.trim();
-	if (!raw) return '';
-	return /^[0-9]+$/.test(raw) ? String(Number(raw)) : raw;
-};
-
-const normalizeName = (value: string | null | undefined) =>
-	value ? value.trim().toLowerCase() : '';
-
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
 	const orgId = event.params.oid;
@@ -70,18 +51,6 @@ export const POST: RequestHandler = async (event) => {
 	});
 
 	const records = result.data?.listPersons?.records ?? [];
-	const personsByExternalId = new Map<string, (typeof records)[number]>();
-	const personsByFullName = new Map<string, (typeof records)[number]>();
-	for (let i = 0; i < records.length; i += 1) {
-		const person = records[i];
-		const externalId = normalizeIdentifier(person.externalId);
-		if (externalId) personsByExternalId.set(externalId, person);
-
-		const nameKey = normalizeName(person.fullName);
-		if (nameKey && !personsByFullName.has(nameKey)) {
-			personsByFullName.set(nameKey, person);
-		}
-	}
 
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
 	if (!baselineDocument) {
@@ -90,9 +59,6 @@ export const POST: RequestHandler = async (event) => {
 
 	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
 
-	const parsedRows: GpsSessionParser[] = [];
-	const unmatchedPersons: Array<{ row: number; playerName: string; jerseyNo: string }> = [];
-	const seenPersons = new Set<string>();
 	// Toggle: use metricDefinitionId as keys?
 	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
 
@@ -118,149 +84,31 @@ export const POST: RequestHandler = async (event) => {
 					?.split(',')
 					.map((h) => h.trim()) ?? []);
 
-	// Build header map (for Excel pasting or debugging)
-	// Array of { field, metricDefinitionId }
-	const headerMap = originalHeaders
-		.map((field) => ({
-			field,
-			metricDefinitionId: FITOGETHER_FIELD_TO_METRIC_ID[field] ?? '',
-		}))
-		.filter((item) => item.metricDefinitionId);
-
-	rawRecords.forEach((row, rowIndex) => {
-		const out: Record<string, string | number> = {};
-		for (const [field, value] of Object.entries(row)) {
-			const key =
-				useMetricIds && FITOGETHER_FIELD_TO_METRIC_ID[field]
-					? FITOGETHER_FIELD_TO_METRIC_ID[field]!
-					: field;
-			out[key] = coerce(value);
-		}
-
-			const fullNameValue = out[PLAYER_NAME_FIELD];
-			const fullName = typeof fullNameValue === 'string' ? fullNameValue : '';
-			if (fullName === 'Team Average') return;
-			const nameKey = normalizeName(fullName);
-
-			const jerseyValue = out[JERSEY_NO_FIELD];
-			const jerseyKey = normalizeIdentifier(
-				typeof jerseyValue === 'string' || typeof jerseyValue === 'number' ? jerseyValue : '',
-			);
-			let matchedPerson = jerseyKey ? personsByExternalId.get(jerseyKey) : undefined;
-			if (!matchedPerson) {
-				if (nameKey) matchedPerson = personsByFullName.get(nameKey);
-			}
-			if (!matchedPerson) {
-				unmatchedPersons.push({
-					row: rowIndex + 2,
-				playerName: fullName || '(missing)',
-				jerseyNo:
-					typeof jerseyValue === 'string' || typeof jerseyValue === 'number'
-						? String(jerseyValue).trim() || '(missing)'
-						: '(missing)',
-				});
-				return;
-			}
-			const dedupeKey =
-				(matchedPerson.id && `person:${matchedPerson.id}`) ||
-				(jerseyKey && `jersey:${jerseyKey}`) ||
-				(nameKey && `name:${nameKey}`);
-			if (dedupeKey) {
-				if (seenPersons.has(dedupeKey)) return;
-				seenPersons.add(dedupeKey);
-			}
-			const resolvedFullName = matchedPerson?.fullName ?? fullName;
-			const resolvedBirthday = matchedPerson?.birthday ?? '0000-00-00';
-
-		parsedRows.push(
-			new GpsSessionParser(
-				{
-					type: 'TRAINING',
-					date: DateTime.fromFormat(out['Date'] as string, 'yyyy/M/d').toFormat('yyyy-MM-dd'),
-					startTime: DateTime.fromFormat(out['Start Time'] as string, 'yyyy/M/d H:mm', {
-						zone: 'Asia/Tokyo',
-					}).toJSDate(),
-					endTime: DateTime.fromFormat(out['End Time'] as string, 'yyyy/M/d H:mm', {
-						zone: 'Asia/Tokyo',
-					}).toJSDate(),
-
-					// TODO get fullName and birthday
-
-					fullName: resolvedFullName,
-					birthday: resolvedBirthday,
-
-					durationMin: Number(out['Duration (min)']),
-					totalDistanceM: Number(out['Total Distance (m)']),
-					totalDistanceMPerMin: Number(out['Total Distance/min (m/min)']),
-					maxSpeedKMH: Number(out['Max Speed (km/h)']),
-
-					noOfHSR: Number(out['No. of HSR (times)']),
-					HSRDistanceM: Number(out['HSR Distance (m)']),
-
-					noOfSprint: Number(out['No. of Sprint (times)']),
-					sprintDistanceM: Number(out['Sprint Distance (m)']),
-					speedZone1DistanceM: Number(out['Speed Zone 1 Distance (m)']),
-					speedZone3DistanceM: Number(out['Speed Zone 3 Distance (m)']),
-					speedZone4DistanceM: Number(out['Speed Zone 4 Distance (m)']),
-					speedZone5DistanceM: Number(out['Speed Zone 5 Distance (m)']),
-
-					accelerationZone4EntryCount: Number(out['Acceleration Zone 4 Entry Count (times)']),
-					accelerationZone5EntryCount: Number(out['Acceleration Zone 5 Entry Count (times)']),
-					accelerationZone6EntryCount: Number(out['Acceleration Zone 6 Entry Count (times)']),
-
-					decelerationZone4EntryCount: Number(out['Deceleration Zone 4 Entry Count (times)']),
-					decelerationZone5EntryCount: Number(out['Deceleration Zone 5 Entry Count (times)']),
-					decelerationZone6EntryCount: Number(out['Deceleration Zone 6 Entry Count (times)']),
-
-					noOfExpAcc: Number(out['No. of Exp. Acc. (times)']),
-					noOfExpDec: Number(out['No. of Exp. Dec. (times)']),
-				},
-				trainingBaseline,
-			),
-		);
-
-		return out;
+	const processor = new FitogetherCsvProcessor({
+		rawRecords,
+		originalHeaders,
+		persons: records,
+		fieldToMetricId: FITOGETHER_FIELD_TO_METRIC_ID,
+		useMetricIds,
 	});
 
-	if (unmatchedPersons.length > 0) {
-		const messageLines = [
-			`以下の${unmatchedPersons.length}名を既存の選手情報と照合できませんでした。`,
-			'Mobili Platformにて、登録選手として登録されていることを確認してください。',
-			'外部IDを用いて照合を行います。Fitogetherの場合、Jersey No → Player Name の順に照合します。',
-		];
+	const { parsers, unmatched, headers, headerMap } = processor.process({
+		trainingBaseline,
+		fallbackBirthday: '0000-00-00',
+	});
 
-		return json(
-			{
-				code: 'UNMATCHED_PERSONS',
-				message: messageLines.join('\n'),
-				details: unmatchedPersons.map((item) => ({
-					row: item.row,
-					playerName: item.playerName,
-					jerseyNo: item.jerseyNo,
-					description: `行${item.row}：${PLAYER_NAME_FIELD}「${item.playerName}」 ${JERSEY_NO_FIELD}「${item.jerseyNo}」`,
-				})),
-			},
-			{ status: 400 },
-		);
+	if (unmatched.length > 0) {
+		const response = buildUnmatchedPersonsResponse(unmatched);
+		if (response) return response;
 	}
-
-	const headers = Array.from(
-		new Set(
-			originalHeaders.map((field) =>
-				useMetricIds && FITOGETHER_FIELD_TO_METRIC_ID[field]
-					? FITOGETHER_FIELD_TO_METRIC_ID[field]!
-					: field,
-			),
-		),
-	);
 
 	return new Response(
 		JSON.stringify(
 			{
-				rows: parsedRows.length,
+				rows: parsers.length,
 				headers, // keys present in each record (after remap)
 				headerMap, // [{ field, metricDefinitionId }] — easy to copy to Excel
-				records: parsedRows.map((r) => r.toJson()), // data rows (keys = either field names or metric IDs)
+				records: parsers.map((r) => r.toJson()), // data rows (keys = either field names or metric IDs)
 			},
 			null,
 			2,

@@ -1,24 +1,20 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { parse } from 'csv-parse/sync';
+import { DateTime } from 'luxon';
 import {
 	AutoRecordMetricMutateStore,
 	CreatePerformanceAssessmentParticipantStore,
 	CreatePerformanceAssessmentWrapperStore,
 	ExportPerformanceAssessmentStore,
+	ListPersonsStore,
 } from '$houdini';
-import { DateTime } from 'luxon';
-import { GpsSessionParser } from '$lib/gps-session-parser.model';
 import { FIELD_ID_MAP, trainigMetricDefinitionIds } from '$lib/training-cols';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
-
-// 2) number coercion (handles thousands separators)
-function coerce(value: string): string | number {
-	if (value === '') return value;
-	const cleaned = value.replace(/,/g, '').trim();
-	if (!isNaN(Number(cleaned)) && /^-?\d+(\.\d+)?$/.test(cleaned)) return Number(cleaned);
-	return value;
-}
+import {
+	FitogetherCsvProcessor,
+	buildUnmatchedPersonsResponse,
+} from '$lib/utils/fitogether-csv-processor';
 
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
@@ -31,13 +27,20 @@ export const POST: RequestHandler = async (event) => {
 	const file = form.get('file');
 	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
 
+	const listUsersStore = new ListPersonsStore();
+	const personsResult = await listUsersStore.fetch({
+		event,
+		variables: {
+			orgId,
+		},
+	});
+	const persons = personsResult.data?.listPersons?.records ?? [];
+
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
 	if (!baselineDocument) {
 		throw error(404, `ゲームスコア基準値が未設定です (orgId=${orgId})`);
 	}
 	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
-
-	const parsedRows: GpsSessionParser[] = [];
 
 	const text = await file.text();
 	const rawRecords = parse(text, {
@@ -47,62 +50,29 @@ export const POST: RequestHandler = async (event) => {
 		relax_column_count: true,
 	}) as Array<Record<string, string>>;
 
-	rawRecords.forEach((row) => {
-		const out: Record<string, string | number> = {};
-		for (const [field, value] of Object.entries(row)) {
-			out[field] = coerce(value);
-		}
+	const originalHeaders =
+		rawRecords.length > 0
+			? Object.keys(rawRecords[0])
+			: (text
+					.split(/\r?\n/)[0]
+					?.split(',')
+					.map((h) => h.trim()) ?? []);
 
-		// ✅ skip if same fullName already exists
-		const fullName = out['Player Name'] as string;
-		if (parsedRows.some((r) => r.fullName === fullName)) return;
-		if (fullName === 'Team Average') return;
-
-		parsedRows.push(
-			new GpsSessionParser(
-				{
-					type: 'TRAINING',
-					date: DateTime.fromFormat(out['Date'] as string, 'yyyy/M/d').toFormat('yyyy-MM-dd'),
-					startTime: DateTime.fromFormat(out['Start Time'] as string, 'yyyy/M/d H:mm', {
-						zone: 'Asia/Tokyo',
-					}).toJSDate(),
-					endTime: DateTime.fromFormat(out['End Time'] as string, 'yyyy/M/d H:mm', {
-						zone: 'Asia/Tokyo',
-					}).toJSDate(),
-
-					fullName: out['Player Name'] as string,
-					birthday: '2000-01-01',
-
-					durationMin: Number(out['Duration (min)']),
-					totalDistanceM: Number(out['Total Distance (m)']),
-					totalDistanceMPerMin: Number(out['Total Distance/min (m/min)']),
-					maxSpeedKMH: Number(out['Max Speed (km/h)']),
-
-					noOfHSR: Number(out['No. of HSR (times)']),
-					HSRDistanceM: Number(out['HSR Distance (m)']),
-
-					noOfSprint: Number(out['No. of Sprint (times)']),
-					sprintDistanceM: Number(out['Sprint Distance (m)']),
-					speedZone1DistanceM: Number(out['Speed Zone 1 Distance (m)']),
-					speedZone3DistanceM: Number(out['Speed Zone 3 Distance (m)']),
-					speedZone4DistanceM: Number(out['Speed Zone 4 Distance (m)']),
-					speedZone5DistanceM: Number(out['Speed Zone 5 Distance (m)']),
-
-					accelerationZone4EntryCount: Number(out['Acceleration Zone 4 Entry Count (times)']),
-					accelerationZone5EntryCount: Number(out['Acceleration Zone 5 Entry Count (times)']),
-					accelerationZone6EntryCount: Number(out['Acceleration Zone 6 Entry Count (times)']),
-
-					decelerationZone4EntryCount: Number(out['Deceleration Zone 4 Entry Count (times)']),
-					decelerationZone5EntryCount: Number(out['Deceleration Zone 5 Entry Count (times)']),
-					decelerationZone6EntryCount: Number(out['Deceleration Zone 6 Entry Count (times)']),
-
-					noOfExpAcc: Number(out['No. of Exp. Acc. (times)']),
-					noOfExpDec: Number(out['No. of Exp. Dec. (times)']),
-				},
-				trainingBaseline,
-			),
-		);
+	const processor = new FitogetherCsvProcessor({
+		rawRecords,
+		originalHeaders,
+		persons,
 	});
+
+	const { parsers: parsedRows, unmatched } = processor.process({
+		trainingBaseline,
+		fallbackBirthday: '2000-01-01',
+	});
+
+	if (unmatched.length > 0) {
+		const response = buildUnmatchedPersonsResponse(unmatched);
+		if (response) return response;
+	}
 
 	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 

@@ -21,15 +21,18 @@
 		return String(v);
 	}
 
+	type UploadPreviewRecord = Record<string, unknown>;
+	type UploadPreviewResponse = {
+		rows: number;
+		headers: string[];
+		records: UploadPreviewRecord[];
+	};
+
 	let isOver = $state(false);
 	let uploading = $state(false);
 	let committing = $state(false); // ✅ NEW
 
-	let result: {
-		rows: number;
-		headers: string[];
-		records: Array<Record<string, unknown>>;
-	} | null = $state(null);
+	let result = $state<UploadPreviewResponse | null>(null);
 
 	let errorHeadline: string | null = $state(null);
 	let errorDetails: string[] = $state([]);
@@ -40,7 +43,7 @@
 	function onCommitSuccess() {
 		// e.g., show toast / navigate / reset
 		// result = null; lastFile = null;
-		goto('/_/');
+		goto(`/_/orgs/${page.params.oid}/gps-analysis`);
 	}
 
 	async function uploadFile(file: File) {
@@ -185,12 +188,16 @@
 	const hideTeamAverage = true;
 
 	// ✅ compute rows reactively (no {#let})
-	let rows = $derived(
+	const emptyRecords: UploadPreviewRecord[] = [];
+	let rows = $derived<UploadPreviewRecord[]>(
 		result && Array.isArray(result.records)
 			? hideTeamAverage
-				? result.records.filter((r) => r['Player Name'] !== 'Team Average')
+				? result.records.filter((r: UploadPreviewRecord) => {
+						const name = r['Player Name'];
+						return !(typeof name === 'string' && name === 'Team Average');
+					})
 				: result.records
-			: [],
+			: emptyRecords,
 	);
 
 	function setError(message: string | null, extraDetails: string[] = []) {
