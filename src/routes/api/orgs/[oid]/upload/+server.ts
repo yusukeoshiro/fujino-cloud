@@ -1,4 +1,4 @@
-import { error, type RequestHandler } from '@sveltejs/kit';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { parse } from 'csv-parse/sync';
 import { DateTime } from 'luxon';
 import { GpsSessionParser } from '$lib/gps-session-parser.model';
@@ -7,6 +7,7 @@ import {
 	METRIC_DEFINITION_IDS,
 	TRAINING_BASELINE_METRICS,
 } from '$lib/constants/metric-definition-ids';
+import { ListPersonsStore } from '$houdini';
 
 // 1) Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
@@ -32,6 +33,9 @@ const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.noOfExpDec,
 };
 
+const PLAYER_NAME_FIELD = 'Player Name';
+const JERSEY_NO_FIELD = 'Jersey No.';
+
 // 2) number coercion (handles thousands separators)
 function coerce(value: string): string | number {
 	if (value === '') return value;
@@ -40,11 +44,43 @@ function coerce(value: string): string | number {
 	return value;
 }
 
+const normalizeIdentifier = (value: string | number | null | undefined) => {
+	if (value === null || value === undefined) return '';
+	const raw = typeof value === 'number' ? String(value) : value.trim();
+	if (!raw) return '';
+	return /^[0-9]+$/.test(raw) ? String(Number(raw)) : raw;
+};
+
+const normalizeName = (value: string | null | undefined) =>
+	value ? value.trim().toLowerCase() : '';
+
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
 	const orgId = event.params.oid;
 	if (!orgId) {
 		throw error(400, 'orgId is required');
+	}
+
+	const listUsersStore = new ListPersonsStore();
+	const result = await listUsersStore.fetch({
+		event,
+		variables: {
+			orgId,
+		},
+	});
+
+	const records = result.data?.listPersons?.records ?? [];
+	const personsByExternalId = new Map<string, (typeof records)[number]>();
+	const personsByFullName = new Map<string, (typeof records)[number]>();
+	for (let i = 0; i < records.length; i += 1) {
+		const person = records[i];
+		const externalId = normalizeIdentifier(person.externalId);
+		if (externalId) personsByExternalId.set(externalId, person);
+
+		const nameKey = normalizeName(person.fullName);
+		if (nameKey && !personsByFullName.has(nameKey)) {
+			personsByFullName.set(nameKey, person);
+		}
 	}
 
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
@@ -55,6 +91,7 @@ export const POST: RequestHandler = async (event) => {
 	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
 
 	const parsedRows: GpsSessionParser[] = [];
+	const unmatchedPersons: Array<{ row: number; playerName: string; jerseyNo: string }> = [];
 	// Toggle: use metricDefinitionId as keys?
 	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
 
@@ -89,7 +126,7 @@ export const POST: RequestHandler = async (event) => {
 		}))
 		.filter((item) => item.metricDefinitionId);
 
-	rawRecords.forEach((row) => {
+	rawRecords.forEach((row, rowIndex) => {
 		const out: Record<string, string | number> = {};
 		for (const [field, value] of Object.entries(row)) {
 			const key =
@@ -100,9 +137,33 @@ export const POST: RequestHandler = async (event) => {
 		}
 
 		// ✅ skip if same fullName already exists
-		const fullName = out['Player Name'] as string;
+		const fullNameValue = out[PLAYER_NAME_FIELD];
+		const fullName = typeof fullNameValue === 'string' ? fullNameValue : '';
 		if (parsedRows.some((r) => r.fullName === fullName)) return;
 		if (fullName === 'Team Average') return;
+
+		const jerseyValue = out[JERSEY_NO_FIELD];
+		const jerseyKey = normalizeIdentifier(
+			typeof jerseyValue === 'string' || typeof jerseyValue === 'number' ? jerseyValue : '',
+		);
+		let matchedPerson = jerseyKey ? personsByExternalId.get(jerseyKey) : undefined;
+		if (!matchedPerson) {
+			const nameKey = normalizeName(fullName);
+			if (nameKey) matchedPerson = personsByFullName.get(nameKey);
+		}
+		if (!matchedPerson) {
+			unmatchedPersons.push({
+				row: rowIndex + 2,
+				playerName: fullName || '(missing)',
+				jerseyNo:
+					typeof jerseyValue === 'string' || typeof jerseyValue === 'number'
+						? String(jerseyValue).trim() || '(missing)'
+						: '(missing)',
+			});
+			return;
+		}
+		const resolvedFullName = matchedPerson?.fullName ?? fullName;
+		const resolvedBirthday = matchedPerson?.birthday ?? '0000-00-00';
 
 		parsedRows.push(
 			new GpsSessionParser(
@@ -116,8 +177,10 @@ export const POST: RequestHandler = async (event) => {
 						zone: 'Asia/Tokyo',
 					}).toJSDate(),
 
-					fullName: out['Player Name'] as string,
-					birthday: '0000-00-00',
+					// TODO get fullName and birthday
+
+					fullName: resolvedFullName,
+					birthday: resolvedBirthday,
 
 					durationMin: Number(out['Duration (min)']),
 					totalDistanceM: Number(out['Total Distance (m)']),
@@ -151,6 +214,28 @@ export const POST: RequestHandler = async (event) => {
 
 		return out;
 	});
+
+	if (unmatchedPersons.length > 0) {
+		const messageLines = [
+			`以下の${unmatchedPersons.length}名を既存の選手情報と照合できませんでした。`,
+			'Mobili Platformにて、登録選手として登録されていることを確認してください。',
+			'外部IDを用いて照合を行います。Fitogetherの場合、Jersey No → Player Name の順に照合します。',
+		];
+
+		return json(
+			{
+				code: 'UNMATCHED_PERSONS',
+				message: messageLines.join('\n'),
+				details: unmatchedPersons.map((item) => ({
+					row: item.row,
+					playerName: item.playerName,
+					jerseyNo: item.jerseyNo,
+					description: `行${item.row}：${PLAYER_NAME_FIELD}「${item.playerName}」 ${JERSEY_NO_FIELD}「${item.jerseyNo}」`,
+				})),
+			},
+			{ status: 400 },
+		);
+	}
 
 	const headers = Array.from(
 		new Set(

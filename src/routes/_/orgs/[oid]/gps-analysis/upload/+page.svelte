@@ -31,7 +31,8 @@
 		records: Array<Record<string, unknown>>;
 	} | null = $state(null);
 
-	let error: string | null = $state(null);
+	let errorHeadline: string | null = $state(null);
+	let errorDetails: string[] = $state([]);
 	let fileInput: HTMLInputElement | null = $state(null);
 	let lastFile: File | null = $state(null);
 
@@ -45,10 +46,10 @@
 	async function uploadFile(file: File) {
 		if (!file) return;
 		if (!orgId) {
-			error = '組織IDが特定できません。';
+			setError('組織IDが特定できません。');
 			return;
 		}
-		error = null;
+		setError(null);
 		result = null;
 		uploading = true;
 		try {
@@ -59,10 +60,63 @@
 				method: 'POST',
 				body: fd,
 			});
-			if (!res.ok) throw new Error(await res.text());
+			if (!res.ok) {
+				const contentType = res.headers.get('content-type') ?? '';
+				if (contentType.includes('application/json')) {
+					const payload = await res.json();
+					const errorDetailsPayload = Array.isArray(payload?.details)
+						? payload.details
+						: [];
+					const err = new Error(
+						typeof payload?.message === 'string'
+							? payload.message
+							: 'アップロードに失敗しました。',
+					) as Error & { details?: unknown };
+					err.details = errorDetailsPayload;
+					throw err;
+				}
+				throw new Error(await res.text());
+			}
 			result = await res.json();
 		} catch (e: any) {
-			error = e?.message ?? 'Upload failed';
+			const details: string[] = [];
+			const rawDetails = e?.details;
+			if (Array.isArray(rawDetails)) {
+				for (const item of rawDetails) {
+					if (typeof item === 'string') {
+						details.push(item);
+					} else if (
+						item &&
+						typeof item === 'object' &&
+						'description' in item &&
+						typeof item.description === 'string'
+					) {
+						details.push(item.description);
+					} else if (
+						item &&
+						typeof item === 'object' &&
+						('row' in item || 'playerName' in item || 'jerseyNo' in item)
+					) {
+						const row =
+							typeof (item as { row?: unknown }).row === 'number'
+								? `行${(item as { row: number }).row}`
+								: '';
+						const playerName =
+							typeof (item as { playerName?: unknown }).playerName === 'string'
+								? `選手名「${(item as { playerName: string }).playerName}」`
+								: '';
+						const jerseyNo =
+							typeof (item as { jerseyNo?: unknown }).jerseyNo === 'string'
+								? `背番号「${(item as { jerseyNo: string }).jerseyNo}」`
+								: '';
+						const parts = [row, playerName, jerseyNo].filter(Boolean);
+						if (parts.length) {
+							details.push(parts.join(' '));
+						}
+					}
+				}
+			}
+			setError(typeof e?.message === 'string' ? e.message : 'アップロードに失敗しました。', details);
 		} finally {
 			uploading = false;
 		}
@@ -101,15 +155,15 @@
 
 	async function commitUpload() {
 		if (!lastFile) {
-			error = '先にファイルを選択してください。';
+			setError('先にファイルを選択してください。');
 			return;
 		}
 		if (!orgId) {
-			error = '組織IDが特定できません。';
+			setError('組織IDが特定できません。');
 			return;
 		}
 		committing = true; // ✅ start spinner
-		error = null;
+		setError(null);
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
@@ -120,7 +174,9 @@
 			if (!res.ok) throw new Error(await res.text());
 			onCommitSuccess(); // ✅ your hook
 		} catch (e: any) {
-			error = e?.message ?? 'Commit failed';
+			setError(
+				typeof e?.message === 'string' ? e.message : 'コミットに失敗しました。もう一度お試しください。',
+			);
 		} finally {
 			committing = false; // ✅ stop spinner
 		}
@@ -136,6 +192,18 @@
 				: result.records
 			: [],
 	);
+
+	function setError(message: string | null, extraDetails: string[] = []) {
+		if (!message) {
+			errorHeadline = null;
+			errorDetails = [];
+			return;
+		}
+		const lines = message.split('\n').map((line) => line.trim()).filter(Boolean);
+		const headline = lines.shift();
+		errorHeadline = headline ?? message;
+		errorDetails = [...lines, ...extraDetails];
+	}
 </script>
 
 <div class="w-full">
@@ -199,8 +267,17 @@
 			</p>
 		{/if}
 
-		{#if error}
-			<p class="mt-4 text-red-600">{error}</p>
+		{#if errorHeadline}
+			<div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+				<p class="font-semibold">{errorHeadline}</p>
+				{#if errorDetails.length}
+					<ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
+						{#each errorDetails as detail}
+							<li>{detail}</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
 		{/if}
 
 		{#if result}
