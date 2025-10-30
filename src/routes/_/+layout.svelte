@@ -74,9 +74,7 @@
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
 		<!-- Left: logo + links -->
 		<div class="flex items-center gap-4">
-			<a href="/_/" class="font-bold text-gray-800">
-				<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-28" />
-			</a>
+			<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-28" />
 
 			{#if page.params.oid}
 				{#each menus as menu}
