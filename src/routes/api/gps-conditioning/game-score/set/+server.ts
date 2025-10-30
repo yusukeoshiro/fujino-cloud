@@ -1,5 +1,4 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
 
 type GameScorePayload = {
@@ -7,7 +6,7 @@ type GameScorePayload = {
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = event.params.oid;
+	const orgId = event.url.searchParams.get('orgId');
 	if (!orgId) {
 		throw error(400, 'orgId is required');
 	}
@@ -27,7 +26,7 @@ export const POST: RequestHandler = async (event) => {
 	const saved = await gameScoreService.upsert(orgId, sanitizedValues);
 	const savedAt = new Date().toISOString();
 
-	console.log('Received /api/orgs/[oid]/game-score payload:', {
+	console.log('Received /api/gps-conditioning/game-score/set payload:', {
 		orgId,
 		values: sanitizedValues,
 	});

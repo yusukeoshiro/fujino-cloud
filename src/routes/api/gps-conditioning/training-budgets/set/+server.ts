@@ -1,28 +1,6 @@
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { trainingBudgetService } from '$lib/services/training-budget.service';
 import { DateTime } from 'luxon';
-
-export const GET: RequestHandler = async (event) => {
-	const orgId = event.params.oid;
-	if (!orgId) {
-		throw error(400, 'orgId is required');
-	}
-	const yearParamStr = event.url.searchParams.get('year');
-	const yearParam = yearParamStr ? Number(yearParamStr) : undefined;
-
-	const config = await trainingBudgetService.getConfig(orgId);
-	const resolvedYear = resolveCalendarYear(yearParam, config.startMonth);
-	const snapshot = await trainingBudgetService.getYearSnapshot(orgId, resolvedYear);
-
-	return json({
-		orgId,
-		year: resolvedYear,
-		config: snapshot.config,
-		budgets: snapshot.budgets,
-		events: snapshot.events,
-	});
-};
 
 type SavePayload = {
 	year?: number;
@@ -36,7 +14,7 @@ type SavePayload = {
 };
 
 export const POST: RequestHandler = async (event) => {
-	const orgId = event.params.oid;
+	const orgId = event.url.searchParams.get('orgId');
 	if (!orgId) {
 		throw error(400, 'orgId is required');
 	}

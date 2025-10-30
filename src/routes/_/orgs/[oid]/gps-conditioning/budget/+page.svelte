@@ -458,11 +458,14 @@
 				deletedEventIds: Array.from(deletedEventIds),
 			};
 
-			const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/training-budget`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
-			});
+			const response = await fetch(
+				`/api/gps-conditioning/training-budgets/set?orgId=${encodeURIComponent(orgId)}`,
+				{
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				},
+			);
 
 			if (!response.ok) {
 				throw new Error('Failed to save training budget');
@@ -499,7 +502,7 @@
 		try {
 			loadingYear = true;
 			const response = await fetch(
-				`/api/orgs/${encodeURIComponent(orgId)}/training-budget?year=${year}`,
+				`/api/gps-conditioning/training-budgets?orgId=${encodeURIComponent(orgId)}&year=${year}`,
 				{
 					method: 'GET',
 				},

@@ -10,7 +10,7 @@
 
 	const menus = [
 		{
-			path: (oid: string) => `/_/orgs/${oid}/gps-analysis`,
+			path: (oid: string) => `/_/orgs/${oid}/gps-conditioning`,
 			label: 'GPSコンディショニング',
 		},
 		{
