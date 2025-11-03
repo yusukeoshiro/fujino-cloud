@@ -27,6 +27,23 @@ export const POST: RequestHandler = async (event) => {
 	const file = form.get('file');
 	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
 
+	const selectedRowIndicesRaw = form.get('selectedRowIndices');
+	let selectedRowIndexSet: Set<number> | null = null;
+	if (typeof selectedRowIndicesRaw === 'string' && selectedRowIndicesRaw.trim().length > 0) {
+		try {
+			const parsed = JSON.parse(selectedRowIndicesRaw) as unknown;
+			if (Array.isArray(parsed)) {
+				selectedRowIndexSet = new Set(
+					parsed
+						.map((value) => Number(value))
+						.filter((value) => Number.isInteger(value) && value >= 0),
+				);
+			}
+		} catch (err) {
+			console.log('Failed to parse selectedRowIndices', err);
+		}
+	}
+
 	const listUsersStore = new ListPersonsStore();
 	const personsResult = await listUsersStore.fetch({
 		event,
@@ -78,6 +95,10 @@ export const POST: RequestHandler = async (event) => {
 
 	if (parsedRows.length === 0) return new Response('File is empty.', { status: 400 });
 
+	const selectionFlags = parsedRows.map((_, index) =>
+		selectedRowIndexSet === null ? true : selectedRowIndexSet.has(index),
+	);
+
 	const dt = DateTime.fromFormat(parsedRows[0].date, 'yyyy-MM-dd');
 
 	const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
@@ -112,6 +133,7 @@ export const POST: RequestHandler = async (event) => {
 	const createParticipant = new CreatePerformanceAssessmentParticipantStore();
 
 	const promises = parsedRows.map(async (record, i) => {
+		const isSelected = selectionFlags[i] ?? true;
 		const result = await createParticipant.mutate(
 			{
 				data: {
@@ -121,21 +143,22 @@ export const POST: RequestHandler = async (event) => {
 					fullName: record.fullName,
 					number: i + 1,
 					...(record.birthday && { birthday: record.birthday }),
+					...(isSelected ? {} : { attr1: 'skipped' }),
 				},
 			},
 			{ event },
 		);
 
-		return { record, result };
+		return { record, result, isSelected };
 	});
 
 	const results = await Promise.all(promises);
 
-	for (const { record, result } of results) {
+	for (const { record, result, isSelected } of results) {
 		if (result.errors) {
 			console.log(JSON.stringify(result.errors));
 		} else {
-			console.log(`participant added ${record.fullName}`);
+			console.log(`participant added ${record.fullName}${isSelected ? '' : ' (skipped)'}`);
 		}
 
 		record.orgUniqueToken = result.data?.createPerformanceAssessmentParticipant
@@ -176,6 +199,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const exportStore = new ExportPerformanceAssessmentStore();
+	console.log('===');
 	const uploadResult = await exportStore.mutate(
 		{
 			performanceAssessmentId:
@@ -185,6 +209,7 @@ export const POST: RequestHandler = async (event) => {
 			event,
 		},
 	);
+	console.log('done');
 
 	if (uploadResult.errors) {
 		console.log(uploadResult.errors);

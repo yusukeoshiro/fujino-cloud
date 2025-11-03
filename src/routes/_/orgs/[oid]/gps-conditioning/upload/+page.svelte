@@ -5,7 +5,7 @@
 
 	const orgId = page.params.oid;
 	const stickyLeft =
-		'sticky left-0 z-20 bg-gray-50 after:absolute after:inset-y-0 after:-right-px after:w-px after:bg-gray-200';
+		'sticky left-20 z-20 bg-gray-50 after:absolute after:inset-y-0 after:-right-px after:w-px after:bg-gray-200';
 	const stickyRight =
 		'sticky right-0 z-20 bg-gray-50 before:absolute before:inset-y-0 before:-left-px before:w-px before:bg-gray-200';
 
@@ -21,7 +21,11 @@
 		return String(v);
 	}
 
-	type UploadPreviewRecord = Record<string, unknown>;
+	type UploadPreviewRecord = Record<string, unknown> & { __rowIndex: number };
+	type UploadPreviewRow = {
+		record: UploadPreviewRecord;
+		selected: boolean;
+	};
 	type UploadPreviewResponse = {
 		rows: number;
 		headers: string[];
@@ -33,6 +37,8 @@
 	let committing = $state(false); // ✅ NEW
 
 	let result = $state<UploadPreviewResponse | null>(null);
+	let rowSelections = $state<Record<number, boolean>>({});
+	let bulkSelectCheckbox: HTMLInputElement | null = $state(null);
 
 	let errorHeadline: string | null = $state(null);
 	let errorDetails: string[] = $state([]);
@@ -46,6 +52,37 @@
 		goto(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	}
 
+	function buildInitialSelections(records: UploadPreviewRecord[] | null | undefined) {
+		if (!records) return {};
+		const selections: Record<number, boolean> = {};
+		for (const record of records) {
+			if (record && typeof record.__rowIndex === 'number') {
+				selections[record.__rowIndex] = true;
+			}
+		}
+		return selections;
+	}
+
+	function toggleSelection(record: UploadPreviewRecord, checked: boolean) {
+		if (typeof record.__rowIndex !== 'number') return;
+		rowSelections = {
+			...rowSelections,
+			[record.__rowIndex]: checked,
+		};
+	}
+
+	function toggleAllRows(selected: boolean) {
+		if (!rows.length) return;
+		const updated: Record<number, boolean> = { ...rowSelections };
+		for (const row of rows) {
+			const rowIndex = typeof row.record.__rowIndex === 'number' ? row.record.__rowIndex : -1;
+			if (rowIndex >= 0) {
+				updated[rowIndex] = selected;
+			}
+		}
+		rowSelections = updated;
+	}
+
 	async function uploadFile(file: File) {
 		if (!file) return;
 		if (!orgId) {
@@ -54,6 +91,7 @@
 		}
 		setError(null);
 		result = null;
+		rowSelections = {};
 		uploading = true;
 		try {
 			const fd = new FormData();
@@ -79,7 +117,9 @@
 				}
 				throw new Error(await res.text());
 			}
-			result = await res.json();
+			const payload = (await res.json()) as UploadPreviewResponse;
+			result = payload;
+			rowSelections = buildInitialSelections(payload.records);
 		} catch (e: any) {
 			const details: string[] = [];
 			const rawDetails = e?.details;
@@ -172,6 +212,12 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
+			const selectedRowIndices = Object.entries(rowSelections)
+				.filter(([, selected]) => selected)
+				.map(([index]) => Number(index))
+				.filter((index) => Number.isFinite(index))
+				.sort((a, b) => a - b);
+			fd.append('selectedRowIndices', JSON.stringify(selectedRowIndices));
 			const res = await fetch(
 				`/api/gps-conditioning/csv/commit?orgId=${encodeURIComponent(orgId)}`,
 				{
@@ -195,17 +241,31 @@
 	const hideTeamAverage = true;
 
 	// ✅ compute rows reactively (no {#let})
-	const emptyRecords: UploadPreviewRecord[] = [];
-	let rows = $derived<UploadPreviewRecord[]>(
+	const emptyRows: UploadPreviewRow[] = [];
+	let rows = $derived<UploadPreviewRow[]>(
 		result && Array.isArray(result.records)
-			? hideTeamAverage
-				? result.records.filter((r: UploadPreviewRecord) => {
-						const name = r['Player Name'];
-						return !(typeof name === 'string' && name === 'Team Average');
-					})
-				: result.records
-			: emptyRecords,
+			? (hideTeamAverage
+					? result.records.filter((r: UploadPreviewRecord) => {
+							const name = r['Player Name'];
+							return !(typeof name === 'string' && name === 'Team Average');
+						})
+					: result.records
+				).map((record) => {
+					const rowIndex = typeof record.__rowIndex === 'number' ? record.__rowIndex : -1;
+					const selected = rowIndex >= 0 ? (rowSelections[rowIndex] ?? true) : true;
+					return { record, selected };
+				})
+			: emptyRows,
 	);
+
+	const allRowsSelected = $derived(rows.length > 0 && rows.every((row) => row.selected));
+	const someRowsSelected = $derived(rows.some((row) => row.selected) && !allRowsSelected);
+
+	$effect(() => {
+		if (bulkSelectCheckbox) {
+			bulkSelectCheckbox.indeterminate = someRowsSelected;
+		}
+	});
 
 	function setError(message: string | null, extraDetails: string[] = []) {
 		if (!message) {
@@ -220,6 +280,16 @@
 		const headline = lines.shift();
 		errorHeadline = headline ?? message;
 		errorDetails = [...lines, ...extraDetails];
+	}
+
+	function resetPreview() {
+		setError(null);
+		result = null;
+		rowSelections = {};
+		lastFile = null;
+		if (fileInput) {
+			fileInput.value = '';
+		}
 	}
 </script>
 
@@ -240,10 +310,10 @@
 			class="cursor-pointer rounded-2xl border-2 border-dashed bg-white/40 p-10 text-center transition
 						select-none hover:bg-white/70
 						{isOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}"
-			on:drop={onDrop}
-			on:dragover={onDragOver}
-			on:dragleave={onDragLeave}
-			on:click={() => fileInput?.click()}
+			ondrop={onDrop}
+			ondragover={onDragOver}
+			ondragleave={onDragLeave}
+			onclick={() => fileInput?.click()}
 		>
 			<p class="mb-2 font-semibold text-slate-800">CSVファイルをここにドロップ</p>
 			<p class="text-sm text-slate-500">またはクリックして選択</p>
@@ -252,7 +322,7 @@
 				type="file"
 				accept=".csv,text/csv"
 				class="hidden"
-				on:change={onPick}
+				onchange={onPick}
 			/>
 		</div>
 	{/if}
@@ -272,35 +342,35 @@
 					cx="12"
 					cy="12"
 					r="10"
-						stroke="currentColor"
-						stroke-width="4"
-						fill="none"
-						opacity="0.25"
-					/>
-					<path
-						d="M22 12a10 10 0 0 1-10 10"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="4"
-						stroke-linecap="round"
-					/>
-				</svg>
-				アップロード中…
-			</p>
-		{/if}
+					stroke="currentColor"
+					stroke-width="4"
+					fill="none"
+					opacity="0.25"
+				/>
+				<path
+					d="M22 12a10 10 0 0 1-10 10"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="4"
+					stroke-linecap="round"
+				/>
+			</svg>
+			アップロード中…
+		</p>
+	{/if}
 
-		{#if errorHeadline}
-			<div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
-				<p class="font-semibold">{errorHeadline}</p>
-				{#if errorDetails.length}
-					<ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
-						{#each errorDetails as detail}
-							<li>{detail}</li>
-						{/each}
-					</ul>
-				{/if}
-			</div>
-		{/if}
+	{#if errorHeadline}
+		<div class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+			<p class="font-semibold">{errorHeadline}</p>
+			{#if errorDetails.length}
+				<ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
+					{#each errorDetails as detail}
+						<li>{detail}</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+	{/if}
 
 	{#if result}
 		<div class="mt-6 space-y-4">
@@ -315,42 +385,79 @@
 					<table class="min-w-full border-collapse text-sm text-slate-900">
 						<thead class="sticky top-0 z-10 bg-slate-50">
 							<tr>
+								<th
+									class="sticky left-0 z-30 w-20 min-w-[5rem] bg-slate-50 px-3 py-2 text-center font-semibold whitespace-nowrap text-slate-700"
+								>
+									<div class="flex items-center justify-center gap-2">
+										<input
+											type="checkbox"
+											bind:this={bulkSelectCheckbox}
+											class="h-4 w-4 accent-blue-600"
+											checked={allRowsSelected}
+											onchange={(event) =>
+												toggleAllRows((event.target as HTMLInputElement).checked)}
+											disabled={!rows.length || uploading || committing}
+											aria-label="全ての選手を切り替え"
+										/>
+										<nobr>計算に含める</nobr>
+									</div>
+								</th>
 								{#each COLUMNS as col}
 									<th
 										class={'px-3 py-2 text-left font-semibold whitespace-nowrap text-slate-700 ' +
 											colStickyClass(col)}
-										>
+									>
+										<nobr>
+											{col}
+										</nobr>
+									</th>
+								{/each}
+							</tr>
+						</thead>
+						<tbody>
+							{#each rows as row, i}
+								<tr class="{i % 2 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50">
+									<td class="sticky left-0 z-20 w-20 min-w-[5rem] bg-inherit px-3 py-2 text-center">
+										<input
+											type="checkbox"
+											class="h-4 w-4 accent-blue-600"
+											checked={row.selected}
+											onchange={(event) =>
+												toggleSelection(row.record, (event.target as HTMLInputElement).checked)}
+											aria-label="選手を取り込み対象に含める"
+										/>
+									</td>
+									{#each COLUMNS as col}
+										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col)}>
 											<nobr>
-												{col}
+												{fmt(row.record[col])}
 											</nobr>
-										</th>
+										</td>
 									{/each}
 								</tr>
-							</thead>
-							<tbody>
-								{#each rows as row, i}
-									<tr class="{i % 2 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50">
-										{#each COLUMNS as col}
-											<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col)}>
-												<nobr>
-													{fmt(row[col])}
-												</nobr>
-											</td>
-										{/each}
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				{:else}
-					<p class="text-sm text-slate-500">表示できるレコードがありません。</p>
-				{/if}
-			</div>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<p class="text-sm text-slate-500">表示できるレコードがありません。</p>
+			{/if}
+		</div>
 
-			<div class="mt-6 flex flex-col items-center">
+		<div class="mt-6 flex flex-col items-center gap-3">
+			<div class="flex flex-col items-center gap-3 sm:flex-row">
 				<button
-					class="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-white transition disabled:cursor-not-allowed disabled:bg-slate-400"
-					on:click={commitUpload}
+					type="button"
+					class="flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+					onclick={resetPreview}
+					disabled={!result || uploading || committing}
+				>
+					やり直す
+				</button>
+				<button
+					type="button"
+					class="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+					onclick={commitUpload}
 					disabled={!lastFile || uploading || committing}
 					aria-busy={committing}
 				>
@@ -380,6 +487,7 @@
 					{/if}
 				</button>
 			</div>
+		</div>
 	{/if}
 </section>
 

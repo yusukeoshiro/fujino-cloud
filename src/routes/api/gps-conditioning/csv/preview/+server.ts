@@ -114,7 +114,10 @@ export const POST: RequestHandler = async (event) => {
 				rows: parsers.length,
 				headers,
 				headerMap,
-				records: parsers.map((r) => r.toJson()),
+				records: parsers.map((r, index) => ({
+					__rowIndex: index,
+					...r.toJson(),
+				})),
 			},
 			null,
 			2,
