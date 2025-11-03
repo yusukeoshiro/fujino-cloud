@@ -50,6 +50,14 @@ export const POST: RequestHandler = async (event) => {
 		},
 	});
 
+	if (result.errors) {
+		console.log(result.errors);
+		return new Response(JSON.stringify({ errors: result.errors }), {
+			headers: { 'content-type': 'application/json' },
+			status: 500,
+		});
+	}
+
 	const records = result.data?.listPersons?.records ?? [];
 
 	const baselineDocument = await gameScoreService.getByOrgId(orgId);
