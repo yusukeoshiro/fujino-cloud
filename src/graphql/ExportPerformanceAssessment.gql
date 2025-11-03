@@ -1,5 +1,5 @@
 mutation ExportPerformanceAssessment($performanceAssessmentId: ID!) {
-	exportPerformanceAssessment(data: { id: $performanceAssessmentId }) {
+	exportPerformanceAssessment(data: { id: $performanceAssessmentId, async: false }) {
 		id
 	}
 }
