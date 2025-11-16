@@ -2,7 +2,7 @@ import { error, type Handle } from '@sveltejs/kit';
 import { adminAuth } from '$lib/admin-firebase'; // your Firebase Admin init
 import { memberService } from './lib/services/member.service';
 import { deviceTokenService } from './lib/services/device-token.service';
-import { deviceTokenAccessor } from '$lib/device-token/device-token-accessor';
+import { deviceTokenAccessor } from '$lib/accessors/device-token.accessor';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const cookie = event.cookies.get('fb.session');

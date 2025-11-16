@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { currentMembers } from '$lib/stores/members.store';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
