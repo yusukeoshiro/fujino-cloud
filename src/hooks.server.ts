@@ -2,8 +2,7 @@ import { error, type Handle } from '@sveltejs/kit';
 import { adminAuth } from '$lib/admin-firebase'; // your Firebase Admin init
 import { memberService } from './lib/services/member.service';
 import { deviceTokenService } from './lib/services/device-token.service';
-import { setSession } from '$houdini/plugins/houdini-svelte/runtime/session';
-import { setDeviceTokenValue, getDeviceTokenValue } from '$lib/device-token/accessor';
+import { deviceTokenAccessor } from '$lib/device-token/accessor';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const cookie = event.cookies.get('fb.session');
@@ -34,7 +33,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event.locals.user = null;
 	}
 
-	setDeviceTokenValue(null, { event });
+	deviceTokenAccessor.set(null);
 
 	const ensureOrgAccess = (orgId: string) => {
 		const user = event.locals.user;
@@ -61,10 +60,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (resolvedOrgId) {
 		const doc = await deviceTokenService.get(resolvedOrgId);
-		setDeviceTokenValue(doc?.token ?? null, { event });
+		deviceTokenAccessor.set(doc?.token ?? null);
 	}
-
-	setSession(event, { deviceToken: getDeviceTokenValue({ event }) });
 
 	// (Optional) gate server-rendered/private routes
 	// Example: protect everything under "/_/" except "/login"

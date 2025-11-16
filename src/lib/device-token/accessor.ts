@@ -1,38 +1,23 @@
-import { browser } from '$app/environment';
-import type { RequestEvent } from '@sveltejs/kit';
-import { deviceToken, deviceTokenReady, getDeviceToken } from '$lib/stores/device-token.store';
+import { writable } from 'svelte/store';
 
-type DeviceTokenContext = {
-	event?: Pick<RequestEvent, 'locals'>;
-	session?: App.Session | null;
-};
+export class DeviceTokenAccessor {
+	private current: string | null = null;
+	private readonly readyStore = writable(false);
 
-export { deviceToken, deviceTokenReady };
-
-export function setDeviceTokenValue(token: string | null, context?: { event?: Pick<RequestEvent, 'locals'> }) {
-	const normalized = token ?? null;
-
-	if (context?.event) {
-		context.event.locals.deviceToken = normalized;
+	get(): string | null {
+		return this.current;
 	}
 
-	if (browser) {
-		deviceToken.set(normalized);
+	set(token: string | null) {
+		this.current = token ?? null;
+		this.readyStore.set(Boolean(this.current));
+	}
+
+	get ready() {
+		return {
+			subscribe: this.readyStore.subscribe,
+		};
 	}
 }
 
-export function getDeviceTokenValue(context?: DeviceTokenContext): string | null {
-	if (browser) {
-		return getDeviceToken();
-	}
-
-	if (context?.event) {
-		return context.event.locals.deviceToken ?? null;
-	}
-
-	if (context?.session) {
-		return context.session?.deviceToken ?? null;
-	}
-
-	return null;
-}
+export const deviceTokenAccessor = new DeviceTokenAccessor();

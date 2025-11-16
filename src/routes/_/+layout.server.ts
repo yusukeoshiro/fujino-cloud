@@ -1,8 +1,8 @@
 import type { MemberDto } from '$lib/services/member.dto';
-import type { PageServerLoad, RequestEvent } from './$types';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async (event: RequestEvent) => {
-	const members: MemberDto[] = event.locals.user?.members || [];
+export const load: LayoutServerLoad = async ({ locals }) => {
+	const members: MemberDto[] = locals.user?.members || [];
 
 	return {
 		members,

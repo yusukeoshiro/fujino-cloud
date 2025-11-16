@@ -1,8 +1,9 @@
 // src/routes/api/session/+server.ts
 import { json } from '@sveltejs/kit';
 import { adminAuth } from '$lib/admin-firebase';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request, cookies }) {
+export const POST: RequestHandler = async ({ request, cookies }) => {
 	const { idToken } = await request.json();
 
 	// 5 days, adjust as needed (max 14d for Firebase session cookies)
@@ -18,9 +19,9 @@ export async function POST({ request, cookies }) {
 	});
 
 	return json({ ok: true });
-}
+};
 
-export async function DELETE({ cookies }) {
+export const DELETE: RequestHandler = async ({ cookies }) => {
 	// Optional: revoke the session server-side
 	const cookie = cookies.get('fb.session');
 	if (cookie) {
@@ -43,4 +44,4 @@ export async function DELETE({ cookies }) {
 	});
 
 	return json({ ok: true });
-}
+};
