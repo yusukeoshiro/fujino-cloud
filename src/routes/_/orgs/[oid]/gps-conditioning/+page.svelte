@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { currentMembers } from '$lib/stores/members.store';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
@@ -32,7 +31,7 @@
 				class="rounded-md border px-3 py-1.5 text-sm transition
 							 hover:bg-gray-50 active:scale-[0.99]
 							 {isActive(30) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
-				on:click={() => applyRange(30)}
+				onclick={() => applyRange(30)}
 			>
 				過去30日
 			</button>
@@ -41,7 +40,7 @@
 				class="rounded-md border px-3 py-1.5 text-sm transition
 							 hover:bg-gray-50 active:scale-[0.99]
 							 {isActive(90) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
-				on:click={() => applyRange(90)}
+				onclick={() => applyRange(90)}
 			>
 				過去90日
 			</button>
@@ -50,7 +49,7 @@
 				class="rounded-md border px-3 py-1.5 text-sm transition
 							 hover:bg-gray-50 active:scale-[0.99]
 							 {isActive(180) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
-				on:click={() => applyRange(180)}
+				onclick={() => applyRange(180)}
 			>
 				過去180日
 			</button>
@@ -59,7 +58,7 @@
 				class="rounded-md border px-3 py-1.5 text-sm transition
 							 hover:bg-gray-50 active:scale-[0.99]
 							 {isActive(365) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
-				on:click={() => applyRange(365)}
+				onclick={() => applyRange(365)}
 			>
 				過去365日
 			</button>

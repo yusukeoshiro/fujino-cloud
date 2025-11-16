@@ -1,14 +1,16 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { deviceToken, deviceTokenReady } from '$lib/stores/device-token.store';
+	import { deviceTokenAccessor } from '$lib/accessors/device-token.accessor';
 	import { page } from '$app/state';
 
 	let { data }: { data: PageData } = $props();
 
 	const orgId = page.params.oid;
 
+	const deviceTokenReady = deviceTokenAccessor.ready;
+
 	const applyToken = (token: string | null) => {
-		deviceToken.set(token ?? null);
+		deviceTokenAccessor.set(token ?? null);
 	};
 
 	let lastUpdated = $state<string | null>(data.deviceTokenUpdatedAt ?? null);

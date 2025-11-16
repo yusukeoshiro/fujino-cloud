@@ -37,7 +37,7 @@ class MemberService {
 	async listByUserId(userId: string): Promise<MemberDto[]> {
 		const snapshot = await adminDb.collection('members').where('userId', '==', userId).get();
 
-		return snapshot.docs.map((doc) => doc.data() as MemberDto);
+		return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot<MemberDto>) => doc.data());
 	}
 }
 

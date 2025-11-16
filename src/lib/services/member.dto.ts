@@ -1,11 +1,11 @@
-export class MemberDto {
+export interface MemberDto {
 	id: string;
 	orgId: string;
 	userId: string;
 	name: string;
 }
 
-export class CreateMemberDto {
+export interface CreateMemberDto {
 	orgId: string;
 	userId: string;
 	name: string;

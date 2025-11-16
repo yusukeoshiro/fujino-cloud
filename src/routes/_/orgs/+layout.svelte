@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { deviceToken } from '$lib/stores/device-token.store';
+	import { deviceTokenAccessor } from '$lib/accessors/device-token.accessor';
 	import { type Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
 	let { data, children }: { data: LayoutData; children: Snippet<[]> } = $props();
 
 	const applyToken = (token: string | null) => {
-		deviceToken.set(token ?? null);
+		deviceTokenAccessor.set(token ?? null);
 	};
 
 	applyToken(data.deviceToken ?? null);

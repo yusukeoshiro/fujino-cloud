@@ -3,7 +3,7 @@
 	import { auth } from '$lib/firebase';
 	import { onAuthStateChanged, signOut } from 'firebase/auth';
 	import { goto } from '$app/navigation';
-	import { currentMembers } from '$lib/stores/members.store';
+	import { currentMembers } from '$lib/accessors/members.store';
 	import { onMount, type Snippet } from 'svelte';
 	import type { PageData } from './$types';
 	import { page } from '$app/state';
