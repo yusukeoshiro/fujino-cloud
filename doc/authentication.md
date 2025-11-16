@@ -12,7 +12,7 @@ Our stack has two complementary layers of authentication:
 
 ### DeviceTokenAccessor
 
-The `DeviceTokenAccessor` singleton (`src/lib/device-token/accessor.ts`) centralizes how we read/update the device token.
+The `DeviceTokenAccessor` singleton (`src/lib/device-token/device-token-accessor.ts`) centralizes how we read/update the device token.
 
 - `deviceTokenAccessor.set(token)` updates the in-memory token and notifies listeners (Svelte components).  
 - `deviceTokenAccessor.get()` returns the current token for server-side callers (e.g., `src/client.ts`).  

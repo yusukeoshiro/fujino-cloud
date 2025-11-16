@@ -1,5 +1,5 @@
 import { HoudiniClient } from '$houdini';
-import { deviceTokenAccessor } from '$lib/device-token/accessor';
+import { deviceTokenAccessor } from '$lib/device-token/device-token-accessor';
 import { env } from '$env/dynamic/private';
 
 export default new HoudiniClient({

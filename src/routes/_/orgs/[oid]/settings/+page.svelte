@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import { deviceTokenAccessor } from '$lib/device-token/accessor';
+	import { deviceTokenAccessor } from '$lib/device-token/device-token-accessor';
 	import { page } from '$app/state';
 
 	let { data }: { data: PageData } = $props();

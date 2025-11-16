@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { deviceTokenAccessor } from '$lib/device-token/accessor';
+	import { deviceTokenAccessor } from '$lib/device-token/device-token-accessor';
 	import { type Snippet } from 'svelte';
 	import type { LayoutData } from './$types';
 
