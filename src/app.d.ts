@@ -13,6 +13,11 @@ declare global {
 				picture: string | null;
 				members: MemberDto[];
 			} | null;
+			deviceToken: string | null;
+		}
+
+		interface Session {
+			deviceToken: string | null;
 		}
 
 		// interface Error {}
