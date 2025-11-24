@@ -35,6 +35,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	deviceTokenAccessor.set(null);
 
+	// (Optional) gate server-rendered/private routes
+	// Example: protect everything under "/_/" except "/login"
+	if (event.url.pathname.startsWith('/_/') && !event.locals.user) {
+		console.log(`user is not logged in! redirecting user!`);
+		return Response.redirect(new URL('/login', event.url), 303);
+	}
+
 	const ensureOrgAccess = (orgId: string) => {
 		const user = event.locals.user;
 		if (!user) {
@@ -61,13 +68,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (resolvedOrgId) {
 		const doc = await deviceTokenService.get(resolvedOrgId);
 		deviceTokenAccessor.set(doc?.token ?? null);
-	}
-
-	// (Optional) gate server-rendered/private routes
-	// Example: protect everything under "/_/" except "/login"
-	if (event.url.pathname.startsWith('/_/') && !event.locals.user) {
-		console.log(`user is not logged in! redirecting user!`);
-		return Response.redirect(new URL('/login', event.url), 303);
 	}
 
 	return resolve(event);
