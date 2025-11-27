@@ -1,0 +1,455 @@
+import type { BetterDirection, MetricDefinitionType, MetricUnit } from './types';
+
+type MetricDefinition = {
+	id: string;
+	createdAt: string;
+	updatedAt: string;
+	orgId: string | null;
+	isPublic: boolean;
+	name: string;
+	description: string;
+	type: MetricDefinitionType;
+	category: string;
+	betterDirection: BetterDirection;
+	formula: string | null;
+	sourceMetricDefinitionIds: string[] | null;
+	unit: MetricUnit;
+	roundingPrecision: number;
+	meta: Record<string, unknown>;
+};
+
+type PerformanceAssessmentTemplateItem = {
+	metricDefinitionId: string;
+	scored: boolean;
+};
+
+type PerformanceAssessmentTemplate = {
+	id: string;
+	createdAt: string;
+	updatedAt: string;
+	orgId: string;
+	name: string;
+	description: string | null;
+	items: PerformanceAssessmentTemplateItem[];
+	meta?: Record<string, unknown>;
+};
+
+type ReferenceBand = {
+	mean: number;
+	std: number;
+};
+
+type ReferenceTable = Record<string, Record<string, ReferenceBand | null>>;
+
+const now = '2025-01-01T00:00:00.000Z';
+
+export const metricDefinitions: MetricDefinition[] = [
+	{
+		id: '3s004Lb8UM9Tiag3kQNR',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '身長',
+		description: '',
+		type: 'raw',
+		category: 'BODY',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'CENTIMETER',
+		roundingPrecision: 1,
+		meta: {},
+	},
+	{
+		id: '5iu1YWxuZFt6X2Stg0iy',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '両足５段跳び',
+		description: '',
+		type: 'raw',
+		category: 'POWER',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'METER',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: '9Ubx6BwRXrl4Fqc60BEQ',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '3 HOP 左',
+		description: '',
+		type: 'raw',
+		category: 'POWER',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'METER',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'FEEunCRt96GG5wXvoDWm',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: 'Pro Agility 右',
+		description: '',
+		type: 'raw',
+		category: 'AGILITY',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'SECOND',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'HWtqdoyh1WIjpJIGtHbM',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: 'Pro Agility 左右差(%)',
+		description: '',
+		type: 'derived',
+		category: 'AGILITY',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula:
+			'=ROUND(ABS($FEEunCRt96GG5wXvoDWm-$UiJ8YCBfUdI9OPnknlU4)/MIN($FEEunCRt96GG5wXvoDWm,$UiJ8YCBfUdI9OPnknlU4), 6)',
+		sourceMetricDefinitionIds: ['FEEunCRt96GG5wXvoDWm', 'UiJ8YCBfUdI9OPnknlU4'],
+		unit: 'PERCENT',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'Hi5CitOIe4MLS2uF3dqc',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '3 HOP 右',
+		description: '',
+		type: 'raw',
+		category: 'POWER',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'METER',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'JyCFHqA5HAOBPcqCOwCv',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '体重',
+		description: '',
+		type: 'raw',
+		category: 'BODY',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'KILOGRAM',
+		roundingPrecision: 1,
+		meta: {},
+	},
+	{
+		id: 'UiJ8YCBfUdI9OPnknlU4',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: 'Pro Agility 左',
+		description: '',
+		type: 'raw',
+		category: 'AGILITY',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'SECOND',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'V1AdIWTGwvVa2RYmZLsC',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: 'BMI',
+		description: '',
+		type: 'derived',
+		category: 'BODY',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: '=ROUND( $JyCFHqA5HAOBPcqCOwCv / POWER($3s004Lb8UM9Tiag3kQNR / 100, 2), 6)',
+		sourceMetricDefinitionIds: ['3s004Lb8UM9Tiag3kQNR', 'JyCFHqA5HAOBPcqCOwCv'],
+		unit: 'UNITLESS',
+		roundingPrecision: 1,
+		meta: {},
+	},
+	{
+		id: 'i3tQbxmRVijkzlXngPan',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '3 HOP 左右差(%)',
+		description: '',
+		type: 'derived',
+		category: 'POWER',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula:
+			'=ROUND(ABS( $9Ubx6BwRXrl4Fqc60BEQ - $Hi5CitOIe4MLS2uF3dqc ) / MIN( $9Ubx6BwRXrl4Fqc60BEQ , $Hi5CitOIe4MLS2uF3dqc ), 6)',
+		sourceMetricDefinitionIds: ['9Ubx6BwRXrl4Fqc60BEQ', 'Hi5CitOIe4MLS2uF3dqc'],
+		unit: 'PERCENT',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'lMaeLRMQfMa1WKbOyly7',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '立ち幅跳び',
+		description: '',
+		type: 'raw',
+		category: 'POWER',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'METER',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'ojpzLOSCTMZf6s4SvRja',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '3 HOP 平均',
+		description: '',
+		type: 'derived',
+		category: 'POWER',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: '=ROUND(AVERAGE($9Ubx6BwRXrl4Fqc60BEQ,$Hi5CitOIe4MLS2uF3dqc), 6)',
+		sourceMetricDefinitionIds: ['9Ubx6BwRXrl4Fqc60BEQ', 'Hi5CitOIe4MLS2uF3dqc'],
+		unit: 'METER',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'sgUyE2xgSX4d5YLDVFdO',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '20M スプリント',
+		description: '',
+		type: 'raw',
+		category: 'SPEED',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'SECOND',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'u5Wdg1MlL88rYKbPQW3o',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: 'Pro Agility 平均',
+		description: '',
+		type: 'derived',
+		category: 'AGILITY',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula: '=ROUND(AVERAGE($FEEunCRt96GG5wXvoDWm,$UiJ8YCBfUdI9OPnknlU4), 6)',
+		sourceMetricDefinitionIds: ['FEEunCRt96GG5wXvoDWm', 'UiJ8YCBfUdI9OPnknlU4'],
+		unit: 'SECOND',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'uaaLUh0KRykPkWA3Dhcd',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '30M スプリント',
+		description: '',
+		type: 'raw',
+		category: 'SPEED',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'SECOND',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'uhQDnmvGVOGPgEYAxJh0',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: '10M スプリント',
+		description: '',
+		type: 'raw',
+		category: 'SPEED',
+		betterDirection: 'LOWER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'SECOND',
+		roundingPrecision: 2,
+		meta: {},
+	},
+	{
+		id: 'y7h8I9Mkl1ppg5ZmRpUb',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		isPublic: true,
+		name: 'YoYo',
+		description: '',
+		type: 'raw',
+		category: 'ENDURANCE',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'COUNT',
+		roundingPrecision: 0,
+		meta: {},
+	},
+];
+
+export const performanceAssessmentTemplates: PerformanceAssessmentTemplate[] = [
+	{
+		id: 'lxIwgccLRJElDAkmHgEl',
+		name: '藤野メソッド・フル',
+		createdAt: '2025-04-20T05:20:09.732Z',
+		updatedAt: '2025-04-20T05:20:09.732Z',
+		orgId: 'default',
+		description: '',
+		items: [
+			{ metricDefinitionId: '3s004Lb8UM9Tiag3kQNR', scored: false },
+			{ metricDefinitionId: 'JyCFHqA5HAOBPcqCOwCv', scored: false },
+			{ metricDefinitionId: 'V1AdIWTGwvVa2RYmZLsC', scored: false },
+			{ metricDefinitionId: 'uhQDnmvGVOGPgEYAxJh0', scored: true },
+			{ metricDefinitionId: 'sgUyE2xgSX4d5YLDVFdO', scored: true },
+			{ metricDefinitionId: 'uaaLUh0KRykPkWA3Dhcd', scored: true },
+			{ metricDefinitionId: 'FEEunCRt96GG5wXvoDWm', scored: false },
+			{ metricDefinitionId: 'UiJ8YCBfUdI9OPnknlU4', scored: false },
+			{ metricDefinitionId: 'HWtqdoyh1WIjpJIGtHbM', scored: false },
+			{ metricDefinitionId: 'u5Wdg1MlL88rYKbPQW3o', scored: true },
+			{ metricDefinitionId: 'Hi5CitOIe4MLS2uF3dqc', scored: false },
+			{ metricDefinitionId: '9Ubx6BwRXrl4Fqc60BEQ', scored: false },
+			{ metricDefinitionId: 'i3tQbxmRVijkzlXngPan', scored: false },
+			{ metricDefinitionId: 'ojpzLOSCTMZf6s4SvRja', scored: true },
+			{ metricDefinitionId: '5iu1YWxuZFt6X2Stg0iy', scored: true },
+			{ metricDefinitionId: 'lMaeLRMQfMa1WKbOyly7', scored: true },
+		],
+	},
+	{
+		id: 'pBySImSxY3qMzLvbBMAW',
+		name: '藤野メソッド・シンプル',
+		createdAt: '2025-04-21T06:39:41.334Z',
+		updatedAt: '2025-04-21T06:39:41.334Z',
+		orgId: 'default',
+		description: '',
+		items: [
+			{ metricDefinitionId: '3s004Lb8UM9Tiag3kQNR', scored: false },
+			{ metricDefinitionId: 'JyCFHqA5HAOBPcqCOwCv', scored: false },
+			{ metricDefinitionId: 'V1AdIWTGwvVa2RYmZLsC', scored: false },
+			{ metricDefinitionId: 'uhQDnmvGVOGPgEYAxJh0', scored: true },
+			{ metricDefinitionId: 'sgUyE2xgSX4d5YLDVFdO', scored: true },
+			{ metricDefinitionId: 'uaaLUh0KRykPkWA3Dhcd', scored: true },
+			{ metricDefinitionId: 'FEEunCRt96GG5wXvoDWm', scored: false },
+			{ metricDefinitionId: 'UiJ8YCBfUdI9OPnknlU4', scored: false },
+			{ metricDefinitionId: 'HWtqdoyh1WIjpJIGtHbM', scored: false },
+			{ metricDefinitionId: 'u5Wdg1MlL88rYKbPQW3o', scored: true },
+			{ metricDefinitionId: 'lMaeLRMQfMa1WKbOyly7', scored: true },
+			{ metricDefinitionId: 'Hi5CitOIe4MLS2uF3dqc', scored: false },
+			{ metricDefinitionId: '9Ubx6BwRXrl4Fqc60BEQ', scored: false },
+			{ metricDefinitionId: 'i3tQbxmRVijkzlXngPan', scored: false },
+			{ metricDefinitionId: 'ojpzLOSCTMZf6s4SvRja', scored: true },
+		],
+	},
+];
+
+export const referenceTable: ReferenceTable = {
+	FEEunCRt96GG5wXvoDWm: {
+		'U16-U18': null,
+	}, // Pro Agility 右
+	UiJ8YCBfUdI9OPnknlU4: {
+		'U16-U18': null,
+	}, // Pro Agility 左
+	HWtqdoyh1WIjpJIGtHbM: {
+		'U16-U18': null,
+	}, // Pro Agility 左右差(%)
+	u5Wdg1MlL88rYKbPQW3o: {
+		'U16-U18': { mean: 4.81, std: 0.13 },
+	}, // Pro Agility 平均
+	V1AdIWTGwvVa2RYmZLsC: {
+		'U16-U18': null,
+	}, // BMI
+	JyCFHqA5HAOBPcqCOwCv: {
+		'U16-U18': null,
+	}, // 体重
+	'3s004Lb8UM9Tiag3kQNR': {
+		'U16-U18': null,
+	}, // 身長
+	y7h8I9Mkl1ppg5ZmRpUb: {
+		'U16-U18': { mean: 24.7, std: 6.1 },
+	}, // YoYo
+	Hi5CitOIe4MLS2uF3dqc: {
+		'U16-U18': null,
+	}, // 3 HOP 右
+	'9Ubx6BwRXrl4Fqc60BEQ': {
+		'U16-U18': null,
+	}, // 3 HOP 左
+	i3tQbxmRVijkzlXngPan: {
+		'U16-U18': null,
+	}, // 3 HOP 左右差(%)
+	ojpzLOSCTMZf6s4SvRja: {
+		'U16-U18': { mean: 6.44, std: 0.46 },
+	}, // 3 HOP 平均
+	'5iu1YWxuZFt6X2Stg0iy': {
+		'U16-U18': { mean: 12.3, std: 0.73 },
+	}, // 両足５段跳び
+	lMaeLRMQfMa1WKbOyly7: {
+		'U16-U18': { mean: 2.42, std: 0.1268 },
+	}, // 立ち幅跳び
+	uhQDnmvGVOGPgEYAxJh0: {
+		'U16-U18': { mean: 1.77, std: 0.07 },
+	}, // 10M スプリント
+	sgUyE2xgSX4d5YLDVFdO: {
+		'U16-U18': { mean: 3.03, std: 0.09 },
+	}, // 20M スプリント
+	uaaLUh0KRykPkWA3Dhcd: {
+		'U16-U18': { mean: 4.22, std: 0.12 },
+	}, // 30M スプリント
+};
+
+export const capabilitiesResponse = {
+	version: 'v1',
+	capabilities: {
+		metricDefinitions: true,
+		scoreProviders: true,
+		performanceAssessmentTemplates: true,
+	},
+};
