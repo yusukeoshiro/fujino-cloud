@@ -11,8 +11,8 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 			contentsProviderApiToken: {
 				hasToken: false,
 				lastFour: null,
-				updatedAt: null
-			}
+				updatedAt: null,
+			},
 		};
 	}
 
@@ -23,7 +23,7 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		contentsProviderApiToken: {
 			hasToken: Boolean(doc),
 			lastFour: doc?.lastFour ?? null,
-			updatedAt: doc?.updatedAt ?? null
-		}
+			updatedAt: doc?.updatedAt ?? null,
+		},
 	};
 };

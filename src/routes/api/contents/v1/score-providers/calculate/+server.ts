@@ -45,10 +45,9 @@ export const POST: RequestHandler = async (event) => {
 	if (!band) return json({ score: null });
 
 	const baseScore = bucketScore(value, band.mean, band.std);
-	const score =
-		metric.betterDirection === 'LOWER_IS_BETTER' ? 6 - baseScore : baseScore;
+	const score = metric.betterDirection === 'LOWER_IS_BETTER' ? 6 - baseScore : baseScore;
 
 	return json({
-		score
+		score,
 	});
 };

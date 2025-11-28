@@ -7,12 +7,12 @@ const config = {
 	// for more information about preprocessors
 	preprocess: vitePreprocess(),
 	kit: {
-        adapter: adapter(),
+		adapter: adapter(),
 
-        alias: {
-            $houdini: ".houdini/"
-        }
-    }
+		alias: {
+			$houdini: '.houdini/',
+		},
+	},
 };
 
 export default config;
