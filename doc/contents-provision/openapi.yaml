@@ -1,0 +1,413 @@
+openapi: "3.0.3"
+info:
+  title: Mobili Content Provider API Specifications
+  version: "1.0.0-v1"
+  description: >
+    REST contract for providers exposing metric definitions, performance assessment
+    templates, and external score calculation to the Mobili platform.
+servers:
+  - url: https://provider.example.com/contents/v1
+    description: Example provider base URL (versioned)
+tags:
+  - name: capabilities
+    description: Provider capability declaration
+  - name: metric-definitions
+    description: Metric definition catalog
+  - name: performance-assessment-templates
+    description: Performance assessment templates
+  - name: score-providers
+    description: External score calculation
+paths:
+  /capabilities:
+    get:
+      tags: [capabilities]
+      summary: Declare which content types are implemented
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Capabilities response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapabilitiesResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+  /metric-definitions:
+    get:
+      tags: [metric-definitions]
+      summary: List all metric definitions
+      description: Returns all metric definitions; responses must contain fewer than 1000 items.
+      responses:
+        "200":
+          description: Metric definition list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricDefinitionListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /metric-definitions/{id}:
+    get:
+      tags: [metric-definitions]
+      summary: Fetch a single metric definition
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Metric definition detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricDefinition"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /performance-assessment-templates:
+    get:
+      tags: [performance-assessment-templates]
+      summary: List performance assessment templates
+      description: Returns all templates; responses must contain fewer than 1000 items.
+      responses:
+        "200":
+          description: Performance assessment template list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceAssessmentTemplateListResponse"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /performance-assessment-templates/{id}:
+    get:
+      tags: [performance-assessment-templates]
+      summary: Fetch a single performance assessment template
+      parameters:
+        - $ref: "#/components/parameters/PathId"
+      responses:
+        "200":
+          description: Performance assessment template detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceAssessmentTemplateDetail"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+  /score-providers/calculate:
+    post:
+      tags: [score-providers]
+      summary: Calculate a score without exposing proprietary formulas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreCalculationRequest"
+      responses:
+        "200":
+          description: Score calculation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScoreCalculationResponse"
+        "400":
+          description: Functional error (e.g., validation/out-of-range)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponseBody"
+        default:
+          $ref: "#/components/responses/ErrorResponse"
+      security:
+        - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Provider-issued API token configured by the Mobili customer. Mobili sends
+        `Authorization: Bearer <token>` on every call.
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    ErrorResponse:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponseBody"
+  schemas:
+    CapabilitiesResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: v1
+        capabilities:
+          type: object
+          properties:
+            metricDefinitions:
+              type: boolean
+            scoreProviders:
+              type: boolean
+            performanceAssessmentTemplates:
+              type: boolean
+          required:
+            - metricDefinitions
+            - scoreProviders
+            - performanceAssessmentTemplates
+      required:
+        - version
+        - capabilities
+    MetricDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+          example: md-123
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        orgId:
+          type: string
+          nullable: true
+        isPublic:
+          type: boolean
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          $ref: "#/components/schemas/MetricDefinitionType"
+        category:
+          type: string
+        betterDirection:
+          $ref: "#/components/schemas/BetterDirection"
+        formula:
+          type: string
+          nullable: true
+          example: "$WEIGHT / (($HEIGHT / 100) ^ 2)"
+        sourceMetricDefinitionIds:
+          type: array
+          items:
+            type: string
+          nullable: true
+          example: ["WEIGHT", "HEIGHT"]
+        unit:
+          $ref: "#/components/schemas/MetricUnit"
+        roundingPrecision:
+          type: integer
+          minimum: 0
+          maximum: 5
+        meta:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - name
+        - description
+        - type
+        - category
+        - betterDirection
+        - formula
+        - unit
+        - roundingPrecision
+        - isPublic
+    MetricDefinitionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricDefinition"
+      required:
+        - items
+      example:
+        items:
+          - id: MD1
+            createdAt: "2024-01-01T00:00:00Z"
+            updatedAt: "2024-01-02T00:00:00Z"
+            orgId: null
+            isPublic: true
+            name: weight
+            description: Body weight
+            type: raw
+            category: body
+            betterDirection: LOWER_IS_BETTER
+            formula: null
+            sourceMetricDefinitionIds: []
+            unit: KILOGRAM
+            roundingPrecision: 1
+            meta: {}
+          - id: MD2
+            createdAt: "2024-01-01T00:00:00Z"
+            updatedAt: "2024-01-02T00:00:00Z"
+            orgId: null
+            isPublic: true
+            name: height
+            description: Body height
+            type: raw
+            category: body
+            betterDirection: HIGHER_IS_BETTER
+            formula: null
+            sourceMetricDefinitionIds: []
+            unit: CENTIMETER
+            roundingPrecision: 1
+            meta: {}
+          - id: MD3
+            createdAt: "2024-01-01T00:00:00Z"
+            updatedAt: "2024-01-02T00:00:00Z"
+            orgId: null
+            isPublic: true
+            name: BMI
+            description: Body mass index
+            type: derived
+            category: body
+            betterDirection: LOWER_IS_BETTER
+            formula: "$MD1 / (($MD2 / 100) ^ 2)"
+            sourceMetricDefinitionIds:
+              - MD1
+              - MD2
+            unit: UNITLESS
+            roundingPrecision: 1
+            meta: {}
+    BetterDirection:
+      type: string
+      enum: [LOWER_IS_BETTER, HIGHER_IS_BETTER]
+    MetricDefinitionType:
+      type: string
+      enum: [raw, derived]
+    MetricUnit:
+      type: string
+      enum:
+        - UNITLESS
+        - CENTIMETER
+        - KILOGRAM
+        - COUNT
+        - PERCENT
+        - METER
+        - SECOND
+        - MINUTE
+        - HOUR
+        - KMPH
+    PerformanceAssessmentTemplateItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: pat-10
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        orgId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PerformanceAssessmentTemplateMetricItem"
+        meta:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - orgId
+        - name
+        - items
+    PerformanceAssessmentTemplateListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PerformanceAssessmentTemplateItem"
+      required:
+        - items
+    PerformanceAssessmentTemplateDetail:
+      allOf:
+        - $ref: "#/components/schemas/PerformanceAssessmentTemplateItem"
+    PerformanceAssessmentTemplateMetricItem:
+      type: object
+      properties:
+        metricDefinitionId:
+          type: string
+        scored:
+          type: boolean
+      required:
+        - metricDefinitionId
+        - scored
+    ScoreCalculationRequest:
+      type: object
+      properties:
+        metricDefinitionId:
+          type: string
+        value:
+          type: number
+        referenceLevel:
+          type: string
+          nullable: true
+        context:
+          type: object
+          additionalProperties: true
+      required:
+        - metricDefinitionId
+        - value
+    ScoreCalculationResponse:
+      type: object
+      properties:
+        score:
+          type: number
+        explanations:
+          type: array
+          items:
+            type: string
+        meta:
+          type: object
+          additionalProperties: true
+      required:
+        - score
+    ErrorResponseBody:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required:
+            - code
+            - message
+        meta:
+          type: object
+          additionalProperties: true
+      required:
+        - error
