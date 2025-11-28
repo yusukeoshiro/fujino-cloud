@@ -94,10 +94,11 @@ export const actions: Actions = {
 		}
 
 		try {
+			const organization = await organizationService.getById(orgId);
 			await memberService.create({
 				orgId,
 				userId: userRecord.uid,
-				name: userRecord.displayName || email, // Fallback to email if name is missing
+				name: organization.name,
 			});
 		} catch (e: any) {
 			if (e.status === 409) {
