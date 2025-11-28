@@ -13,6 +13,7 @@ npm run verify
 ```
 
 This command runs:
+
 1.  `npm run check`: SvelteKit sync, Svelte check, and TypeScript check.
 2.  `npm run lint`: Prettier check and ESLint.
 3.  `npm run test`: Unit tests with Vitest.
@@ -21,5 +22,5 @@ If any of these checks fail, you must fix the issues before submitting.
 
 ## Common Issues
 
--   **Playwright Browsers**: If tests fail due to missing browsers, run `npx playwright install`.
--   **Houdini**: If you encounter errors related to `$houdini`, run `npx houdini generate`.
+- **Playwright Browsers**: If tests fail due to missing browsers, run `npx playwright install`.
+- **Houdini**: If you encounter errors related to `$houdini`, run `npx houdini generate`.
