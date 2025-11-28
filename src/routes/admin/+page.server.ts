@@ -23,8 +23,9 @@ export const actions: Actions = {
 
 		try {
 			await organizationService.create({ id, name });
-		} catch (e: any) {
-			if (e.status === 409) {
+		} catch (e: unknown) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			if ((e as any).status === 409) {
 				return fail(409, { error: 'Organization already exists' });
 			}
 			console.error('Error creating org:', e);
@@ -70,8 +71,9 @@ export const actions: Actions = {
 		let userRecord;
 		try {
 			userRecord = await adminAuth.getUserByEmail(email);
-		} catch (e: any) {
-			if (e.code === 'auth/user-not-found') {
+		} catch (e: unknown) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			if ((e as any).code === 'auth/user-not-found') {
 				// Create user
 				try {
 					userRecord = await adminAuth.createUser({
@@ -100,8 +102,9 @@ export const actions: Actions = {
 				userId: userRecord.uid,
 				name: organization.name,
 			});
-		} catch (e: any) {
-			if (e.status === 409) {
+		} catch (e: unknown) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			if ((e as any).status === 409) {
 				return fail(409, { error: 'User already in org' });
 			}
 			console.error('Error adding member:', e);

@@ -1,0 +1,112 @@
+
+> fujino-cloud@0.0.1 verify
+> npm run check && npm run lint && npm run test -- --browser.headless
+
+
+> fujino-cloud@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit
+
+Loading svelte-check in workspace: /app
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+
+> fujino-cloud@0.0.1 lint
+> prettier --check . && eslint .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/budget/+page.svelte
+  317:4  warning  Unused eslint-disable directive (no problems were reported from 'svelte/no-dom-manipulating')
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte
+  125:4  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  238:4  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+
+✖ 3 problems (0 errors, 3 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+
+
+> fujino-cloud@0.0.1 test
+> npm run test:unit -- --run --browser.headless
+
+
+> fujino-cloud@0.0.1 test:unit
+> vitest --run --browser.headless
+
+💡 Tip: we recommend upgrading to houdini@next for support with the latest vite and svelte-kit versions. Read more here: https://houdini-docs-next.netlify.app/guides/migrateTo20
+🎩 Generating runtime...
+📃 Unchanged: 5
+💡 Tip: we recommend upgrading to houdini@next for support with the latest vite and svelte-kit versions. Read more here: https://houdini-docs-next.netlify.app/guides/migrateTo20
+💡 Tip: we recommend upgrading to houdini@next for support with the latest vite and svelte-kit versions. Read more here: https://houdini-docs-next.netlify.app/guides/migrateTo20
+🎩 Generating runtime...
+🎩 Generating runtime...
+📃 Unchanged: 5
+📃 Unchanged: 5
+
+ RUN  v3.2.4 /app
+
+The following Vite config options will be overridden by SvelteKit:
+  - base
+💡 Tip: we recommend upgrading to houdini@next for support with the latest vite and svelte-kit versions. Read more here: https://houdini-docs-next.netlify.app/guides/migrateTo20
+🎩 Generating runtime...
+ ✓ |server| src/lib/gps-session-parser.model.test.ts (11 tests) 8ms
+ ✓ |server| src/lib/services/organization.service.test.ts (5 tests) 12ms
+ ✓ |server| src/lib/utils/fitogether-csv-processor.test.ts (12 tests) 49ms
+📃 Unchanged: 5
+ ✓ |server| src/lib/services/member.service.test.ts (2 tests) 7ms
+ ✓ |server| src/demo.spec.ts (1 test) 4ms
+ ❯ |client (chromium)| src/routes/page.svelte.spec.ts (1 test | 1 failed) 15088ms
+   × /+page.svelte > should render h1 15086ms
+     → Matcher did not succeed in time.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |client (chromium)| src/routes/page.svelte.spec.ts > /+page.svelte > should render h1
+Error: Matcher did not succeed in time.
+
+Failure screenshot:
+  - src/routes/__screenshots__/page.svelte.spec.ts/--page-svelte-should-render-h1-1.png
+
+ ❯ src/routes/page.svelte.spec.ts:14:58
+
+
+Caused by: VitestBrowserElementError: Cannot find element with locator: getByRole('heading', { level: 1 })
+
+<body>
+
+
+
+
+  <div>
+
+  </div>
+</body>
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯
+TypeError: Cannot read properties of undefined (reading 'hash')
+ ❯ get_navigation_intent node_modules/@sveltejs/kit/src/runtime/client/client.js:1291:36
+ ❯ navigate node_modules/@sveltejs/kit/src/runtime/client/client.js:1413:22
+ ❯ _goto node_modules/@sveltejs/kit/src/runtime/client/client.js:400:8
+ ❯ goto node_modules/@sveltejs/kit/src/runtime/client/client.js:1933:8
+ ❯ src/routes/+page.svelte:3:10
+
+This error originated in "src/routes/page.svelte.spec.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+The latest test that might've caused the error is "should render h1". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 31 passed (32)
+     Errors  1 error
+   Start at  06:01:08
+   Duration  22.24s (transform 991ms, setup 14ms, collect 2.33s, tests 15.17s, environment 1ms, prepare 13.43s)

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
 	coerce,
 	normalizeIdentifier,
@@ -7,7 +7,6 @@ import {
 	type FitogetherCsvProcessorOptions,
 	type FitogetherPersonRecord,
 } from './fitogether-csv-processor';
-import { DateTime } from 'luxon';
 
 describe('FitogetherCsvProcessor Utils', () => {
 	describe('coerce', () => {

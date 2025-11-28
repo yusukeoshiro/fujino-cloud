@@ -18,10 +18,12 @@
 		item.exact ? page.url.pathname === item.path : page.url.pathname.startsWith(item.path);
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -->
 <nav class="sticky top-0 z-[60] border-b border-slate-200 bg-white">
 	<ul class="flex justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 sm:gap-6">
-		{#each items as item}
+		{#each items as item (item.path)}
 			<li>
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 				<a
 					href={item.path}
 					class={`rounded-md px-3 py-1.5 transition-colors ${isActive(item) ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'}`}

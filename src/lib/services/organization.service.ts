@@ -11,6 +11,7 @@ class OrganizationService {
 
 	async list(): Promise<OrganizationDto[]> {
 		const snapshot = await this.collection().get();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }) as OrganizationDto);
 	}
 

@@ -36,6 +36,7 @@ describe('MemberService', () => {
 			};
 
 			const collection = adminDb.collection('members');
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(collection.get as any).mockResolvedValue(mockSnapshot);
 
 			const result = await memberService.listByOrgId(orgId);
@@ -55,6 +56,7 @@ describe('MemberService', () => {
 			};
 
 			const collection = adminDb.collection('members');
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(collection.doc as any).mockReturnValue(mockDoc);
 
 			await memberService.delete(memberId);

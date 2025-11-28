@@ -1,0 +1,120 @@
+
+> fujino-cloud@0.0.1 verify
+> npm run check && npm run lint && npm run test -- --browser.headless
+
+
+> fujino-cloud@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit
+
+Loading svelte-check in workspace: /app
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+
+> fujino-cloud@0.0.1 lint
+> prettier --check . && eslint .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+/app/src/lib/services/member.service.test.ts
+  39:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  58:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/lib/services/organization.service.test.ts
+  33:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  46:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  57:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/lib/services/organization.service.ts
+  14:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/lib/utils/fitogether-csv-processor.test.ts
+   1:32  error  'vi' is defined but never used        @typescript-eslint/no-unused-vars
+  10:10  error  'DateTime' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/routes/+page.svelte
+  5:21  error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+/app/src/routes/.well-known/appspecific/com.chrome.devtools.json/+server.ts
+  3:29  error  'request' is defined but never used  @typescript-eslint/no-unused-vars
+  3:38  error  'cookies' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/routes/_/+layout.svelte
+   39:9   error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+   50:10  error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+   62:14  error  Empty block statement                               no-empty
+   80:5   error  Each block should have a key                        svelte/require-each-key
+   84:14  error  Found a link with a url that isn't resolved         svelte/no-navigation-without-resolve
+  106:14  error  Found a link with a url that isn't resolved         svelte/no-navigation-without-resolve
+  146:5   error  Each block should have a key                        svelte/require-each-key
+  148:12  error  Found a link with a url that isn't resolved         svelte/no-navigation-without-resolve
+
+/app/src/routes/_/orgs/[oid]/+page.svelte
+  7:8  error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/+layout.svelte
+  23:3   error  Each block should have a key                 svelte/require-each-key
+  26:11  error  Found a link with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/+page.svelte
+  16:8  error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/budget/+page.svelte
+    3:11  error  'DateTime' is defined but never used                                                                                                                               @typescript-eslint/no-unused-vars
+   42:6   error  'editingOriginalValue' is assigned a value but never used                                                                                                          @typescript-eslint/no-unused-vars
+  208:4   error  Don't manipulate the DOM directly. The Svelte runtime can get confused if there is a difference between the actual DOM and the DOM expected by the Svelte runtime  svelte/no-dom-manipulating
+  324:53  error  'index' is defined but never used                                                                                                                                  @typescript-eslint/no-unused-vars
+  361:6   error  Don't manipulate the DOM directly. The Svelte runtime can get confused if there is a difference between the actual DOM and the DOM expected by the Svelte runtime  svelte/no-dom-manipulating
+  410:40  error  'eventDate' is defined but never used                                                                                                                              @typescript-eslint/no-unused-vars
+  415:17  error  Found a mutable instance of the built-in Set class. Use SvelteSet instead                                                                                          svelte/prefer-svelte-reactivity
+  524:12  error  'start' is assigned a value but never used                                                                                                                         @typescript-eslint/no-unused-vars
+  620:5   error  Each block should have a key                                                                                                                                       svelte/require-each-key
+  634:5   error  Each block should have a key                                                                                                                                       svelte/require-each-key
+  669:7   error  Each block should have a key                                                                                                                                       svelte/require-each-key
+  680:6   error  Each block should have a key                                                                                                                                       svelte/require-each-key
+  688:8   error  Each block should have a key                                                                                                                                       svelte/require-each-key
+  749:12  error  Each block should have a key                                                                                                                                       svelte/require-each-key
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/game-score/+page.svelte
+   21:6   error  'lastSavedToken' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   23:6   error  'notification' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   28:8   error  'updateCellValue' is assigned a value but never used    @typescript-eslint/no-unused-vars
+   96:8   error  'currentCellLabel' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  102:8   error  'restoreCaretToEnd' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  214:6   error  Each block should have a key                            svelte/require-each-key
+  229:6   error  Each block should have a key                            svelte/require-each-key
+  316:56  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/game-score/columns.ts
+  1:24  error  'FOOTER_COLS' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte
+   52:8   error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+  123:15  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  230:15  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  308:22  error  svelte-ignore comment is used, but not warned       svelte/no-unused-svelte-ignore
+  367:6   error  Each block should have a key                        svelte/require-each-key
+  405:9   error  Each block should have a key                        svelte/require-each-key
+  418:8   error  Each block should have a key                        svelte/require-each-key
+  430:10  error  Each block should have a key                        svelte/require-each-key
+
+/app/src/routes/admin/+page.server.ts
+   26:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   73:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/app/src/routes/api/gps-conditioning/training-budgets/set/+server.ts
+  25:11  error  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/app/src/routes/login/+page.svelte
+  47:15  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  72:16  error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+/app/src/routes/login/email-callback/+page.svelte
+  36:15  error  Found a goto() call with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+✖ 64 problems (64 errors, 0 warnings)

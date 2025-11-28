@@ -1,0 +1,31 @@
+
+> fujino-cloud@0.0.1 verify
+> npm run check && npm run lint && npm run test -- --browser.headless
+
+
+> fujino-cloud@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit
+
+Loading svelte-check in workspace: /app
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+
+> fujino-cloud@0.0.1 lint
+> prettier --check . && eslint .
+
+Checking formatting...
+All matched files use Prettier code style!
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/+layout.svelte
+  27:11  error  Found a link with a url that isn't resolved  svelte/no-navigation-without-resolve
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/budget/+page.svelte
+  317:4  warning  Unused eslint-disable directive (no problems were reported from 'svelte/no-dom-manipulating')
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte
+  125:4  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+  238:4  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')
+
+✖ 4 problems (1 error, 3 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.

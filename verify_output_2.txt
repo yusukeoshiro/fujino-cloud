@@ -1,0 +1,21 @@
+
+> fujino-cloud@0.0.1 verify
+> npm run check && npm run lint && npm run test -- --browser.headless
+
+
+> fujino-cloud@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit
+
+Loading svelte-check in workspace: /app
+Getting Svelte diagnostics...
+
+svelte-check found 0 errors and 0 warnings
+
+> fujino-cloud@0.0.1 lint
+> prettier --check . && eslint .
+
+Checking formatting...
+[warn] src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte
+[warn] src/routes/admin/+page.server.ts
+[warn] src/routes/login/+page.svelte
+[warn] Code style issues found in 3 files. Run Prettier with --write to fix.

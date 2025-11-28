@@ -30,8 +30,10 @@ describe('OrganizationService', () => {
 		vi.clearAllMocks();
 
 		// Setup default mocks
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(mockCollection.doc as any).mockReturnValue(mockDoc);
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(adminDb.collection as any).mockReturnValue(mockCollection);
 	});
 
@@ -43,6 +45,7 @@ describe('OrganizationService', () => {
 				data: () => ({ name: d.name }),
 			})),
 		};
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(mockCollection.get as any).mockResolvedValue(mockSnapshot);
 
 		const result = await organizationService.list();
@@ -54,6 +57,7 @@ describe('OrganizationService', () => {
 		const input = { id: 'custom-id', name: 'New Org' };
 
 		// Mock doc.get() to return does not exist for the new ID check
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(mockDoc.get as any).mockResolvedValue({ exists: false });
 
 		const result = await organizationService.create(input);
@@ -75,12 +79,14 @@ describe('OrganizationService', () => {
 	it('should throw error if organization already exists', async () => {
 		const input = { id: 'existing-id', name: 'Existing Org' };
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(mockDoc.get as any).mockResolvedValue({ exists: true });
 
 		await expect(organizationService.create(input)).rejects.toThrow();
 	});
 
 	it('should update an organization name', async () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(mockDoc.get as any).mockResolvedValue({
 			exists: true,
 			id: '1',

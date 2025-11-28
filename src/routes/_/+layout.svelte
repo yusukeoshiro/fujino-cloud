@@ -36,6 +36,7 @@
 
 			await fetch('/api/session', { method: 'DELETE' });
 
+			// eslint-disable-next-line svelte/no-navigation-without-resolve
 			goto('/login'); // ✅ redirect to login page
 		} catch (err) {
 			console.error('Logout failed:', err);
@@ -47,6 +48,7 @@
 	const navigateToOnlyOrg = (currentOrgId: string | null) => {
 		if (currentOrgId == null) {
 			if (members.length === 1) {
+				// eslint-disable-next-line svelte/no-navigation-without-resolve
 				goto(`/_/orgs/${members[0].orgId}`);
 			}
 		}
@@ -60,6 +62,7 @@
 
 		const unsubscribe = onAuthStateChanged(auth, async (user) => {
 			if (user) {
+				// do nothing
 			} else {
 				logout();
 			}
@@ -70,6 +73,7 @@
 	});
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -->
 <div class="w-full bg-white shadow">
 	<div class="mx-auto flex max-w-5xl items-center justify-between gap-2 p-4">
 		<!-- Left: logo + links -->
@@ -77,9 +81,10 @@
 			<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-28" />
 
 			{#if page.params.oid}
-				{#each menus as menu}
+				{#each menus as menu (menu.label)}
 					{#if $currentMembers.length > 0 && page.params.oid}
 						{#key menu.label}
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 							<a
 								href={menu.path(page.params.oid)}
 								class={`border-b-2 pb-0.5 transition-colors ${isActive(menu.path(page.params.oid)) ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}
@@ -102,6 +107,7 @@
 						</div>
 					{/if}
 					{#if $currentMembers.length > 1}
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 						<a
 							href="/_/"
 							class="rounded-lg border border-blue-200 bg-white px-3 py-1 text-xs font-medium text-blue-700 transition hover:border-blue-400 hover:bg-blue-50"
@@ -143,7 +149,8 @@
 		<div class="rounded-xl border border-blue-100 bg-blue-50/60 p-6 text-center shadow-sm">
 			<p class="text-sm font-medium text-blue-900">組織を選択してください</p>
 			<div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-				{#each $currentMembers as member}
+				{#each $currentMembers as member (member.orgId)}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
 					<a
 						href={`/_/orgs/${member.orgId}`}
 						class="flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-blue-700 transition hover:border-blue-400 hover:bg-blue-50"

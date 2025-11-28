@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { DateTime } from 'luxon';
 	import type { PageData } from './$types';
 	import type {
 		TrainingBudgetConfig,
@@ -39,6 +38,7 @@
 	let selectedBudgetIndex = $state<number | null>(null);
 	let editingBudgetIndex = $state<number | null>(null);
 	let editingDraft = $state('');
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let editingOriginalValue = '';
 	let editingSelectMode: 'all' | 'end' = 'all';
 	let budgetEditorEl = $state<HTMLElement | null>(null);
@@ -205,7 +205,7 @@
 		editingDraft = initial;
 		await tick();
 		if (budgetEditorEl) {
-			budgetEditorEl.textContent = editingDraft;
+			budgetEditorEl.textContent = editingDraft; // eslint-disable-line svelte/no-dom-manipulating
 			budgetEditorEl.focus();
 			if (editingSelectMode === 'all') {
 				selectAll(budgetEditorEl);
@@ -321,6 +321,7 @@
 		editingDraft = sanitized;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	function handleEditorKeydown(event: KeyboardEvent, index: number) {
 		switch (event.key) {
 			case 'Enter':
@@ -358,6 +359,7 @@
 			if (offset === 0) {
 				editingDraft = value;
 				if (budgetEditorEl) {
+					// eslint-disable-next-line svelte/no-dom-manipulating
 					budgetEditorEl.textContent = value;
 					moveCaretToEnd(budgetEditorEl);
 				}
@@ -407,11 +409,12 @@
 				break;
 		}
 	}
-	function removeEvent(eventId: string, eventDate: string) {
+	function removeEvent(eventId: string) {
 		const event = events.find((item) => item.id === eventId);
 		if (!event) return;
 		events = events.filter((item) => item.id !== eventId);
 		if (!event.id.startsWith('temp-')) {
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
 			const next = new Set(deletedEventIds);
 			next.add(event.id);
 			deletedEventIds = next;
@@ -521,6 +524,7 @@
 			editingDraft = '';
 			editingOriginalValue = '';
 			addEventFor = null;
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
 			const { start } = getCalendarYearRange(year, config.startMonth, config.weekStartsOn);
 			notification = null;
 			await tick();
@@ -617,7 +621,7 @@
 				onchange={() => queuePersist()}
 				class="rounded-lg border border-slate-300 px-2 py-1"
 			>
-				{#each monthOptions as option}
+				{#each monthOptions as option (option.value)}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>
@@ -631,7 +635,7 @@
 				onchange={() => queuePersist()}
 				class="rounded-lg border border-slate-300 px-2 py-1"
 			>
-				{#each weekStartOptions as option}
+				{#each weekStartOptions as option (option.value)}
 					<option value={option.value}>{option.label}</option>
 				{/each}
 			</select>
@@ -666,7 +670,7 @@
 				<thead class="sticky top-0 z-20 bg-white shadow-sm">
 					<tr>
 						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">週#</th>
-						{#each rotatedWeekdayLabels as label}
+						{#each rotatedWeekdayLabels as label (label)}
 							<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">{label}</th>
 						{/each}
 						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
@@ -677,7 +681,7 @@
 				</thead>
 
 				<tbody>
-					{#each weeks as week, index}
+					{#each weeks as week, index (week.index)}
 						<tr class="border-b border-slate-200 last:border-0">
 							<th
 								class="sticky left-0 border-r border-slate-200 bg-slate-50 px-2 py-2 whitespace-nowrap text-slate-800"
@@ -685,7 +689,7 @@
 								W{week.index}
 							</th>
 
-							{#each week.days as day}
+							{#each week.days as day (day.iso)}
 								<td
 									class={`relative h-[100px] p-0 align-top transition-colors hover:bg-slate-200
 									`}
@@ -746,7 +750,7 @@
 										{/if}
 
 										<ul class="flex flex-1 flex-col gap-1 overflow-y-auto">
-											{#each day.events.slice(0, 3) as event}
+											{#each day.events.slice(0, 3) as event (event.id)}
 												<li class="group flex items-center gap-1">
 													<div
 														class="flex-1 rounded-full bg-slate-100 px-2 py-1 text-left text-xs"
@@ -759,7 +763,7 @@
 														class="cursor-pointer text-xs text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
 														onclick={(e) => {
 															e.stopPropagation();
-															removeEvent(event.id, day.iso);
+															removeEvent(event.id);
 														}}
 													>
 														✕

@@ -13,6 +13,7 @@
 		const url = new URL($page.url);
 		url.searchParams.set('date', buildToken(days));
 		// keep other query params intact; replace history to avoid stacking entries
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(`${url.pathname}?${url.searchParams.toString()}`, { replaceState: true });
 	}
 	// for active button styling

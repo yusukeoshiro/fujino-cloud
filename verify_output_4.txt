@@ -1,0 +1,31 @@
+
+> fujino-cloud@0.0.1 verify
+> npm run check && npm run lint && npm run test -- --browser.headless
+
+
+> fujino-cloud@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && tsc --noEmit
+
+Loading svelte-check in workspace: /app
+Getting Svelte diagnostics...
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte:165:15
+Error: Property 'message' does not exist on type '{}'. (ts)
+			setError(
+				typeof e?.message === 'string' ? e.message : 'アップロードに失敗しました。',
+				details,
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte:165:40
+Error: Property 'message' does not exist on type '{}'. (ts)
+			setError(
+				typeof e?.message === 'string' ? e.message : 'アップロードに失敗しました。',
+				details,
+
+/app/src/routes/_/orgs/[oid]/gps-conditioning/upload/+page.svelte:238:8
+Error: 'e' is of type 'unknown'. (ts)
+				typeof (e as any)?.message === 'string'
+					? e.message
+					: 'コミットに失敗しました。もう一度お試しください。',
+
+====================================
+svelte-check found 3 errors and 0 warnings in 1 file
