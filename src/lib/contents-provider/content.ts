@@ -835,54 +835,71 @@ export const performanceAssessmentTemplates: PerformanceAssessmentTemplate[] = [
 
 export const referenceTable: ReferenceTable = {
 	FEEunCRt96GG5wXvoDWm: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // Pro Agility 右
 	UiJ8YCBfUdI9OPnknlU4: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // Pro Agility 左
 	HWtqdoyh1WIjpJIGtHbM: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // Pro Agility 左右差(%)
 	u5Wdg1MlL88rYKbPQW3o: {
+		'U10-U12': { mean: 5.43, std: 0.21 },
 		'U16-U18': { mean: 4.81, std: 0.13 },
 	}, // Pro Agility 平均
 	V1AdIWTGwvVa2RYmZLsC: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // BMI
 	JyCFHqA5HAOBPcqCOwCv: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // 体重
 	'3s004Lb8UM9Tiag3kQNR': {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // 身長
 	y7h8I9Mkl1ppg5ZmRpUb: {
+		'U10-U12': null,
 		'U16-U18': { mean: 24.7, std: 6.1 },
 	}, // YoYo
 	Hi5CitOIe4MLS2uF3dqc: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // 3 HOP 右
 	'9Ubx6BwRXrl4Fqc60BEQ': {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // 3 HOP 左
 	i3tQbxmRVijkzlXngPan: {
+		'U10-U12': null,
 		'U16-U18': null,
 	}, // 3 HOP 左右差(%)
 	ojpzLOSCTMZf6s4SvRja: {
+		'U10-U12': { mean: 4.42, std: 0.42 },
 		'U16-U18': { mean: 6.44, std: 0.46 },
 	}, // 3 HOP 平均
 	'5iu1YWxuZFt6X2Stg0iy': {
+		'U10-U12': { mean: 9, std: 0.79 },
 		'U16-U18': { mean: 12.3, std: 0.73 },
 	}, // 両足５段跳び
 	lMaeLRMQfMa1WKbOyly7: {
+		'U10-U12': { mean: 1.8285, std: 0.1603 },
 		'U16-U18': { mean: 2.42, std: 0.1268 },
 	}, // 立ち幅跳び
 	uhQDnmvGVOGPgEYAxJh0: {
+		'U10-U12': { mean: 2.1, std: 0.09 },
 		'U16-U18': { mean: 1.77, std: 0.07 },
 	}, // 10M スプリント
 	sgUyE2xgSX4d5YLDVFdO: {
+		'U10-U12': { mean: 3.63, std: 0.16 },
 		'U16-U18': { mean: 3.03, std: 0.09 },
 	}, // 20M スプリント
 	uaaLUh0KRykPkWA3Dhcd: {
+		'U10-U12': { mean: 5.12, std: 0.24 },
 		'U16-U18': { mean: 4.22, std: 0.12 },
 	}, // 30M スプリント
 };
