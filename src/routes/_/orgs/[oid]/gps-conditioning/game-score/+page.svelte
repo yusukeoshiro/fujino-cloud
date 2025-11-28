@@ -18,13 +18,16 @@
 
 	let values = $state<GameScoreValues>(cloneValues(data.values));
 	let saving = $state(false);
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let lastSavedToken = $state<string | null>(null);
 	type Banner = { text: string; tone: 'success' | 'error' } | null;
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let notification = $state<Banner>(null);
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
 	let editDraft: Record<string, string> = {};
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const updateCellValue = (column: GameScoreColumn, value: string, _target?: HTMLElement) => {
 		const sanitized = sanitizeInput(value);
 
@@ -93,12 +96,14 @@
 		selection.addRange(range);
 	};
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const currentCellLabel = () => {
 		if (activeColumn === null) return '';
 		const column = columns[activeColumn];
 		return column ? column.label : '';
 	};
 
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const restoreCaretToEnd = (node: HTMLElement) => {
 		if (typeof window === 'undefined') return;
 		requestAnimationFrame(() => {
@@ -211,7 +216,7 @@
 		<table class="w-full min-w-[720px] border-collapse text-sm [font-variant-numeric:tabular-nums]">
 			<thead class="sticky top-0 z-10 bg-slate-50">
 				<tr>
-					{#each columns as column}
+					{#each columns as column (column.key)}
 						<th class="border border-slate-200 text-left align-bottom">
 							<div class="px-2 py-2 font-semibold text-slate-800">{column.label}</div>
 							<!-- {#if column.metricDefinitionId}
@@ -226,7 +231,7 @@
 
 			<tbody>
 				<tr>
-					{#each columns as column, colIndex}
+					{#each columns as column, colIndex (column.key)}
 						<td
 							class={`min-w-[130px] border border-slate-200 p-0 align-top ${
 								activeColumn === colIndex ? 'outline-2 -outline-offset-2 outline-blue-600' : ''
@@ -313,6 +318,7 @@
 								}}
 								onkeydown={async (event) => {
 									const navKeys = ['Enter', 'ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'];
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
 									if (!navKeys.includes(event.key) || (event as any).isComposing) return;
 
 									event.preventDefault();

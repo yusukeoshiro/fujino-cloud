@@ -33,6 +33,7 @@
 			window.localStorage.removeItem('emailForSignIn');
 			console.log(result);
 
+			// eslint-disable-next-line svelte/no-navigation-without-resolve
 			await goto('/_/');
 
 			// .then((result) => {

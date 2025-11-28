@@ -1,4 +1,4 @@
-import { DISPLAY_COLS, FOOTER_COLS } from '../upload/utils/headers.util';
+import { DISPLAY_COLS } from '../upload/utils/headers.util';
 import { METRIC_DEFINITION_IDS } from '$lib/constants/metric-definition-ids';
 import type { GameScoreValueEntry } from '$lib/services/game-score.service';
 

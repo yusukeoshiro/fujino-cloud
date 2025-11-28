@@ -44,8 +44,9 @@
 		try {
 			await sendLoginLink(email);
 			message = 'ログインリンクを送信しました。メールをご確認ください。';
-		} catch (e: any) {
-			error = e?.message ?? 'リンク送信に失敗しました。';
+		} catch (e: unknown) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			error = (e as any)?.message ?? 'リンク送信に失敗しました。';
 		} finally {
 			sending = false;
 		}
@@ -69,6 +70,7 @@
 				});
 
 				console.log('✅ Logged in as:', user.email);
+				// eslint-disable-next-line svelte/no-navigation-without-resolve
 				await goto('/_');
 			} else {
 				console.log('🚪 User logged out or not authenticated');

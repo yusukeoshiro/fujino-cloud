@@ -49,6 +49,7 @@
 	function onCommitSuccess() {
 		// e.g., show toast / navigate / reset
 		// result = null; lastFile = null;
+		// eslint-disable-next-line svelte/no-navigation-without-resolve
 		goto(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	}
 
@@ -120,9 +121,10 @@
 			const payload = (await res.json()) as UploadPreviewResponse;
 			result = payload;
 			rowSelections = buildInitialSelections(payload.records);
-		} catch (e: any) {
+		} catch (e: unknown) {
 			const details: string[] = [];
-			const rawDetails = e?.details;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const rawDetails = (e as any)?.details;
 			if (Array.isArray(rawDetails)) {
 				for (const item of rawDetails) {
 					if (typeof item === 'string') {
@@ -159,7 +161,11 @@
 				}
 			}
 			setError(
-				typeof e?.message === 'string' ? e.message : 'アップロードに失敗しました。',
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				typeof (e as any)?.message === 'string'
+					? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+						(e as any).message
+					: 'アップロードに失敗しました。',
 				details,
 			);
 		} finally {
@@ -227,10 +233,12 @@
 			);
 			if (!res.ok) throw new Error(await res.text());
 			onCommitSuccess(); // ✅ your hook
-		} catch (e: any) {
+		} catch (e: unknown) {
 			setError(
-				typeof e?.message === 'string'
-					? e.message
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				typeof (e as any)?.message === 'string'
+					? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+						(e as any).message
 					: 'コミットに失敗しました。もう一度お試しください。',
 			);
 		} finally {
@@ -305,7 +313,6 @@
 		<!-- Hot spot / dropzone -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<!-- svelte-ignore event_directive_deprecated -->
 		<div
 			class="cursor-pointer rounded-2xl border-2 border-dashed bg-white/40 p-10 text-center transition
 						select-none hover:bg-white/70
@@ -364,7 +371,7 @@
 			<p class="font-semibold">{errorHeadline}</p>
 			{#if errorDetails.length}
 				<ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
-					{#each errorDetails as detail}
+					{#each errorDetails as detail, i (i)}
 						<li>{detail}</li>
 					{/each}
 				</ul>
@@ -402,7 +409,7 @@
 										<nobr>計算に含める</nobr>
 									</div>
 								</th>
-								{#each COLUMNS as col}
+								{#each COLUMNS as col (col)}
 									<th
 										class={'px-3 py-2 text-left font-semibold whitespace-nowrap text-slate-700 ' +
 											colStickyClass(col)}
@@ -415,7 +422,7 @@
 							</tr>
 						</thead>
 						<tbody>
-							{#each rows as row, i}
+							{#each rows as row, i (i)}
 								<tr class="{i % 2 ? 'bg-white' : 'bg-slate-50'} hover:bg-blue-50">
 									<td class="sticky left-0 z-20 w-20 min-w-[5rem] bg-inherit px-3 py-2 text-center">
 										<input
@@ -427,7 +434,7 @@
 											aria-label="選手を取り込み対象に含める"
 										/>
 									</td>
-									{#each COLUMNS as col}
+									{#each COLUMNS as col (col)}
 										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col)}>
 											<nobr>
 												{fmt(row.record[col])}

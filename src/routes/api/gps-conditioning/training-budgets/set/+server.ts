@@ -22,7 +22,7 @@ export const POST: RequestHandler = async (event) => {
 	let body: SavePayload;
 	try {
 		body = (await event.request.json()) as SavePayload;
-	} catch (err) {
+	} catch {
 		return json({ message: 'Invalid JSON payload' }, { status: 400 });
 	}
 
