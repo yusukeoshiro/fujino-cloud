@@ -18,5 +18,7 @@ if (!getApps().length) {
 
 export const adminAuth = getAuth();
 
+const databaseId = env.FIRESTORE_DATABASE_ID || 'default';
+
 // TODO I dont know why I need to speficy default here. its really annoying
-export const adminDb = getFirestore('default');
+export const adminDb = getFirestore(databaseId);
