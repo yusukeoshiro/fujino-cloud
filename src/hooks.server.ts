@@ -48,7 +48,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			return Response.redirect(new URL('/login', event.url), 303);
 		}
 
-		if (event.locals.user.email !== env.ADMIN_EMAIL) {
+		const adminEmails = (env.ADMIN_EMAIL || '')
+			.split(',')
+			.map((e) => e.trim())
+			.filter((e) => e);
+
+		if (!event.locals.user.email || !adminEmails.includes(event.locals.user.email)) {
 			throw error(403, 'Forbidden: You are not an admin');
 		}
 	}
