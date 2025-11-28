@@ -1,4 +1,4 @@
-build container 
+build container
 
 ssh -L 5173:localhost:5173 oshiro.tplinkdns.com
 

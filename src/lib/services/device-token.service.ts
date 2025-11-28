@@ -25,7 +25,7 @@ class DeviceTokenService {
 		const payload: DeviceTokenDocument = {
 			orgId,
 			token,
-			updatedAt: new Date().toISOString()
+			updatedAt: new Date().toISOString(),
 		};
 		await this.collection().doc(orgId).set(payload, { merge: true });
 		return payload;
