@@ -26,14 +26,14 @@ class GameScoreService {
 		await this.collection.doc(orgId).set(
 			{
 				orgId,
-				values
+				values,
 			},
-			{ merge: true }
+			{ merge: true },
 		);
 
 		return {
 			orgId,
-			values
+			values,
 		};
 	}
 }

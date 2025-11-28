@@ -66,7 +66,10 @@ export const normalizeIdentifier = (value: string | number | null | undefined) =
 export const normalizeName = (value: string | null | undefined) =>
 	value ? value.trim().toLowerCase() : '';
 
-type CollectEntriesResult = Pick<FitogetherCsvProcessResult, 'entries' | 'unmatched' | 'headers' | 'headerMap'>;
+type CollectEntriesResult = Pick<
+	FitogetherCsvProcessResult,
+	'entries' | 'unmatched' | 'headers' | 'headerMap'
+>;
 
 export class FitogetherCsvProcessor {
 	private personsByExternalId = new Map<string, FitogetherPersonRecord>();

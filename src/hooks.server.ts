@@ -1,4 +1,5 @@
 import { error, type Handle } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { adminAuth } from '$lib/admin-firebase'; // your Firebase Admin init
 import { memberService } from './lib/services/member.service';
 import { deviceTokenService } from './lib/services/device-token.service';
@@ -40,6 +41,21 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (event.url.pathname.startsWith('/_/') && !event.locals.user) {
 		console.log(`user is not logged in! redirecting user!`);
 		return Response.redirect(new URL('/login', event.url), 303);
+	}
+
+	if (event.url.pathname.startsWith('/admin')) {
+		if (!event.locals.user) {
+			return Response.redirect(new URL('/login', event.url), 303);
+		}
+
+		const adminEmails = (env.ADMIN_EMAILS || '')
+			.split(',')
+			.map((e) => e.trim())
+			.filter((e) => e);
+
+		if (!event.locals.user.email || !adminEmails.includes(event.locals.user.email)) {
+			throw error(403, 'Forbidden: You are not an admin');
+		}
 	}
 
 	const ensureOrgAccess = (orgId: string) => {

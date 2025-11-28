@@ -23,7 +23,7 @@
 	let contentsProviderApiToken = $state({
 		hasToken: data.contentsProviderApiToken?.hasToken ?? false,
 		lastFour: data.contentsProviderApiToken?.lastFour ?? null,
-		updatedAt: data.contentsProviderApiToken?.updatedAt ?? null
+		updatedAt: data.contentsProviderApiToken?.updatedAt ?? null,
 	});
 	let contentsProviderIssuedToken = $state<string | null>(null);
 	let contentsProviderBanner = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
@@ -45,7 +45,8 @@
 		}
 	};
 
-	const formatTimestamp = (value: string | null) => (value ? new Date(value).toLocaleString() : null);
+	const formatTimestamp = (value: string | null) =>
+		value ? new Date(value).toLocaleString() : null;
 
 	const saveDeviceToken = async (event: SubmitEvent) => {
 		event.preventDefault();
@@ -70,7 +71,10 @@
 			applyToken(trimmed);
 			tokenInput = '';
 			deviceLastUpdated = result.updatedAt ?? null;
-			deviceBanner = { text: result.message ?? 'デバイストークンを保存しました。', tone: 'success' };
+			deviceBanner = {
+				text: result.message ?? 'デバイストークンを保存しました。',
+				tone: 'success',
+			};
 		} catch (error) {
 			console.error(error);
 			deviceBanner = {
@@ -97,7 +101,10 @@
 			applyToken(null);
 			tokenInput = '';
 			deviceLastUpdated = null;
-			deviceBanner = { text: result.message ?? 'デバイストークンを削除しました。', tone: 'success' };
+			deviceBanner = {
+				text: result.message ?? 'デバイストークンを削除しました。',
+				tone: 'success',
+			};
 		} catch (error) {
 			console.error(error);
 			deviceBanner = {
@@ -115,9 +122,12 @@
 		contentsProviderBanner = null;
 		contentsProviderIssuedToken = null;
 		try {
-			const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/contents-provider-api-token`, {
-				method: 'POST',
-			});
+			const response = await fetch(
+				`/api/orgs/${encodeURIComponent(orgId)}/contents-provider-api-token`,
+				{
+					method: 'POST',
+				},
+			);
 			const result = await response.json();
 			if (!response.ok || !result?.token) {
 				throw new Error(result?.message ?? 'APIトークンの発行に失敗しました。');
@@ -125,7 +135,8 @@
 
 			contentsProviderApiToken = {
 				hasToken: true,
-				lastFour: result.lastFour ?? (typeof result.token === 'string' ? result.token.slice(-4) : null),
+				lastFour:
+					result.lastFour ?? (typeof result.token === 'string' ? result.token.slice(-4) : null),
 				updatedAt: result.updatedAt ?? null,
 			};
 			contentsProviderIssuedToken = result.token;
@@ -149,9 +160,12 @@
 		isDeletingContentsProvider = true;
 		contentsProviderBanner = null;
 		try {
-			const response = await fetch(`/api/orgs/${encodeURIComponent(orgId)}/contents-provider-api-token`, {
-				method: 'DELETE',
-			});
+			const response = await fetch(
+				`/api/orgs/${encodeURIComponent(orgId)}/contents-provider-api-token`,
+				{
+					method: 'DELETE',
+				},
+			);
 			const result = await response.json();
 			if (!response.ok || !result?.success) {
 				throw new Error(result?.message ?? 'APIトークンの削除に失敗しました。');
@@ -182,7 +196,8 @@
 	<header class="flex flex-col gap-2">
 		<h1 class="text-2xl font-semibold text-slate-900">設定</h1>
 		<p class="text-sm text-slate-600">
-			Fujino Cloud と Mobili Platform 間の連携トークンを管理します。方向ごとにトークンが異なるため、使い道を確認して設定してください。
+			Fujino Cloud と Mobili Platform
+			間の連携トークンを管理します。方向ごとにトークンが異なるため、使い道を確認して設定してください。
 		</p>
 	</header>
 
@@ -204,7 +219,9 @@
 				<div>
 					<h2 class="text-lg font-medium text-slate-900">Fujino Cloud → Mobili Platform</h2>
 					<p class="text-sm text-slate-500">
-						Mobili Platform API を呼び出すためのデバイストークンです。組織ごとに発行したトークンを保存すると、Fujino Cloud からのリクエストに自動適用されます。
+						Mobili Platform API
+						を呼び出すためのデバイストークンです。組織ごとに発行したトークンを保存すると、Fujino
+						Cloud からのリクエストに自動適用されます。
 					</p>
 				</div>
 				<div
@@ -281,12 +298,15 @@
 				<div>
 					<h2 class="text-lg font-medium text-slate-900">Mobili Platform → Fujino Cloud</h2>
 					<p class="text-sm text-slate-500">
-						Mobili Platform から Fujino Cloud のコンテンツ提供 API を呼び出すためのトークンです。発行/再発行すると新しいトークンが一度だけ表示されます。
+						Mobili Platform から Fujino Cloud のコンテンツ提供 API
+						を呼び出すためのトークンです。発行/再発行すると新しいトークンが一度だけ表示されます。
 					</p>
 				</div>
 				<div
 					class={`rounded-full px-3 py-1 text-xs font-semibold ${
-						contentsProviderApiToken.hasToken ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+						contentsProviderApiToken.hasToken
+							? 'bg-emerald-100 text-emerald-700'
+							: 'bg-slate-100 text-slate-500'
 					}`}
 				>
 					{contentsProviderApiToken.hasToken ? '発行済み' : '未発行'}
@@ -310,7 +330,11 @@
 					class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-indigo-300"
 					disabled={isIssuingContentsProvider}
 				>
-					{isIssuingContentsProvider ? '発行中…' : contentsProviderApiToken.hasToken ? '再発行する' : '発行する'}
+					{isIssuingContentsProvider
+						? '発行中…'
+						: contentsProviderApiToken.hasToken
+							? '再発行する'
+							: '発行する'}
 				</button>
 				{#if contentsProviderApiToken.hasToken}
 					<button
@@ -329,7 +353,9 @@
 					<p class="text-sm font-medium text-amber-800">
 						このトークンは一度しか表示されません。必ず安全な場所に保管してください。
 					</p>
-					<div class="mt-2 rounded-md bg-white px-3 py-2 font-mono text-xs text-slate-800 shadow-inner">
+					<div
+						class="mt-2 rounded-md bg-white px-3 py-2 font-mono text-xs text-slate-800 shadow-inner"
+					>
 						{contentsProviderIssuedToken}
 					</div>
 				</div>

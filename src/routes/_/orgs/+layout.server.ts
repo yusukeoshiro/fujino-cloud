@@ -8,7 +8,7 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		return {
 			deviceToken: null,
 			deviceTokenUpdatedAt: null,
-			orgId: null
+			orgId: null,
 		};
 	}
 
@@ -17,6 +17,6 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	return {
 		deviceToken: doc?.token ?? null,
 		deviceTokenUpdatedAt: doc?.updatedAt ?? null,
-		orgId
+		orgId,
 	};
 };

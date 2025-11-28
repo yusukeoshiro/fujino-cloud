@@ -39,7 +39,7 @@ export const DISPLAY_COLS = [
 ];
 
 export const FOOTER_COLS = [
-	'トレーニングスコア消費' // b3DroV7arY2KLRUJpdtq
+	'トレーニングスコア消費', // b3DroV7arY2KLRUJpdtq
 ];
 
 // ✅ combined columns (left → middle → right)
