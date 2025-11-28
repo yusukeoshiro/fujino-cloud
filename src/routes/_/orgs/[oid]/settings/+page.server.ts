@@ -3,8 +3,26 @@ import type { Actions, PageServerLoad } from './$types';
 import { contentsProviderApiTokenService } from '$lib/services/contents-provider-api-token.service';
 import { memberService } from '$lib/services/member.service';
 import { adminAuth } from '$lib/admin-firebase';
+import type { UserRecord } from 'firebase-admin/auth';
+import type { MemberDto } from '$lib/services/member.dto';
 
-export const load: PageServerLoad = async ({ params, parent }) => {
+type EnrichedMember = MemberDto & { email: string | null; photoURL: string | null };
+type FirebaseError = { code?: string; message?: string };
+
+const isUserNotFoundError = (error: unknown) =>
+	typeof error === 'object' &&
+	error !== null &&
+	'code' in error &&
+	(error as FirebaseError).code === 'auth/user-not-found';
+
+const errorMessage = (error: unknown) =>
+	error instanceof Error
+		? error.message
+		: typeof error === 'object' && error !== null && 'message' in error
+			? String((error as FirebaseError).message)
+			: 'unknown error';
+
+export const load: PageServerLoad = async ({ params, parent, locals }) => {
 	const parentData = await parent();
 	const orgId = params.oid;
 
@@ -14,43 +32,42 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 			contentsProviderApiToken: {
 				hasToken: false,
 				lastFour: null,
-				updatedAt: null
+				updatedAt: null,
 			},
-			members: []
+			members: [],
 		};
 	}
 
 	const [tokenDoc, members] = await Promise.all([
 		contentsProviderApiTokenService.get(orgId),
-		memberService.listByOrgId(orgId)
+		memberService.listByOrgId(orgId),
 	]);
 
 	// Enrich members with email using batch fetch
-	let enrichedMembers = members;
+	let enrichedMembers: EnrichedMember[] = members.map((member: MemberDto) => ({
+		...member,
+		email: null,
+		photoURL: null,
+	}));
 	if (members.length > 0) {
 		const uids = members.map((m) => m.userId);
 		try {
-			const usersResult = await adminAuth.getUsers(
-				uids.map((uid) => ({ uid }))
+			const usersResult = await adminAuth.getUsers(uids.map((uid) => ({ uid })));
+			const userMap = new Map<string, UserRecord>(
+				usersResult.users.map((u: UserRecord) => [u.uid, u]),
 			);
-			const userMap = new Map(usersResult.users.map((u) => [u.uid, u]));
 
-			enrichedMembers = members.map((member) => {
+			enrichedMembers = enrichedMembers.map((member) => {
 				const userRecord = userMap.get(member.userId);
 				return {
 					...member,
-					email: userRecord?.email ?? null,
-					photoURL: userRecord?.photoURL ?? null
+					email: userRecord?.email ?? member.email,
+					photoURL: userRecord?.photoURL ?? member.photoURL,
 				};
 			});
 		} catch (e) {
 			console.error('Failed to batch fetch users', e);
-			// Fallback to no enrichment
-			enrichedMembers = members.map((member) => ({
-				...member,
-				email: null,
-				photoURL: null
-			}));
+			// Fallback to existing values which are already initialized
 		}
 	}
 
@@ -59,9 +76,10 @@ export const load: PageServerLoad = async ({ params, parent }) => {
 		contentsProviderApiToken: {
 			hasToken: Boolean(tokenDoc),
 			lastFour: tokenDoc?.lastFour ?? null,
-			updatedAt: tokenDoc?.updatedAt ?? null
+			updatedAt: tokenDoc?.updatedAt ?? null,
 		},
-		members: enrichedMembers
+		user: locals.user,
+		members: enrichedMembers,
 	};
 };
 
@@ -71,7 +89,7 @@ export const actions: Actions = {
 		if (!orgId) throw error(400, 'Organization ID is missing');
 
 		// Authorization check
-		if (!locals.user || !locals.user.members?.some(m => m.orgId === orgId)) {
+		if (!locals.user || !locals.user.members?.some((m) => m.orgId === orgId)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -83,12 +101,35 @@ export const actions: Actions = {
 		}
 
 		try {
-			const userRecord = await adminAuth.getUserByEmail(email);
+			let userRecord: UserRecord | null = null;
+			try {
+				userRecord = await adminAuth.getUserByEmail(email);
+			} catch (e) {
+				if (isUserNotFoundError(e)) {
+					try {
+						userRecord = await adminAuth.createUser({
+							email,
+							emailVerified: false,
+							disabled: false,
+						});
+					} catch (createError) {
+						console.error('Failed to create user for invitation', createError);
+						return fail(500, { email, error: 'ユーザーの作成に失敗しました。' });
+					}
+				} else {
+					console.error('Failed to fetch user by email', e);
+					return fail(500, { email, error: 'ユーザーの取得に失敗しました。' });
+				}
+			}
+			if (!userRecord) {
+				console.error('User record was not retrieved or created');
+				return fail(500, { email, error: 'ユーザー情報の取得に失敗しました。' });
+			}
 
 			// Check for duplicate membership
 			// We can check the current members of the org or check the user's memberships
 			const existingMembers = await memberService.listByOrgId(orgId);
-			const isAlreadyMember = existingMembers.some(m => m.userId === userRecord.uid);
+			const isAlreadyMember = existingMembers.some((m) => m.userId === userRecord.uid);
 
 			if (isAlreadyMember) {
 				return fail(409, { email, alreadyExists: true });
@@ -97,15 +138,15 @@ export const actions: Actions = {
 			await memberService.create({
 				orgId,
 				userId: userRecord.uid,
-				name: userRecord.displayName || email.split('@')[0]
+				name: userRecord.displayName || email.split('@')[0],
 			});
 			return { success: true };
-		} catch (e: any) {
-			if (e.code === 'auth/user-not-found') {
+		} catch (e) {
+			if (isUserNotFoundError(e)) {
 				return fail(400, { email, notFound: true });
 			}
 			console.error('Invite failed', e);
-			return fail(500, { email, error: e.message });
+			return fail(500, { email, error: errorMessage(e) });
 		}
 	},
 
@@ -114,7 +155,7 @@ export const actions: Actions = {
 		if (!orgId) throw error(400, 'Organization ID is missing');
 
 		// Authorization check
-		if (!locals.user || !locals.user.members?.some(m => m.orgId === orgId)) {
+		if (!locals.user || !locals.user.members?.some((m) => m.orgId === orgId)) {
 			throw error(403, 'Forbidden');
 		}
 
@@ -137,5 +178,5 @@ export const actions: Actions = {
 
 		await memberService.delete(memberId);
 		return { success: true };
-	}
+	},
 };

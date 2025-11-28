@@ -7,12 +7,12 @@ vi.mock('../admin-firebase', () => {
 	const mockCollection = {
 		where: vi.fn().mockReturnThis(),
 		get: vi.fn(),
-		doc: vi.fn()
+		doc: vi.fn(),
 	};
 	return {
 		adminDb: {
-			collection: vi.fn().mockReturnValue(mockCollection)
-		}
+			collection: vi.fn().mockReturnValue(mockCollection),
+		},
 	};
 });
 
@@ -26,13 +26,13 @@ describe('MemberService', () => {
 			const orgId = 'test-org';
 			const mockMembers = [
 				{ id: '1', orgId, userId: 'u1', name: 'Member 1' },
-				{ id: '2', orgId, userId: 'u2', name: 'Member 2' }
+				{ id: '2', orgId, userId: 'u2', name: 'Member 2' },
 			];
 
 			const mockSnapshot = {
-				docs: mockMembers.map(m => ({
-					data: () => m
-				}))
+				docs: mockMembers.map((m) => ({
+					data: () => m,
+				})),
 			};
 
 			const collection = adminDb.collection('members');
@@ -51,7 +51,7 @@ describe('MemberService', () => {
 		it('should delete member by id', async () => {
 			const memberId = 'member-1';
 			const mockDoc = {
-				delete: vi.fn().mockResolvedValue(undefined)
+				delete: vi.fn().mockResolvedValue(undefined),
 			};
 
 			const collection = adminDb.collection('members');

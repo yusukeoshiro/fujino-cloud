@@ -45,7 +45,9 @@ class MemberService {
 	async listByOrgId(orgId: string): Promise<MemberDto[]> {
 		const snapshot = await adminDb.collection('members').where('orgId', '==', orgId).get();
 
-		return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot<MemberDto>) => doc.data());
+		return snapshot.docs.map((doc: FirebaseFirestore.QueryDocumentSnapshot<MemberDto>) =>
+			doc.data(),
+		);
 	}
 
 	async delete(id: string) {
