@@ -1,6 +1,6 @@
 {
-  "extensions": {
-    "firestore-bigquery-export": "firebase/firestore-bigquery-export@0.2.6",
-    "firestore-bigquery-export-l7be": "firebase/firestore-bigquery-export@0.2.6"
-  }
+	"extensions": {
+		"firestore-bigquery-export": "firebase/firestore-bigquery-export@0.2.6",
+		"firestore-bigquery-export-l7be": "firebase/firestore-bigquery-export@0.2.6"
+	}
 }

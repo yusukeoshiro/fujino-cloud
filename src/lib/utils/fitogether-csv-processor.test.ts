@@ -65,7 +65,15 @@ describe('FitogetherCsvProcessor', () => {
 
 	const defaultOptions: FitogetherCsvProcessorOptions = {
 		rawRecords: [],
-		originalHeaders: ['Player Name', 'Jersey No.', 'Date', 'Start Time', 'End Time', 'Duration (min)', 'Total Distance (m)'],
+		originalHeaders: [
+			'Player Name',
+			'Jersey No.',
+			'Date',
+			'Start Time',
+			'End Time',
+			'Duration (min)',
+			'Total Distance (m)',
+		],
 		persons: mockPersons,
 	};
 
@@ -76,13 +84,13 @@ describe('FitogetherCsvProcessor', () => {
 				{
 					'Player Name': 'Unknown',
 					'Jersey No.': '10',
-					'Date': '2023/10/27',
+					Date: '2023/10/27',
 					'Start Time': '2023/10/27 10:00',
 					'End Time': '2023/10/27 11:00',
 					'Duration (min)': '60',
-					'Total Distance (m)': '5000'
-				}
-			]
+					'Total Distance (m)': '5000',
+				},
+			],
 		};
 		const processor = new FitogetherCsvProcessor(options);
 		const result = processor.process({ trainingBaseline: undefined });
@@ -99,13 +107,13 @@ describe('FitogetherCsvProcessor', () => {
 				{
 					'Player Name': 'Jane Smith',
 					'Jersey No.': '99', // Unknown jersey
-					'Date': '2023/10/27',
+					Date: '2023/10/27',
 					'Start Time': '2023/10/27 10:00',
 					'End Time': '2023/10/27 11:00',
 					'Duration (min)': '60',
-					'Total Distance (m)': '5000'
-				}
-			]
+					'Total Distance (m)': '5000',
+				},
+			],
 		};
 		const processor = new FitogetherCsvProcessor(options);
 		const result = processor.process({ trainingBaseline: undefined });
@@ -121,13 +129,13 @@ describe('FitogetherCsvProcessor', () => {
 				{
 					'Player Name': 'Stranger',
 					'Jersey No.': '999',
-					'Date': '2023/10/27',
+					Date: '2023/10/27',
 					'Start Time': '2023/10/27 10:00',
 					'End Time': '2023/10/27 11:00',
 					'Duration (min)': '60',
-					'Total Distance (m)': '5000'
-				}
-			]
+					'Total Distance (m)': '5000',
+				},
+			],
 		};
 		const processor = new FitogetherCsvProcessor(options);
 		const result = processor.process({ trainingBaseline: undefined });
@@ -144,13 +152,13 @@ describe('FitogetherCsvProcessor', () => {
 				{
 					'Player Name': 'Team Average',
 					'Jersey No.': '',
-					'Date': '2023/10/27',
+					Date: '2023/10/27',
 					'Start Time': '2023/10/27 10:00',
 					'End Time': '2023/10/27 11:00',
 					'Duration (min)': '60',
-					'Total Distance (m)': '5000'
-				}
-			]
+					'Total Distance (m)': '5000',
+				},
+			],
 		};
 		const processor = new FitogetherCsvProcessor(options);
 		const result = processor.process({ trainingBaseline: undefined });

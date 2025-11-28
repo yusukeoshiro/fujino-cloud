@@ -1,7 +1,7 @@
-openapi: "3.0.3"
+openapi: '3.0.3'
 info:
   title: Mobili Content Provider API Specifications
-  version: "1.0.0-v1"
+  version: '1.0.0-v1'
   description: >
     REST contract for providers exposing metric definitions, performance assessment
     templates, and external score calculation to the Mobili platform.
@@ -25,28 +25,28 @@ paths:
       security:
         - bearerAuth: []
       responses:
-        "200":
+        '200':
           description: Capabilities response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CapabilitiesResponse"
+                $ref: '#/components/schemas/CapabilitiesResponse'
         default:
-          $ref: "#/components/responses/ErrorResponse"
+          $ref: '#/components/responses/ErrorResponse'
   /metric-definitions:
     get:
       tags: [metric-definitions]
       summary: List all metric definitions
       description: Returns all metric definitions; responses must contain fewer than 1000 items.
       responses:
-        "200":
+        '200':
           description: Metric definition list
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MetricDefinitionListResponse"
+                $ref: '#/components/schemas/MetricDefinitionListResponse'
         default:
-          $ref: "#/components/responses/ErrorResponse"
+          $ref: '#/components/responses/ErrorResponse'
       security:
         - bearerAuth: []
   /metric-definitions/{id}:
@@ -54,16 +54,16 @@ paths:
       tags: [metric-definitions]
       summary: Fetch a single metric definition
       parameters:
-        - $ref: "#/components/parameters/PathId"
+        - $ref: '#/components/parameters/PathId'
       responses:
-        "200":
+        '200':
           description: Metric definition detail
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MetricDefinition"
+                $ref: '#/components/schemas/MetricDefinition'
         default:
-          $ref: "#/components/responses/ErrorResponse"
+          $ref: '#/components/responses/ErrorResponse'
       security:
         - bearerAuth: []
   /performance-assessment-templates:
@@ -72,14 +72,14 @@ paths:
       summary: List performance assessment templates
       description: Returns all templates; responses must contain fewer than 1000 items.
       responses:
-        "200":
+        '200':
           description: Performance assessment template list
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PerformanceAssessmentTemplateListResponse"
+                $ref: '#/components/schemas/PerformanceAssessmentTemplateListResponse'
         default:
-          $ref: "#/components/responses/ErrorResponse"
+          $ref: '#/components/responses/ErrorResponse'
       security:
         - bearerAuth: []
   /performance-assessment-templates/{id}:
@@ -87,16 +87,16 @@ paths:
       tags: [performance-assessment-templates]
       summary: Fetch a single performance assessment template
       parameters:
-        - $ref: "#/components/parameters/PathId"
+        - $ref: '#/components/parameters/PathId'
       responses:
-        "200":
+        '200':
           description: Performance assessment template detail
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PerformanceAssessmentTemplateDetail"
+                $ref: '#/components/schemas/PerformanceAssessmentTemplateDetail'
         default:
-          $ref: "#/components/responses/ErrorResponse"
+          $ref: '#/components/responses/ErrorResponse'
       security:
         - bearerAuth: []
   /score-providers/calculate:
@@ -108,22 +108,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ScoreCalculationRequest"
+              $ref: '#/components/schemas/ScoreCalculationRequest'
       responses:
-        "200":
+        '200':
           description: Score calculation result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScoreCalculationResponse"
-        "400":
+                $ref: '#/components/schemas/ScoreCalculationResponse'
+        '400':
           description: Functional error (e.g., validation/out-of-range)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponseBody"
+                $ref: '#/components/schemas/ErrorResponseBody'
         default:
-          $ref: "#/components/responses/ErrorResponse"
+          $ref: '#/components/responses/ErrorResponse'
       security:
         - bearerAuth: []
 components:
@@ -148,7 +148,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ErrorResponseBody"
+            $ref: '#/components/schemas/ErrorResponseBody'
   schemas:
     CapabilitiesResponse:
       type: object
@@ -194,23 +194,23 @@ components:
         description:
           type: string
         type:
-          $ref: "#/components/schemas/MetricDefinitionType"
+          $ref: '#/components/schemas/MetricDefinitionType'
         category:
           type: string
         betterDirection:
-          $ref: "#/components/schemas/BetterDirection"
+          $ref: '#/components/schemas/BetterDirection'
         formula:
           type: string
           nullable: true
-          example: "$WEIGHT / (($HEIGHT / 100) ^ 2)"
+          example: '$WEIGHT / (($HEIGHT / 100) ^ 2)'
         sourceMetricDefinitionIds:
           type: array
           items:
             type: string
           nullable: true
-          example: ["WEIGHT", "HEIGHT"]
+          example: ['WEIGHT', 'HEIGHT']
         unit:
-          $ref: "#/components/schemas/MetricUnit"
+          $ref: '#/components/schemas/MetricUnit'
         roundingPrecision:
           type: integer
           minimum: 0
@@ -237,14 +237,14 @@ components:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/MetricDefinition"
+            $ref: '#/components/schemas/MetricDefinition'
       required:
         - items
       example:
         items:
           - id: MD1
-            createdAt: "2024-01-01T00:00:00Z"
-            updatedAt: "2024-01-02T00:00:00Z"
+            createdAt: '2024-01-01T00:00:00Z'
+            updatedAt: '2024-01-02T00:00:00Z'
             orgId: null
             isPublic: true
             name: weight
@@ -258,8 +258,8 @@ components:
             roundingPrecision: 1
             meta: {}
           - id: MD2
-            createdAt: "2024-01-01T00:00:00Z"
-            updatedAt: "2024-01-02T00:00:00Z"
+            createdAt: '2024-01-01T00:00:00Z'
+            updatedAt: '2024-01-02T00:00:00Z'
             orgId: null
             isPublic: true
             name: height
@@ -273,8 +273,8 @@ components:
             roundingPrecision: 1
             meta: {}
           - id: MD3
-            createdAt: "2024-01-01T00:00:00Z"
-            updatedAt: "2024-01-02T00:00:00Z"
+            createdAt: '2024-01-01T00:00:00Z'
+            updatedAt: '2024-01-02T00:00:00Z'
             orgId: null
             isPublic: true
             name: BMI
@@ -282,7 +282,7 @@ components:
             type: derived
             category: body
             betterDirection: LOWER_IS_BETTER
-            formula: "$MD1 / (($MD2 / 100) ^ 2)"
+            formula: '$MD1 / (($MD2 / 100) ^ 2)'
             sourceMetricDefinitionIds:
               - MD1
               - MD2
@@ -330,7 +330,7 @@ components:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/PerformanceAssessmentTemplateMetricItem"
+            $ref: '#/components/schemas/PerformanceAssessmentTemplateMetricItem'
         meta:
           type: object
           additionalProperties: true
@@ -347,12 +347,12 @@ components:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/PerformanceAssessmentTemplateItem"
+            $ref: '#/components/schemas/PerformanceAssessmentTemplateItem'
       required:
         - items
     PerformanceAssessmentTemplateDetail:
       allOf:
-        - $ref: "#/components/schemas/PerformanceAssessmentTemplateItem"
+        - $ref: '#/components/schemas/PerformanceAssessmentTemplateItem'
     PerformanceAssessmentTemplateMetricItem:
       type: object
       properties:

@@ -15,6 +15,6 @@ export const load: PageServerLoad = async ({ params }) => {
 	return {
 		columns: GAME_SCORE_COLUMNS,
 		values,
-		orgId
+		orgId,
 	};
 };
