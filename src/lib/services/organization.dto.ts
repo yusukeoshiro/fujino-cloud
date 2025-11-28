@@ -5,5 +5,6 @@ export interface OrganizationDto {
 }
 
 export interface CreateOrganizationDto {
+	id: string;
 	name: string;
 }

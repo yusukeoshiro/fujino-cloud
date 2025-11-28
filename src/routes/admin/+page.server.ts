@@ -15,12 +15,21 @@ export const actions: Actions = {
 	createOrg: async ({ request }) => {
 		const data = await request.formData();
 		const name = data.get('name') as string;
+		const id = data.get('id') as string;
 
-		if (!name) {
+		if (!name || !id) {
 			return fail(400, { missing: true });
 		}
 
-		await organizationService.create({ name });
+		try {
+			await organizationService.create({ id, name });
+		} catch (e: any) {
+			if (e.status === 409) {
+				return fail(409, { error: 'Organization already exists' });
+			}
+			console.error('Error creating org:', e);
+			return fail(500, { error: 'Failed to create organization' });
+		}
 		return { success: true };
 	},
 

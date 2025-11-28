@@ -14,17 +14,29 @@
 
 	<div class="mb-8 rounded border bg-gray-50 p-4">
 		<h2 class="mb-2 text-xl font-semibold">Create New Organization</h2>
-		<form method="POST" action="?/createOrg" use:enhance class="flex gap-2">
-			<input
-				type="text"
-				name="name"
-				placeholder="Organization Name"
-				class="flex-grow rounded border p-2"
-				required
-			/>
-			<button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-				Create
-			</button>
+		<form method="POST" action="?/createOrg" use:enhance class="flex flex-col gap-2">
+			<div class="flex gap-2">
+				<input
+					type="text"
+					name="id"
+					placeholder="Organization ID"
+					class="w-1/3 rounded border p-2"
+					required
+				/>
+				<input
+					type="text"
+					name="name"
+					placeholder="Organization Name"
+					class="flex-grow rounded border p-2"
+					required
+				/>
+				<button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
+					Create
+				</button>
+			</div>
+			<p class="text-xs text-gray-500">
+				Note: The Organization ID must match the ID issued by the Mobili platform.
+			</p>
 		</form>
 	</div>
 
@@ -43,6 +55,7 @@
 							class="mr-4 flex flex-grow items-center gap-2"
 						>
 							<input type="hidden" name="id" value={org.id} />
+							<div class="mr-2 font-mono text-gray-600">{org.id}</div>
 							<input
 								type="text"
 								name="name"

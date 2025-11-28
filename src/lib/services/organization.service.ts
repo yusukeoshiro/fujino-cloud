@@ -23,9 +23,14 @@ class OrganizationService {
 	}
 
 	async create(data: CreateOrganizationDto): Promise<OrganizationDto> {
-		const ref = this.collection().doc();
+		const ref = this.collection().doc(data.id);
+		const snapshot = await ref.get();
+		if (snapshot.exists) {
+			throw error(409, `Organization with id ${data.id} already exists`);
+		}
+
 		const org: OrganizationDto = {
-			id: ref.id,
+			id: data.id,
 			name: data.name,
 			createdAt: new Date().toISOString(),
 		};

@@ -23,7 +23,7 @@ describe('OrganizationService', () => {
 		set: vi.fn(),
 		update: vi.fn(),
 		delete: vi.fn(),
-		id: 'new-id', // Add id to mock doc
+		id: 'custom-id',
 	};
 
 	beforeEach(() => {
@@ -51,26 +51,33 @@ describe('OrganizationService', () => {
 	});
 
 	it('should create an organization', async () => {
-		const input = { name: 'New Org' };
+		const input = { id: 'custom-id', name: 'New Org' };
 
-		// Ensure doc() returns an object with id
-		(mockCollection.doc as any).mockReturnValue({
-			...mockDoc,
-			id: 'new-id',
-		});
+		// Mock doc.get() to return does not exist for the new ID check
+		(mockDoc.get as any).mockResolvedValue({ exists: false });
 
 		const result = await organizationService.create(input);
 
 		expect(result).toEqual({
-			id: 'new-id',
+			id: 'custom-id',
 			name: 'New Org',
 			createdAt: expect.any(String),
 		});
+
+		expect(mockCollection.doc).toHaveBeenCalledWith('custom-id');
 		expect(mockDoc.set).toHaveBeenCalledWith({
-			id: 'new-id',
+			id: 'custom-id',
 			name: 'New Org',
 			createdAt: expect.any(String),
 		});
+	});
+
+	it('should throw error if organization already exists', async () => {
+		const input = { id: 'existing-id', name: 'Existing Org' };
+
+		(mockDoc.get as any).mockResolvedValue({ exists: true });
+
+		await expect(organizationService.create(input)).rejects.toThrow();
 	});
 
 	it('should update an organization name', async () => {
