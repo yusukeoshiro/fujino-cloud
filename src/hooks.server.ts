@@ -48,7 +48,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			return Response.redirect(new URL('/login', event.url), 303);
 		}
 
-		const adminEmails = (env.ADMIN_EMAIL || '')
+		const adminEmails = (env.ADMIN_EMAILS || '')
 			.split(',')
 			.map((e) => e.trim())
 			.filter((e) => e);
