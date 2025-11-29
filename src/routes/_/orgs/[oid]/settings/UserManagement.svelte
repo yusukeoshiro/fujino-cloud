@@ -57,7 +57,9 @@
 					disabled={isInviting}
 					class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
 				>
-					{isInviting ? '招待中...' : '招待'}
+					<nobr>
+						{isInviting ? '招待中...' : '招待'}
+					</nobr>
 				</button>
 			</form>
 		</div>
@@ -67,11 +69,6 @@
 			<table class="min-w-full divide-y divide-gray-300 bg-white">
 				<thead class="bg-gray-50">
 					<tr>
-						<th
-							scope="col"
-							class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6"
-							>名前</th
-						>
 						<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
 							>メールアドレス</th
 						>
@@ -84,24 +81,8 @@
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-200 bg-white">
-					{#each data.members || [] as member (member.id)}
+					{#each data.members || [] as member (member.userId)}
 						<tr>
-							<td
-								class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6"
-							>
-								<div class="flex items-center">
-									{#if member.photoURL}
-										<img class="mr-3 h-8 w-8 rounded-full" src={member.photoURL} alt="" />
-									{:else}
-										<div
-											class="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-xs text-gray-500"
-										>
-											{(member.name || '?').charAt(0).toUpperCase()}
-										</div>
-									{/if}
-									{member.name}
-								</div>
-							</td>
 							<td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500"
 								>{member.email ?? 'Unknown'}</td
 							>
