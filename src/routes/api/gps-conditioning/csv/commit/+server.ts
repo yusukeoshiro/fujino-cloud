@@ -127,8 +127,22 @@ export const POST: RequestHandler = async (event) => {
 		},
 	);
 
-	console.log(resultCreatePerformanceAssessment.errors);
-	console.log(resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper);
+	const performanceAssessmentId =
+		resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper?.id;
+
+	if (resultCreatePerformanceAssessment.errors || !performanceAssessmentId) {
+		console.log(
+			'Failed to create performance assessment',
+			resultCreatePerformanceAssessment.errors,
+		);
+		return new Response(
+			JSON.stringify({
+				message: 'Failed to create performance assessment',
+				errors: resultCreatePerformanceAssessment.errors,
+			}),
+			{ headers: { 'content-type': 'application/json' }, status: 500 },
+		);
+	}
 
 	const createParticipant = new CreatePerformanceAssessmentParticipantStore();
 
@@ -138,8 +152,7 @@ export const POST: RequestHandler = async (event) => {
 			{
 				data: {
 					orgId,
-					performanceAssessmentId:
-						resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper.id,
+					performanceAssessmentId,
 					fullName: record.fullName,
 					number: i + 1,
 					...(record.birthday && { birthday: record.birthday }),
@@ -175,8 +188,7 @@ export const POST: RequestHandler = async (event) => {
 						data: {
 							orgUniqueToken: record.orgUniqueToken!,
 							metricDefinitionId: FIELD_ID_MAP[key],
-							performanceAssessmentId:
-								resultCreatePerformanceAssessment.data!.createPerformanceAssessmentWrapper.id!,
+							performanceAssessmentId,
 							// eslint-disable-next-line @typescript-eslint/no-explicit-any
 							value: (record as any)[key],
 							isOfficial: true,
@@ -202,8 +214,7 @@ export const POST: RequestHandler = async (event) => {
 	console.log('===');
 	const uploadResult = await exportStore.mutate(
 		{
-			performanceAssessmentId:
-				resultCreatePerformanceAssessment.data!.createPerformanceAssessmentWrapper.id!,
+			performanceAssessmentId,
 		},
 		{
 			event,

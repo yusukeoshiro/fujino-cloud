@@ -12,9 +12,7 @@
 <section class="space-y-6 px-6 py-8">
 	<header class="flex flex-col gap-2">
 		<h1 class="text-2xl font-semibold text-slate-900">設定</h1>
-		<p class="text-sm text-slate-600">
-			システム連携設定およびユーザー管理を行います。
-		</p>
+		<p class="text-sm text-slate-600">システム連携設定およびユーザー管理を行います。</p>
 	</header>
 
 	<!-- Tab Navigation -->
@@ -26,7 +24,7 @@
 					activeTab === 'system'
 						? 'border-indigo-500 text-indigo-600'
 						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-				} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
+				} border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
 				aria-current={activeTab === 'system' ? 'page' : undefined}
 			>
 				システム連携
@@ -37,7 +35,7 @@
 					activeTab === 'users'
 						? 'border-indigo-500 text-indigo-600'
 						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-				} whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
+				} border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
 				aria-current={activeTab === 'users' ? 'page' : undefined}
 			>
 				ユーザー管理
