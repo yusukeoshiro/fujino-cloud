@@ -37,6 +37,12 @@
 	let committing = $state(false); // ✅ NEW
 
 	let result = $state<UploadPreviewResponse | null>(null);
+	type GpsCategory = 'training' | 'game';
+	const gpsCategoryOptions: ReadonlyArray<{ value: GpsCategory; label: string }> = [
+		{ value: 'training', label: 'トレーニング' },
+		{ value: 'game', label: '試合' },
+	];
+	let gpsCategory = $state<GpsCategory>('training');
 	let rowSelections = $state<Record<number, boolean>>({});
 	let bulkSelectCheckbox: HTMLInputElement | null = $state(null);
 
@@ -97,6 +103,7 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', file);
+			fd.append('gpsCategory', gpsCategory);
 
 			const res = await fetch(
 				`/api/gps-conditioning/csv/preview?orgId=${encodeURIComponent(orgId)}`,
@@ -218,6 +225,7 @@
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
+			fd.append('gpsCategory', gpsCategory);
 			const selectedRowIndices = Object.entries(rowSelections)
 				.filter(([, selected]) => selected)
 				.map(([index]) => Number(index))
@@ -308,6 +316,29 @@
 			Fitogether の CSV をアップロードしてプレビューし、取り込み前に未照合選手や重複を確認できます。
 		</p>
 	</header>
+
+	<div
+		class="mb-6 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/60 p-4 shadow-sm"
+	>
+		<div>
+			<p class="text-sm font-semibold text-slate-800">データの種別</p>
+		</div>
+		<div class="inline-flex rounded-xl bg-slate-100 p-1 text-sm font-medium text-slate-700">
+			{#each gpsCategoryOptions as option (option.value)}
+				<button
+					type="button"
+					class={'rounded-lg px-4 py-2 transition ' +
+						(gpsCategory === option.value
+							? 'bg-white text-slate-900 shadow-sm'
+							: 'text-slate-600 hover:text-slate-800')}
+					onclick={() => (gpsCategory = option.value)}
+					aria-pressed={gpsCategory === option.value}
+				>
+					{option.label}
+				</button>
+			{/each}
+		</div>
+	</div>
 
 	{#if !result}
 		<!-- Hot spot / dropzone -->

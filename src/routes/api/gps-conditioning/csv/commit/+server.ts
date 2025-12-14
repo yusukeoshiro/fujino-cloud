@@ -15,6 +15,7 @@ import {
 	FitogetherCsvProcessor,
 	buildUnmatchedPersonsResponse,
 } from '$lib/utils/fitogether-csv-processor';
+import type { SessionType } from '$lib/gps-core.model';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -25,6 +26,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const form = await request.formData();
 	const file = form.get('file');
+	const sessionType = resolveSessionType(form);
 	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
 
 	const selectedRowIndicesRaw = form.get('selectedRowIndices');
@@ -100,14 +102,21 @@ export const POST: RequestHandler = async (event) => {
 	);
 
 	const dt = DateTime.fromFormat(parsedRows[0].date, 'yyyy-MM-dd');
+	const sessionLabel = sessionType === 'GAME' ? 'ゲーム' : 'トレーニング';
 
 	const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
 		{
 			data: {
 				performanceAssessment: {
-					name: `${dt.toFormat('yyyy-MM-dd トレーニング')}`,
+					name: `${dt.toFormat('yyyy-MM-dd')} ${sessionLabel}`,
 					date: dt.toFormat('yyyy-MM-dd'),
 					orgId,
+					metadata: [
+						{
+							key: 'x-fujino-cloud-gps-type',
+							value: sessionType,
+						},
+					],
 				},
 				performanceAssessmentMetrics: [
 					...trainigMetricDefinitionIds.map((metricDefinitionId, i) => {
@@ -250,4 +259,10 @@ function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
 		accelerationCountTotal: number;
 		decelerationCountTotal: number;
 	};
+}
+
+function resolveSessionType(form: FormData): SessionType {
+	const raw = form.get('gpsCategory');
+	if (typeof raw === 'string' && raw.toLowerCase() === 'game') return 'GAME';
+	return 'TRAINING';
 }
