@@ -1,0 +1,1136 @@
+"""
+Indicates exactly one field must be supplied and this field must not be `null`.
+"""
+directive @oneOf on INPUT_OBJECT
+
+type Age {
+  months: Float!
+  years: Float!
+}
+
+input AnonymizeDto {
+  birthday: String!
+  name: String!
+  orgId: String!
+}
+
+type AnonymizeResultDto {
+  birthday: String!
+  globalUniqueToken: String!
+  name: String!
+  orgUniqueToken: String
+}
+
+input AutoRecordMetric {
+  isOfficial: Boolean = false
+  isPriority: Boolean = false
+  metricDefinitionId: String!
+  orgUniqueToken: String!
+  performanceAssessmentId: String!
+  value: Float!
+}
+
+enum BetterDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+}
+
+enum BlockingState {
+  BLOCKING
+  NON_BLOCKING
+}
+
+type CaptureOptions {
+  metricDefinition(orgId: ID!): MetricDefinition
+  metricDefinitionId: String!
+  name: String
+  relativeToStepIndex: Int
+  type: CaptureType!
+}
+
+input CaptureOptionsInput {
+  metricDefinitionId: String!
+  name: String
+  relativeToStepIndex: Int
+  type: CaptureType!
+}
+
+enum CaptureType {
+  ABSOLUTE
+  RELATIVE
+}
+
+enum CollectionMode {
+  GATE_SESSION_V2
+  GROUP_DROPOUT_V1
+  SIMPLE_INPUT_V1
+}
+
+enum ConditionState {
+  BLOCKING
+  NON_BLOCKING
+}
+
+type ContentProvider {
+  baseUrl: String!
+  capabilities: ContentProviderCapabilities
+  createdAt: DateTime!
+  description: String
+  headline: String
+  id: ID!
+  isActive: Boolean!
+  logoUrl: String
+  providerLabel: String!
+  screenshotUrls: [String!]
+  subscription(orgId: ID): ContentSubscription
+  updatedAt: DateTime!
+}
+
+type ContentProviderCapabilities {
+  metricDefinitions: Boolean!
+  performanceAssessments: Boolean!
+  scoreProviders: Boolean!
+}
+
+input ContentProviderCapabilitiesInput {
+  metricDefinitions: Boolean! = false
+  performanceAssessments: Boolean! = false
+  scoreProviders: Boolean! = false
+}
+
+input ContentProviderCreate {
+  baseUrl: String!
+  capabilities: ContentProviderCapabilitiesInput
+  description: String
+  headline: String
+  isActive: Boolean! = true
+  logoUrl: String
+  providerLabel: String!
+  screenshotUrls: [String!]
+}
+
+input ContentProviderList {
+  conditions: ContentProviderListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input ContentProviderListConditions {
+  isActive: Boolean
+}
+
+type ContentProviderListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [ContentProvider!]!
+}
+
+input ContentProviderUpdate {
+  baseUrl: String
+  capabilities: ContentProviderCapabilitiesInput
+  description: String
+  headline: String
+  id: ID!
+  isActive: Boolean
+  logoUrl: String
+  providerLabel: String
+  screenshotUrls: [String!]
+}
+
+type ContentSubscription {
+  apiToken: String
+  contentProvider: ContentProvider!
+  contentProviderId: String!
+  createdAt: DateTime!
+  id: ID!
+  orgId: String!
+  updatedAt: DateTime!
+}
+
+input ContentSubscriptionCreate {
+  contentProviderId: String!
+  orgId: String
+}
+
+input ContentSubscriptionList {
+  conditions: ContentSubscriptionListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input ContentSubscriptionListConditions {
+  isActive: Boolean
+  orgId: ID
+}
+
+type ContentSubscriptionListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [ContentSubscription!]!
+}
+
+input ContentSubscriptionUpdate {
+  apiToken: String
+  id: ID!
+}
+
+type CustomClaims {
+  memberships: [OrgMember!]
+  systemRoles: [SystemRole!]
+}
+
+input DatasetOrgInput {
+  orgId: String!
+}
+
+input DatasetPermissionInput {
+  email: String!
+  orgId: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+enum DerivedOperation {
+  AVERAGE
+  BMI
+  DIFFERENCE_PERCENT
+}
+
+type DeviceInputConfig {
+  allowStaggeredStart: Boolean
+  bindToCloudMetricDefinitions: Boolean
+  collectionMode: CollectionMode!
+  deviceType: DeviceType!
+  gatePathSteps: [GatePathStep!]!
+  id: String!
+  mainMetricDefinition(orgId: ID!): MetricDefinition
+  mainMetricDefinitionId: String!
+  name: String!
+  readyConditions: [ReadyCondition!]!
+  roundingPrecision: Int!
+  unit: String
+}
+
+input DeviceInputConfigCreate {
+  allowStaggeredStart: Boolean
+  bindToCloudMetricDefinitions: Boolean
+  collectionMode: CollectionMode!
+  deviceType: DeviceType!
+  gatePathSteps: [GatePathStepInput!]!
+  mainMetricDefinitionId: String!
+  name: String!
+  readyConditions: [ReadyConditionInput!]!
+  roundingPrecision: Int!
+  unit: String
+}
+
+input DeviceInputConfigListConditions {
+  mainMetricDefinitionId: String
+}
+
+input DeviceInputConfigListDto {
+  conditions: DeviceInputConfigListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+type DeviceInputConfigListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [DeviceInputConfig!]!
+}
+
+input DeviceInputConfigUpdate {
+  allowStaggeredStart: Boolean
+  bindToCloudMetricDefinitions: Boolean
+  collectionMode: CollectionMode
+  deviceType: DeviceType
+  gatePathSteps: [GatePathStepInput!]
+  id: String!
+  mainMetricDefinitionId: String
+  name: String
+  readyConditions: [ReadyConditionInput!]
+  roundingPrecision: Int
+  unit: String
+}
+
+type DeviceToken {
+  canSeeQrImage: Boolean
+  createdAt: DateTime!
+  expiresAt: DateTime!
+  id: String!
+  name: String!
+  orgId: String!
+  qrImage: String
+  token: String
+  updatedAt: DateTime!
+}
+
+input DeviceTokenCreate {
+  expiresInDays: Float!
+  name: String!
+  orgId: String!
+}
+
+input DeviceTokenList {
+  conditions: DeviceTokenListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input DeviceTokenListConditions {
+  orgId: ID!
+}
+
+type DeviceTokenListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [DeviceToken!]!
+}
+
+enum DeviceType {
+  GATE
+}
+
+type GatePathStep {
+  captureOptions: CaptureOptions
+  captureTimestamp: Boolean!
+  engageSession: Boolean!
+  gateIndex: Int!
+  readyNext: Boolean
+  resetTime: Boolean!
+  state: BlockingState!
+}
+
+input GatePathStepInput {
+  captureOptions: CaptureOptionsInput
+  captureTimestamp: Boolean!
+  engageSession: Boolean!
+  gateIndex: Int!
+  readyNext: Boolean
+  resetTime: Boolean!
+  state: BlockingState!
+}
+
+input InputCustomClaims {
+  systemRoles: [SystemRole!]
+}
+
+input InputDelete {
+  id: ID!
+}
+
+input InputDetail {
+  id: ID!
+}
+
+input InputDetailAsync {
+  async: Boolean = true
+  id: ID!
+}
+
+input InputSendAllReports {
+  async: Boolean = true
+  email: String!
+  id: String!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type MetadataEntry {
+  key: String!
+  value: String!
+}
+
+input MetadataEntryInput {
+  key: String!
+  value: String!
+}
+
+type Metric {
+  allAttempts: [MetricAttempt!]!
+  betterDirection: BetterDirection!
+  createdAt: DateTime!
+  date: String!
+  derivedMetricDefinitionIds: [String!]!
+  globalUniqueToken: String!
+  id: ID!
+  isOfficial: Boolean
+  metricDefinition: MetricDefinition!
+  metricDefinitionId: String!
+  orgId: String!
+  orgUniqueToken: String!
+  performanceAssessmentId: String!
+  performanceAssessmentMetric: PerformanceAssessmentMetric!
+  performanceAssessmentMetricId: String!
+  performanceAssessmentParticipant: PerformanceAssessmentParticipant!
+  performanceAssessmentParticipantId: String!
+  person: Person!
+  personId: String
+  score: Float
+  updatedAt: DateTime!
+  value: Float
+}
+
+type MetricAttempt {
+  collectedAt: DateTime!
+  value: Float!
+}
+
+type MetricDefinition {
+  betterDirection: BetterDirection!
+  category: String!
+  contentProviderId: String
+  createdAt: DateTime!
+  description: String!
+  formula: String
+  id: ID!
+  isPublic: Boolean! @deprecated(reason: "there is no more public metric definition anymore")
+  name: String!
+  operation: DerivedOperation @deprecated(reason: "use formula instead. operation will be removed in a future release")
+  orgId: String!
+  roundingPrecision: Float!
+  sourceMetricDefinitionIds: [String!]
+  sourceMetricDefinitionNames: [String!]!
+  type: MetricDefinitionType!
+  unit: MetricUnit!
+  updatedAt: DateTime!
+}
+
+input MetricDefinitionCreate {
+  betterDirection: BetterDirection!
+  category: String!
+  description: String! = ""
+  formula: String
+  isPublic: Boolean!
+  name: String!
+  operation: DerivedOperation
+  orgId: String
+  roundingPrecision: Float!
+  sourceMetricDefinitionIds: [String!]
+  type: MetricDefinitionType! = raw
+  unit: MetricUnit!
+}
+
+input MetricDefinitionDelete {
+  id: ID!
+  orgId: ID!
+}
+
+input MetricDefinitionGet {
+  id: ID!
+  orgId: ID!
+}
+
+input MetricDefinitionList {
+  conditions: MetricDefinitionListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input MetricDefinitionListConditions {
+  orgId: ID
+}
+
+type MetricDefinitionListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [MetricDefinition!]!
+}
+
+enum MetricDefinitionType {
+  derived
+  raw
+}
+
+input MetricDefinitionUpdate {
+  category: String
+  description: String
+  formula: String
+  id: ID!
+  isPublic: Boolean
+  name: String
+  orgId: ID!
+  roundingPrecision: Float
+  sourceMetricDefinitionIds: [String!]
+}
+
+enum MetricUnit {
+  CENTIMETER
+  COUNT
+  HOUR
+  KILOGRAM
+  KMPH
+  METER
+  MINUTE
+  PERCENT
+  SECOND
+  UNITLESS
+}
+
+input MetricUpdate {
+  id: ID!
+  score: Float
+  updateScore: Boolean = false
+  value: Float
+}
+
+type Mutation {
+  addDatasetPermissionOrg(data: DatasetPermissionInput!): Org!
+  autoRecordMetric(data: AutoRecordMetric!): Metric!
+  bulkSendResultEmailsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  consolidateMetricsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  createContentProvider(data: ContentProviderCreate!): ContentProvider!
+  createContentSubscription(data: ContentSubscriptionCreate!): ContentSubscription!
+  createDatasetOrg(data: DatasetOrgInput!): Org!
+  createDeviceInputConfig(data: DeviceInputConfigCreate!): DeviceInputConfig!
+  createDeviceToken(data: DeviceTokenCreate!): DeviceToken!
+  createMetricDefinition(data: MetricDefinitionCreate!): MetricDefinition!
+  createOrg(data: OrgCreate!): Org!
+  createOrgMember(data: OrgMemberCreate!): OrgMember!
+  createPerformanceAssessment(data: PerformanceAssessmentCreate!): PerformanceAssessment!
+  createPerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantCreate!): PerformanceAssessmentParticipant!
+  createPerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateCreate!): PerformanceAssessmentTemplate!
+  createPerformanceAssessmentWrapper(data: PerformanceAssessmentWrapperCreate!): PerformanceAssessment!
+  createPerson(data: PersonCreate!): Person!
+  createReference(data: ReferenceCreate!): Reference!
+  createScoreProvider(data: ScoreProviderCreate!): ScoreProvider!
+  createUser(data: UserCreate!): User!
+  deleteContentProvider(data: InputDelete!): ContentProvider!
+  deleteContentSubscription(data: InputDelete!): ContentSubscription!
+  deleteDatasetOrg(data: DatasetOrgInput!): Org!
+  deleteDeviceInputConfig(data: InputDelete!): DeviceInputConfig!
+  deleteDeviceToken(data: InputDelete!): DeviceToken!
+  deleteMetricDefinition(data: MetricDefinitionDelete!): MetricDefinition!
+  deleteOrg(data: InputDelete!): Org!
+  deleteOrgMember(data: InputDelete!): OrgMember!
+  deletePerformanceAssessment(data: InputDelete!): PerformanceAssessment!
+  deletePerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateDelete!): PerformanceAssessmentTemplate!
+  deletePerson(data: InputDelete!): Person!
+  deleteReference(data: InputDelete!): Reference!
+  deleteScoreProvider(data: InputDelete!): ScoreProvider!
+  deleteUser(data: UserDelete!): User!
+  exportPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  removeDatasetPermissionOrg(data: DatasetPermissionInput!): Org!
+  scheduleScorePerformanceAssessment(data: InputDetail!): PerformanceAssessment!
+  scoreMetric(data: InputDetail!): Metric!
+  sendAllReportsPerformanceAssessment(data: InputSendAllReports!): PerformanceAssessment!
+  sendResultEmailPerformanceAssessmentParticipant(data: InputDetail!): PerformanceAssessmentParticipant!
+  syncSpreadsheetPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  updateContentProvider(data: ContentProviderUpdate!): ContentProvider!
+  updateContentSubscription(data: ContentSubscriptionUpdate!): ContentSubscription!
+  updateDeviceInputConfig(data: DeviceInputConfigUpdate!): DeviceInputConfig!
+  updateMetric(data: MetricUpdate!): Metric!
+  updateMetricDefinition(data: MetricDefinitionUpdate!): MetricDefinition!
+  updateOrg(data: OrgUpdate!): Org!
+  updateOrgMember(data: OrgMemberUpdate!): OrgMember!
+  updatePerformanceAssessment(data: PerformanceAssessmentUpdate!): PerformanceAssessment!
+  updatePerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantUpdate!): PerformanceAssessmentParticipant!
+  updatePerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateUpdate!): PerformanceAssessmentTemplate!
+  updatePerson(data: PersonUpdate!): Person!
+  updateReference(data: ReferenceUpdate!): Reference!
+  updateScoreProvider(data: ScoreProviderUpdate!): ScoreProvider!
+  updateUser(data: UserUpdate!): User!
+  upsertPerson(data: PersonCreate!): Person!
+}
+
+type Org {
+  address: String!
+  createdAt: DateTime!
+  datasetAccessPermissions: [String!]
+  email: String
+  id: ID!
+  isActive: Boolean!
+  name: String!
+  privateDatasetId: String
+  privateDatasetProject: String
+  referenceLevels: [String!]
+  table: OrgDatasetTable
+  updatedAt: DateTime!
+}
+
+input OrgCreate {
+  address: String!
+  email: String!
+  name: String!
+}
+
+type OrgDatasetTable {
+  metrics: String!
+}
+
+input OrgList {
+  conditions: OrgListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input OrgListConditions {
+  isActive: Boolean!
+}
+
+type OrgListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [Org!]!
+}
+
+type OrgMember {
+  createdAt: DateTime!
+  id: ID!
+  orgId: String!
+  role: UserRole!
+  updatedAt: DateTime!
+  user: User!
+  userId: String!
+}
+
+input OrgMemberCreate {
+  orgId: String!
+  role: UserRole!
+  user: UserInput!
+}
+
+input OrgMemberList {
+  conditions: OrgMemberListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input OrgMemberListConditions {
+  orgId: ID!
+}
+
+type OrgMemberListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [OrgMember!]!
+}
+
+input OrgMemberUpdate {
+  id: ID!
+  role: UserRole
+}
+
+input OrgUpdate {
+  id: ID!
+  referenceLevels: [String!]
+}
+
+input PageOption {
+  nextToken: String
+  prevToken: String
+  size: Float
+  sortOptions: [SortOption!]
+}
+
+type PerformanceAssessment {
+  createdAt: DateTime!
+  date: String!
+  description: String
+  downloadLink: String!
+  exported: Boolean!
+  id: ID!
+  inProgressExport: Boolean
+  inProgressSyncSheet: Boolean
+  metadata: [MetadataEntry!]
+  metrics: [PerformanceAssessmentMetric!]!
+  name: String!
+  orgId: String
+  participants: [PerformanceAssessmentParticipant!]!
+  participantsCount: Float!
+  ready: Boolean!
+  referenceLevel: String
+  spreadsheetUrl: String
+  updatedAt: DateTime!
+}
+
+input PerformanceAssessmentCreate {
+  date: String!
+  description: String
+  inProgressExport: Boolean = false
+  inProgressSyncSheet: Boolean = false
+  metadata: [MetadataEntryInput!]
+  name: String!
+  orgId: String
+  referenceLevel: String
+  spreadsheetUrl: String
+}
+
+input PerformanceAssessmentList {
+  conditions: PerformanceAssessmentListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input PerformanceAssessmentListConditions {
+  orgId: String!
+}
+
+type PerformanceAssessmentListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [PerformanceAssessment!]!
+}
+
+type PerformanceAssessmentMetric {
+  category: String!
+  createdAt: DateTime!
+  displayOrder: Float!
+  id: ID!
+  metricDefinition: MetricDefinition!
+  metricDefinitionId: String!
+  metrics: [Metric!]!
+  orgId: String!
+  performanceAssessmentId: String!
+  referenceMean: Float
+  referenceStd: Float
+  scored: Boolean!
+  updatedAt: DateTime!
+}
+
+input PerformanceAssessmentMetricCreate {
+  category: String!
+  displayOrder: Float!
+  metricDefinitionId: String!
+  orgId: String
+  performanceAssessmentId: String
+  referenceMean: Float
+  referenceStd: Float
+  scored: Boolean!
+}
+
+type PerformanceAssessmentParticipant {
+  attr1: String
+  attr2: String
+  birthday: String
+  createdAt: DateTime!
+  downloadLink: String!
+  email: String
+  fullName: String!
+  globalUniqueToken: String
+  id: ID!
+  isAnonymous: Boolean
+  kana: String
+  metadata: [MetadataEntry!]
+  metrics: [Metric!]!
+  number: Float
+  orgId: String!
+  orgUniqueToken: String
+  performanceAssessmentId: String!
+  person: Person
+  personId: String
+  sex: PersonSex
+  teamRank: String
+  updatedAt: DateTime!
+}
+
+input PerformanceAssessmentParticipantCreate {
+  attr1: String
+  attr2: String
+  birthday: String
+  email: String
+  fullName: String!
+  isAnonymous: Boolean = false
+  kana: String
+  metadata: [MetadataEntryInput!]
+  number: Float
+  orgId: ID
+  performanceAssessmentId: ID
+  personId: String
+  sex: PersonSex
+  teamRank: String
+}
+
+input PerformanceAssessmentParticipantUpdate {
+  attr1: String
+  attr2: String
+  email: String
+  id: ID!
+  kana: String
+  metadata: [MetadataEntryInput!]
+  number: Float
+  teamRank: String
+}
+
+type PerformanceAssessmentTemplate {
+  contentProviderId: String
+  createdAt: DateTime!
+  description: String
+  id: ID!
+  items: [PerformanceAssessmentTemplateItem!]!
+  name: String!
+  orgId: String!
+  updatedAt: DateTime!
+}
+
+input PerformanceAssessmentTemplateCreate {
+  contentProviderId: String
+  description: String
+  items: [PerformanceAssessmentTemplateItemInput!]!
+  name: String!
+  orgId: String!
+}
+
+input PerformanceAssessmentTemplateDelete {
+  id: ID!
+  orgId: ID!
+}
+
+input PerformanceAssessmentTemplateGet {
+  id: ID!
+  orgId: ID!
+}
+
+type PerformanceAssessmentTemplateItem {
+  metricDefinition: MetricDefinition!
+  metricDefinitionId: String!
+  orgId: ID!
+  scored: Boolean!
+}
+
+input PerformanceAssessmentTemplateItemInput {
+  metricDefinitionId: String!
+  scored: Boolean!
+}
+
+input PerformanceAssessmentTemplateList {
+  conditions: PerformanceAssessmentTemplateListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input PerformanceAssessmentTemplateListConditions {
+  orgId: ID!
+}
+
+type PerformanceAssessmentTemplateListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [PerformanceAssessmentTemplate!]!
+}
+
+input PerformanceAssessmentTemplateUpdate {
+  contentProviderId: String
+  description: String
+  id: ID!
+  items: [PerformanceAssessmentTemplateItemInput!]
+  name: String
+  orgId: ID!
+}
+
+input PerformanceAssessmentUpdate {
+  id: ID!
+  metadata: [MetadataEntryInput!]
+  name: String
+  ready: Boolean
+  spreadsheetUrl: String
+}
+
+input PerformanceAssessmentWrapperCreate {
+  performanceAssessment: PerformanceAssessmentCreate!
+  performanceAssessmentMetrics: [PerformanceAssessmentMetricCreate!]!
+  performanceAssessmentParticipants: [PerformanceAssessmentParticipantCreate!]!
+}
+
+type Person {
+  age: Age!
+  birthday: String
+  createdAt: DateTime!
+  email: String
+  externalId: String
+  fullName: String!
+  globalUniqueToken: String
+  id: ID!
+  isActive: Boolean!
+  isAnonymous: Boolean!
+  kana: String
+  metadata: [MetadataEntry!]
+  orgId: String!
+  orgUniqueToken: String!
+  sex: PersonSex
+  teamRank: String
+  updatedAt: DateTime!
+}
+
+input PersonCreate {
+  birthday: String
+  email: String
+  externalId: String
+  fullName: String!
+  isAnonymous: Boolean = false
+  kana: String
+  metadata: [MetadataEntryInput!]
+  orgId: String!
+  sex: PersonSex
+  teamRank: String
+}
+
+input PersonList {
+  conditions: PersonListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input PersonListConditions {
+  orgId: ID!
+}
+
+type PersonListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [Person!]!
+}
+
+enum PersonSex {
+  FEMALE
+  MALE
+}
+
+input PersonUpdate {
+  email: String
+  externalId: String
+  id: ID!
+  isActive: Boolean
+  kana: String
+  metadata: [MetadataEntryInput!]
+  sex: PersonSex
+  teamRank: String
+}
+
+type Query {
+  anonymize(data: AnonymizeDto!): AnonymizeResultDto!
+  getContentProvider(data: InputDetail!): ContentProvider!
+  getContentSubscription(data: InputDetail!): ContentSubscription!
+  getDeviceInputConfig(data: InputDetail!): DeviceInputConfig!
+  getDeviceToken(data: InputDetail!): DeviceToken!
+  getMetric(data: InputDetail!): Metric!
+  getMetricDefinition(data: MetricDefinitionGet!): MetricDefinition!
+  getOrg(data: InputDetail!): Org!
+  getOrgMember(data: InputDetail!): OrgMember!
+  getPerformanceAssessment(data: InputDetail!): PerformanceAssessment!
+  getPerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateGet!): PerformanceAssessmentTemplate!
+  getPerson(data: InputDetail!): Person!
+  getReference(data: InputDetail!): Reference!
+  getScoreProvider(data: InputDetail!): ScoreProvider!
+  getUser(data: UserGet!): User!
+  listContentProviders(data: ContentProviderList): ContentProviderListPage!
+  listContentSubscriptions(data: ContentSubscriptionList): ContentSubscriptionListPage!
+  listDeviceInputConfigs(data: DeviceInputConfigListDto!): DeviceInputConfigListPage!
+  listDeviceTokens(data: DeviceTokenList!): DeviceTokenListPage!
+  listMetricDefinitions(data: MetricDefinitionList!): MetricDefinitionListPage!
+  listOrgMembers(data: OrgMemberList!): OrgMemberListPage!
+  listOrgs(data: OrgList!): OrgListPage!
+  listPerformanceAssessmentTemplates(data: PerformanceAssessmentTemplateList!): PerformanceAssessmentTemplateListPage!
+  listPerformanceAssessments(data: PerformanceAssessmentList!): PerformanceAssessmentListPage!
+  listPersons(data: PersonList!): PersonListPage!
+  listReferences(data: ReferenceList!): ReferenceListPage!
+  listScoreProviders(data: ScoreProviderList!): ScoreProviderListPage!
+  listUsers: [User!]!
+}
+
+type ReadyCondition {
+  gateIndex: Int!
+  requiredState: ConditionState!
+}
+
+input ReadyConditionInput {
+  gateIndex: Int!
+  requiredState: ConditionState!
+}
+
+type Reference {
+  createdAt: DateTime!
+  id: ID!
+  level: String!
+  mean: Float!
+  metricDefinition: MetricDefinition!
+  metricDefinitionId: String!
+  orgId: String!
+  std: Float!
+  updatedAt: DateTime!
+}
+
+input ReferenceCreate {
+  level: String!
+  mean: Float!
+  metricDefinitionId: String!
+  orgId: String!
+  std: Float!
+}
+
+input ReferenceList {
+  conditions: ReferenceListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input ReferenceListConditions {
+  orgId: ID!
+}
+
+type ReferenceListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [Reference!]!
+}
+
+input ReferenceUpdate {
+  id: ID!
+  level: String
+  mean: Float
+  std: Float
+}
+
+type ScoreProvider {
+  createdAt: DateTime!
+  formula: String!
+  id: ID!
+  isGlobal: Boolean!
+  metricDefinitionId: String
+  orgId: String!
+  updatedAt: DateTime!
+}
+
+input ScoreProviderCreate {
+  formula: String!
+  metricDefinitionId: String
+  orgId: String!
+}
+
+input ScoreProviderList {
+  conditions: ScoreProviderListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input ScoreProviderListConditions {
+  orgId: ID!
+}
+
+type ScoreProviderListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [ScoreProvider!]!
+}
+
+input ScoreProviderUpdate {
+  formula: String
+  id: ID!
+}
+
+input SortOption {
+  sortKey: String!
+  sortOrder: SortOrder!
+}
+
+enum SortOrder {
+  asc
+  desc
+}
+
+enum SystemRole {
+  GOD
+}
+
+type User {
+  contact: String!
+  customClaims: CustomClaims
+  displayName: String
+  email: String
+  id: ID!
+  phoneNumber: String
+  photoURL: String
+  providerData: JSON
+  uid: ID!
+}
+
+input UserCreate {
+  customClaims: InputCustomClaims
+  displayName: String
+  email: String
+  phoneNumber: String
+}
+
+input UserDelete {
+  id: ID!
+}
+
+input UserGet {
+  email: String
+  phoneNumber: String
+  userId: ID
+}
+
+input UserInput {
+  email: String
+  userId: String
+}
+
+enum UserRole {
+  EMPLOYEE
+  MANAGER
+  OWNER
+}
+
+input UserUpdate {
+  customClaims: InputCustomClaims
+  displayName: String
+  email: String
+  id: ID!
+  phoneNumber: String
+}
