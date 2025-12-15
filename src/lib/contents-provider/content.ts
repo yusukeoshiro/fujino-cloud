@@ -1,4 +1,12 @@
-import type { BetterDirection, MetricDefinitionType, MetricUnit } from './types';
+import type {
+	BetterDirection,
+	BlockingState,
+	CaptureType,
+	CollectionMode,
+	DeviceType,
+	MetricDefinitionType,
+	MetricUnit,
+} from './types';
 
 type MetricDefinition = {
 	id: string;
@@ -40,6 +48,42 @@ type ReferenceBand = {
 };
 
 type ReferenceTable = Record<string, Record<string, ReferenceBand | null>>;
+
+type CaptureOptions = {
+	metricDefinitionId: string;
+	type: CaptureType;
+	relativeToStepIndex: number | null;
+	metricDefinition?: { name: string };
+};
+
+type GatePathStep = {
+	gateIndex: number;
+	state: BlockingState;
+	captureTimestamp: boolean;
+	captureOptions: CaptureOptions | null;
+	resetTime: boolean;
+	engageSession: boolean;
+	readyNext?: boolean | null;
+};
+
+type ReadyCondition = {
+	gateIndex: number;
+	requiredState: BlockingState;
+};
+
+type DeviceInputConfig = {
+	id: string;
+	createdAt: string;
+	updatedAt: string;
+	orgId: string | null;
+	deviceType: DeviceType;
+	collectionMode: CollectionMode;
+	mainMetricDefinitionId: string;
+	gatePathSteps: GatePathStep[];
+	readyConditions: ReadyCondition[];
+	allowStaggeredStart: boolean;
+	contentProviderId?: string | null;
+};
 
 const now = '2025-01-01T00:00:00.000Z';
 
@@ -779,6 +823,176 @@ export const metricDefinitions: MetricDefinition[] = [
 	},
 ];
 
+export const deviceInputConfigs: DeviceInputConfig[] = [
+	{
+		id: 'BcSJAqPj3U9wdK6iOjxA',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		deviceType: 'GATE',
+		collectionMode: 'GATE_SESSION_V2',
+		mainMetricDefinitionId: 'FEEunCRt96GG5wXvoDWm',
+		gatePathSteps: [
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: false,
+				captureOptions: null,
+				resetTime: true,
+				engageSession: true,
+				readyNext: false,
+			},
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: false,
+				captureOptions: null,
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: true,
+				captureOptions: {
+					metricDefinitionId: 'FEEunCRt96GG5wXvoDWm',
+					type: 'ABSOLUTE',
+					relativeToStepIndex: null,
+				},
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+		],
+		readyConditions: [
+			{
+				gateIndex: 0,
+				requiredState: 'NON_BLOCKING',
+			},
+		],
+		allowStaggeredStart: false,
+		contentProviderId: null,
+	},
+	{
+		id: 'Rk9TI1OFeNVQ1vPcBfRl',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		deviceType: 'GATE',
+		collectionMode: 'GATE_SESSION_V2',
+		mainMetricDefinitionId: 'uaaLUh0KRykPkWA3Dhcd',
+		gatePathSteps: [
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: false,
+				captureOptions: null,
+				resetTime: true,
+				engageSession: true,
+				readyNext: false,
+			},
+			{
+				gateIndex: 1,
+				state: 'BLOCKING',
+				captureTimestamp: true,
+				captureOptions: {
+					metricDefinitionId: 'uhQDnmvGVOGPgEYAxJh0',
+					type: 'ABSOLUTE',
+					relativeToStepIndex: null,
+				},
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+			{
+				gateIndex: 2,
+				state: 'BLOCKING',
+				captureTimestamp: true,
+				captureOptions: {
+					metricDefinitionId: 'sgUyE2xgSX4d5YLDVFdO',
+					type: 'ABSOLUTE',
+					relativeToStepIndex: null,
+				},
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+			{
+				gateIndex: 3,
+				state: 'BLOCKING',
+				captureTimestamp: true,
+				captureOptions: {
+					metricDefinitionId: 'uaaLUh0KRykPkWA3Dhcd',
+					type: 'ABSOLUTE',
+					relativeToStepIndex: null,
+				},
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+		],
+		readyConditions: [
+			{ gateIndex: 0, requiredState: 'NON_BLOCKING' },
+			{ gateIndex: 1, requiredState: 'NON_BLOCKING' },
+			{ gateIndex: 2, requiredState: 'NON_BLOCKING' },
+			{ gateIndex: 3, requiredState: 'NON_BLOCKING' },
+		],
+		allowStaggeredStart: false,
+		contentProviderId: null,
+	},
+	{
+		id: 'qxgnEF7FUmQeTSIw1sgm',
+		createdAt: now,
+		updatedAt: now,
+		orgId: null,
+		deviceType: 'GATE',
+		collectionMode: 'GATE_SESSION_V2',
+		mainMetricDefinitionId: 'UiJ8YCBfUdI9OPnknlU4',
+		gatePathSteps: [
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: false,
+				captureOptions: null,
+				resetTime: true,
+				engageSession: true,
+				readyNext: false,
+			},
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: false,
+				captureOptions: null,
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+			{
+				gateIndex: 0,
+				state: 'BLOCKING',
+				captureTimestamp: true,
+				captureOptions: {
+					metricDefinitionId: 'UiJ8YCBfUdI9OPnknlU4',
+					type: 'ABSOLUTE',
+					relativeToStepIndex: null,
+				},
+				resetTime: false,
+				engageSession: false,
+				readyNext: false,
+			},
+		],
+		readyConditions: [
+			{
+				gateIndex: 0,
+				requiredState: 'NON_BLOCKING',
+			},
+		],
+		allowStaggeredStart: false,
+		contentProviderId: null,
+	},
+];
+
 export const performanceAssessmentTemplates: PerformanceAssessmentTemplate[] = [
 	{
 		id: 'lxIwgccLRJElDAkmHgEl',
@@ -910,5 +1124,6 @@ export const capabilitiesResponse = {
 		metricDefinitions: true,
 		scoreProviders: true,
 		performanceAssessmentTemplates: true,
+		deviceInputConfigs: true,
 	},
 };

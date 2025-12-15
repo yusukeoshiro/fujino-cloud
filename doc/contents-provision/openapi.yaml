@@ -17,6 +17,8 @@ tags:
     description: Performance assessment templates
   - name: score-providers
     description: External score calculation
+  - name: device-input-configs
+    description: Device input configuration (gate/session layouts) surfaced by the provider
 paths:
   /capabilities:
     get:
@@ -126,6 +128,39 @@ paths:
           $ref: '#/components/responses/ErrorResponse'
       security:
         - bearerAuth: []
+  /device-input-configs:
+    get:
+      tags: [device-input-configs]
+      summary: List all device input configs (gate/session layouts)
+      description: Returns all device input configs; responses must contain fewer than 1000 items.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of device input configs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInputConfigListResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /device-input-configs/{id}:
+    get:
+      tags: [device-input-configs]
+      summary: Fetch a single device input config
+      parameters:
+        - $ref: '#/components/parameters/PathId'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Device input config detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceInputConfig'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
 components:
   securitySchemes:
     bearerAuth:
@@ -165,10 +200,13 @@ components:
               type: boolean
             performanceAssessmentTemplates:
               type: boolean
+            deviceInputConfigs:
+              type: boolean
           required:
             - metricDefinitions
             - scoreProviders
             - performanceAssessmentTemplates
+            - deviceInputConfigs
       required:
         - version
         - capabilities
@@ -308,6 +346,153 @@ components:
         - MINUTE
         - HOUR
         - KMPH
+    DeviceInputConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          example: dic-001
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        orgId:
+          type: string
+          nullable: true
+        deviceType:
+          $ref: '#/components/schemas/DeviceType'
+        collectionMode:
+          $ref: '#/components/schemas/CollectionMode'
+        mainMetricDefinitionId:
+          type: string
+          example: MD1
+        gatePathSteps:
+          type: array
+          items:
+            $ref: '#/components/schemas/GatePathStep'
+        readyConditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReadyCondition'
+        allowStaggeredStart:
+          type: boolean
+          description: Allow parallel participants to start before the previous finishes.
+        contentProviderId:
+          type: string
+          nullable: true
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - deviceType
+        - collectionMode
+        - mainMetricDefinitionId
+        - gatePathSteps
+        - readyConditions
+        - allowStaggeredStart
+    DeviceInputConfigListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceInputConfig'
+      required:
+        - items
+      example:
+        items:
+          - id: dic-001
+            createdAt: '2024-01-01T00:00:00Z'
+            updatedAt: '2024-01-02T00:00:00Z'
+            orgId: null
+            deviceType: GATE
+            collectionMode: GATE_SESSION_V2
+            mainMetricDefinitionId: MD1
+            gatePathSteps:
+              - gateIndex: 0
+                state: BLOCKING
+                captureTimestamp: true
+                captureOptions:
+                  metricDefinitionId: MD1
+                  type: ABSOLUTE
+                  relativeToStepIndex: null
+                resetTime: true
+                engageSession: true
+                readyNext: false
+            readyConditions:
+              - gateIndex: 0
+                requiredState: NON_BLOCKING
+            allowStaggeredStart: false
+            contentProviderId: null
+    GatePathStep:
+      type: object
+      properties:
+        gateIndex:
+          type: integer
+          format: int32
+        state:
+          $ref: '#/components/schemas/BlockingState'
+        captureTimestamp:
+          type: boolean
+        captureOptions:
+          $ref: '#/components/schemas/CaptureOptions'
+          nullable: true
+        resetTime:
+          type: boolean
+        engageSession:
+          type: boolean
+        readyNext:
+          type: boolean
+          nullable: true
+      required:
+        - gateIndex
+        - state
+        - captureTimestamp
+        - resetTime
+        - engageSession
+    CaptureOptions:
+      type: object
+      properties:
+        metricDefinitionId:
+          type: string
+        type:
+          $ref: '#/components/schemas/CaptureType'
+        relativeToStepIndex:
+          type: integer
+          format: int32
+          nullable: true
+      required:
+        - metricDefinitionId
+        - type
+    ReadyCondition:
+      type: object
+      properties:
+        gateIndex:
+          type: integer
+          format: int32
+        requiredState:
+          $ref: '#/components/schemas/BlockingState'
+      required:
+        - gateIndex
+        - requiredState
+    DeviceType:
+      type: string
+      enum: [GATE, UNKNOWN]
+      example: GATE
+    CollectionMode:
+      type: string
+      enum: [GATE_SESSION_V2, GROUP_DROPOUT_V1, SIMPLE_INPUT_V1]
+      example: GATE_SESSION_V2
+    BlockingState:
+      type: string
+      enum: [BLOCKING, NON_BLOCKING]
+      example: BLOCKING
+    CaptureType:
+      type: string
+      enum: [ABSOLUTE, RELATIVE]
+      example: ABSOLUTE
     PerformanceAssessmentTemplateItem:
       type: object
       properties:

@@ -13,3 +13,8 @@ export type MetricUnit =
 	| 'KMPH';
 
 export type DerivedOperation = 'AVERAGE' | 'DIFFERENCE_PERCENT' | 'BMI';
+
+export type DeviceType = 'GATE' | 'UNKNOWN';
+export type CollectionMode = 'GATE_SESSION_V2' | 'GROUP_DROPOUT_V1' | 'SIMPLE_INPUT_V1';
+export type BlockingState = 'BLOCKING' | 'NON_BLOCKING';
+export type CaptureType = 'ABSOLUTE' | 'RELATIVE';
