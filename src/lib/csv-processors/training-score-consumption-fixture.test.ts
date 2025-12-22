@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parse } from 'csv-parse/sync';
-import { FitogetherCsvProcessor } from '$lib/utils/fitogether-csv-processor';
+import { FitogetherCsvProcessor } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
 
 type GameScoreFixture = {

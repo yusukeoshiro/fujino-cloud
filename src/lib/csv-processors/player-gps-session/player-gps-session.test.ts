@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { PlayerGpsSession } from './gps-session-parser.model';
-import type { GpsCore, SessionMeta } from './gps-core.model';
+import { PlayerGpsSession } from './player-gps-session';
+import type { GpsCore, SessionMeta } from '../../gps-core.model';
 
 describe('PlayerGpsSession', () => {
 	const mockData: GpsCore & SessionMeta = {

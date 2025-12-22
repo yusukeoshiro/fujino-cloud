@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { DateTime } from 'luxon';
-import { PlayerGpsSession } from '$lib/gps-session-parser.model';
+import { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
 
 export const PLAYER_NAME_FIELD = 'Player Name';
 export const JERSEY_NO_FIELD = 'Jersey No.';

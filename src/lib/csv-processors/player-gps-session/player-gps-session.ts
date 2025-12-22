@@ -1,4 +1,4 @@
-import type { GpsCore, SessionMeta, SessionType } from './gps-core.model';
+import type { GpsCore, SessionMeta, SessionType } from '../../gps-core.model';
 
 // PlayerGpsSession models a single player's GPS session row and exposes derived metrics and score calculations.
 export class PlayerGpsSession implements GpsCore, SessionMeta {

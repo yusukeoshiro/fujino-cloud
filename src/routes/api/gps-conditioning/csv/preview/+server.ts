@@ -9,7 +9,7 @@ import { ListPersonsStore } from '$houdini';
 import {
 	FitogetherCsvProcessor,
 	buildUnmatchedPersonsResponse,
-} from '$lib/utils/fitogether-csv-processor';
+} from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 
 // Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
