@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { DateTime } from 'luxon';
-import { GpsSessionParser } from '$lib/gps-session-parser.model';
+import { PlayerGpsSession } from '$lib/gps-session-parser.model';
 
 export const PLAYER_NAME_FIELD = 'Player Name';
 export const JERSEY_NO_FIELD = 'Jersey No.';
@@ -21,7 +21,7 @@ export interface FitogetherCsvProcessorOptions {
 }
 
 export interface FitogetherBuildParsersOptions {
-	trainingBaseline: ConstructorParameters<typeof GpsSessionParser>[1];
+	trainingBaseline: ConstructorParameters<typeof PlayerGpsSession>[1];
 	fallbackBirthday?: string;
 }
 
@@ -37,7 +37,7 @@ export interface FitogetherCsvProcessedEntry {
 
 export interface FitogetherCsvProcessResult {
 	entries: FitogetherCsvProcessedEntry[];
-	parsers: GpsSessionParser[];
+	parsers: PlayerGpsSession[];
 	unmatched: UnmatchedPerson[];
 	headers: string[];
 	headerMap: Array<{ field: string; metricDefinitionId: string }>;
@@ -96,7 +96,7 @@ export class FitogetherCsvProcessor {
 				entry.resolvedBirthday && entry.resolvedBirthday !== '0000-00-00'
 					? entry.resolvedBirthday
 					: fallbackBirthday;
-			return new GpsSessionParser(
+			return new PlayerGpsSession(
 				{
 					type: 'TRAINING',
 					date: DateTime.fromFormat(entry.values['Date'] as string, 'yyyy/M/d').toFormat(

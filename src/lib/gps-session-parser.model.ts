@@ -1,6 +1,7 @@
 import type { GpsCore, SessionMeta, SessionType } from './gps-core.model';
 
-export class GpsSessionParser implements GpsCore, SessionMeta {
+// PlayerGpsSession models a single player's GPS session row and exposes derived metrics and score calculations.
+export class PlayerGpsSession implements GpsCore, SessionMeta {
 	// raw fields (same as before)
 	type: SessionType;
 	date: string;
@@ -81,22 +82,29 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 
 	// computed, from raw:
 	get highIntensityM() {
+		// Derived: distance covered in speed zones Z3–Z5.
 		return this.speedZone5DistanceM + this.speedZone4DistanceM + this.speedZone3DistanceM;
 	}
 	get highIntensityRate() {
+		// Derived: high-intensity distance as a share of total distance.
 		return this.highIntensityM / this.totalDistanceM;
 	}
 	get walkingRate() {
+		// Derived: low-intensity (Z1) share of total distance.
 		return this.speedZone1DistanceM / this.totalDistanceM;
 	}
 	get accelerationCountTotal() {
+		// Derived: higher acceleration zone counts used in scoring.
 		return this.accelerationZone5EntryCount + this.accelerationZone6EntryCount;
 	}
 	get decelerationCountTotal() {
+		// Derived: higher deceleration zone counts used in scoring.
 		return this.decelerationZone5EntryCount + this.decelerationZone6EntryCount;
 	}
 
 	get trainingScoreConsumption(): number | null {
+		// Derived: average of four ratios vs baseline (total distance, high intensity, accel, decel) * 100, rounded.
+		// Returns null if baseline is missing/invalid to avoid divide-by-zero or NaN.
 		const baseline = this.trainingBaseline;
 		if (!baseline) return null;
 		const { totalDistanceM, highIntensityM, accelerationCountTotal, decelerationCountTotal } =
@@ -115,7 +123,7 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 			return null;
 		}
 
-		return Math.round(
+		const trainingConsumptionScore = Math.round(
 			((this.totalDistanceM / totalDistanceM +
 				this.highIntensityM / highIntensityM +
 				this.accelerationCountTotal / accelerationCountTotal +
@@ -123,9 +131,12 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 				4) *
 				100,
 		);
+
+		return trainingConsumptionScore;
 	}
 
 	toJson() {
+		// Format the session into a display/export-friendly shape with derived metrics included.
 		const iso = (d?: Date) => (d ? d.toISOString() : null);
 
 		const base = {

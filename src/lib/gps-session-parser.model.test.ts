@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { GpsSessionParser } from './gps-session-parser.model';
+import { PlayerGpsSession } from './gps-session-parser.model';
 import type { GpsCore, SessionMeta } from './gps-core.model';
 
-describe('GpsSessionParser', () => {
+describe('PlayerGpsSession', () => {
 	const mockData: GpsCore & SessionMeta = {
 		type: 'TRAINING',
 		date: '2023-10-27',
@@ -39,7 +39,7 @@ describe('GpsSessionParser', () => {
 	};
 
 	it('should initialize correctly', () => {
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 
 		expect(parser.fullName).toBe('Test Player');
 		expect(parser.totalDistanceM).toBe(10000);
@@ -48,37 +48,37 @@ describe('GpsSessionParser', () => {
 
 	it('should calculate highIntensityM correctly', () => {
 		// Z5 + Z4 + Z3 = 200 + 500 + 1000 = 1700
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.highIntensityM).toBe(1700);
 	});
 
 	it('should calculate highIntensityRate correctly', () => {
 		// 1700 / 10000 = 0.17
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.highIntensityRate).toBe(0.17);
 	});
 
 	it('should calculate walkingRate correctly', () => {
 		// Z1 / total = 4000 / 10000 = 0.4
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.walkingRate).toBe(0.4);
 	});
 
 	it('should calculate accelerationCountTotal correctly', () => {
 		// Acc Z5 + Z6 = 3 + 1 = 4
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.accelerationCountTotal).toBe(4);
 	});
 
 	it('should calculate decelerationCountTotal correctly', () => {
 		// Dec Z5 + Z6 = 4 + 2 = 6
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.decelerationCountTotal).toBe(6);
 	});
 
 	describe('trainingScoreConsumption', () => {
 		it('should return null if no baseline provided', () => {
-			const parser = new GpsSessionParser(mockData);
+			const parser = new PlayerGpsSession(mockData);
 			expect(parser.trainingScoreConsumption).toBeNull();
 		});
 
@@ -89,7 +89,7 @@ describe('GpsSessionParser', () => {
 				accelerationCountTotal: 4, // 100%
 				decelerationCountTotal: 6, // 100%
 			};
-			const parser = new GpsSessionParser(mockData, baseline);
+			const parser = new PlayerGpsSession(mockData, baseline);
 
 			// (1 + 1 + 1 + 1) / 4 * 100 = 100
 			expect(parser.trainingScoreConsumption).toBe(100);
@@ -102,7 +102,7 @@ describe('GpsSessionParser', () => {
 				accelerationCountTotal: 8, // parser is 50%
 				decelerationCountTotal: 12, // parser is 50%
 			};
-			const parser = new GpsSessionParser(mockData, baseline);
+			const parser = new PlayerGpsSession(mockData, baseline);
 
 			// (0.5 + 0.5 + 0.5 + 0.5) / 4 * 100 = 50
 			expect(parser.trainingScoreConsumption).toBe(50);
@@ -115,13 +115,13 @@ describe('GpsSessionParser', () => {
 				accelerationCountTotal: 4,
 				decelerationCountTotal: 6,
 			};
-			const parser = new GpsSessionParser(mockData, baseline);
+			const parser = new PlayerGpsSession(mockData, baseline);
 			expect(parser.trainingScoreConsumption).toBeNull();
 		});
 	});
 
 	it('should generate toJson object correctly', () => {
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		const json = parser.toJson();
 
 		expect(json['氏名']).toBe('Test Player');
