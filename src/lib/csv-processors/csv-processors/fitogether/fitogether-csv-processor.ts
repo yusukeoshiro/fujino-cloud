@@ -126,6 +126,10 @@ export class FitogetherCsvProcessor {
 					speedZone3DistanceM: Number(entry.values['Speed Zone 3 Distance (m)']),
 					speedZone4DistanceM: Number(entry.values['Speed Zone 4 Distance (m)']),
 					speedZone5DistanceM: Number(entry.values['Speed Zone 5 Distance (m)']),
+					speedZone6DistanceM: Number(entry.values['Speed Zone 6 Distance (m)']),
+					speedZone7DistanceM: Number(entry.values['Speed Zone 7 Distance (m)']),
+					speedZone8DistanceM: Number(entry.values['Speed Zone 8 Distance (m)']),
+					speedZone9DistanceM: Number(entry.values['Speed Zone 9 Distance (m)']),
 
 					accelerationZone4EntryCount: Number(
 						entry.values['Acceleration Zone 4 Entry Count (times)'],

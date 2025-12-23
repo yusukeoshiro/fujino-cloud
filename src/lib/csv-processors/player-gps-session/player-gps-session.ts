@@ -1,4 +1,4 @@
-import type { GpsCore, SessionMeta, SessionType } from '../../gps-core.model';
+import type { GpsCore, SessionMeta, SessionType } from './gps-core.model';
 
 // PlayerGpsSession models a single player's GPS session row and exposes derived metrics and score calculations.
 export class PlayerGpsSession implements GpsCore, SessionMeta {
@@ -25,6 +25,10 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	speedZone3DistanceM: number;
 	speedZone4DistanceM: number;
 	speedZone5DistanceM: number;
+	speedZone6DistanceM: number;
+	speedZone7DistanceM: number;
+	speedZone8DistanceM: number;
+	speedZone9DistanceM: number;
 
 	accelerationZone4EntryCount: number;
 	accelerationZone5EntryCount: number;
@@ -67,6 +71,10 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		this.speedZone3DistanceM = params.speedZone3DistanceM;
 		this.speedZone4DistanceM = params.speedZone4DistanceM;
 		this.speedZone5DistanceM = params.speedZone5DistanceM;
+		this.speedZone6DistanceM = params.speedZone6DistanceM;
+		this.speedZone7DistanceM = params.speedZone7DistanceM;
+		this.speedZone8DistanceM = params.speedZone8DistanceM;
+		this.speedZone9DistanceM = params.speedZone9DistanceM;
 
 		this.accelerationZone4EntryCount = params.accelerationZone4EntryCount;
 		this.accelerationZone5EntryCount = params.accelerationZone5EntryCount;
@@ -82,8 +90,8 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 
 	// computed, from raw:
 	get highIntensityM() {
-		// Derived: distance covered in speed zones Z3–Z5.
-		return this.speedZone5DistanceM + this.speedZone4DistanceM + this.speedZone3DistanceM;
+		// Derived: distance covered in speed zones Z8–Z9.
+		return this.speedZone8DistanceM + this.speedZone9DistanceM;
 	}
 	get highIntensityRate() {
 		// Derived: high-intensity distance as a share of total distance.
@@ -132,6 +140,14 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 				100,
 		);
 
+		console.log('----------------');
+		console.log(`${this.fullName}`);
+		console.log(`${this.totalDistanceM} / ${totalDistanceM}`);
+		console.log(`${this.highIntensityM} / ${highIntensityM}`);
+		console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
+		console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
+		console.log({ trainingConsumptionScore });
+
 		return trainingConsumptionScore;
 	}
 
@@ -163,6 +179,10 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			'Z3距離(m)': this.speedZone3DistanceM,
 			'Z4距離(m)': this.speedZone4DistanceM,
 			'Z5距離(m)': this.speedZone5DistanceM,
+			'Z6距離(m)': this.speedZone6DistanceM,
+			'Z7距離(m)': this.speedZone7DistanceM,
+			'Z8距離(m)': this.speedZone8DistanceM,
+			'Z9距離(m)': this.speedZone9DistanceM,
 
 			加速Z4回数: this.accelerationZone4EntryCount,
 			加速Z5回数: this.accelerationZone5EntryCount,

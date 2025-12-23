@@ -25,6 +25,10 @@ describe('PlayerGpsSession', () => {
 		speedZone3DistanceM: 1000,
 		speedZone4DistanceM: 500,
 		speedZone5DistanceM: 200,
+		speedZone6DistanceM: 120,
+		speedZone7DistanceM: 80,
+		speedZone8DistanceM: 150,
+		speedZone9DistanceM: 50,
 
 		accelerationZone4EntryCount: 5,
 		accelerationZone5EntryCount: 3,
@@ -47,15 +51,15 @@ describe('PlayerGpsSession', () => {
 	});
 
 	it('should calculate highIntensityM correctly', () => {
-		// Z5 + Z4 + Z3 = 200 + 500 + 1000 = 1700
+		// Z8 + Z9 = 150 + 50 = 200
 		const parser = new PlayerGpsSession(mockData);
-		expect(parser.highIntensityM).toBe(1700);
+		expect(parser.highIntensityM).toBe(200);
 	});
 
 	it('should calculate highIntensityRate correctly', () => {
-		// 1700 / 10000 = 0.17
+		// 200 / 10000 = 0.02
 		const parser = new PlayerGpsSession(mockData);
-		expect(parser.highIntensityRate).toBe(0.17);
+		expect(parser.highIntensityRate).toBe(0.02);
 	});
 
 	it('should calculate walkingRate correctly', () => {
@@ -85,7 +89,7 @@ describe('PlayerGpsSession', () => {
 		it('should calculate score correctly with valid baseline', () => {
 			const baseline = {
 				totalDistanceM: 10000, // 100%
-				highIntensityM: 1700, // 100%
+				highIntensityM: 200, // 100%
 				accelerationCountTotal: 4, // 100%
 				decelerationCountTotal: 6, // 100%
 			};
@@ -98,7 +102,7 @@ describe('PlayerGpsSession', () => {
 		it('should calculate score correctly with mixed baseline', () => {
 			const baseline = {
 				totalDistanceM: 20000, // parser is 50%
-				highIntensityM: 3400, // parser is 50%
+				highIntensityM: 400, // parser is 50%
 				accelerationCountTotal: 8, // parser is 50%
 				decelerationCountTotal: 12, // parser is 50%
 			};
@@ -111,7 +115,7 @@ describe('PlayerGpsSession', () => {
 		it('should handle zero in baseline (return null to avoid division by zero)', () => {
 			const baseline = {
 				totalDistanceM: 0,
-				highIntensityM: 1700,
+				highIntensityM: 200,
 				accelerationCountTotal: 4,
 				decelerationCountTotal: 6,
 			};
@@ -126,7 +130,7 @@ describe('PlayerGpsSession', () => {
 
 		expect(json['氏名']).toBe('Test Player');
 		expect(json['総走行距離(m)']).toBe(10000);
-		expect(json['高強度距離(m)']).toBe(1700);
+		expect(json['高強度距離(m)']).toBe(200);
 		expect(json['トレーニングスコア消費']).toBeNull();
 	});
 });

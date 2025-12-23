@@ -34,10 +34,10 @@ const buildTrainingBaseline = (fixture: GameScoreFixture) => {
 };
 
 describe('training score consumption fixtures', () => {
-	it('matches training-scenario-1 output expectations', () => {
-		const inputCsv = loadFixture('test-assets/training-scenario-1.input.csv');
-		const outputCsv = loadFixture('test-assets/training-scenario-1.output.csv');
-		const gameScoreJson = loadFixture('test-assets/training-scenario-1.gamescore.json');
+	it('matches training-scenario-2 output expectations', () => {
+		const inputCsv = loadFixture('test-assets/training-scenario-2.input.csv');
+		const outputCsv = loadFixture('test-assets/training-scenario-2.output.csv');
+		const gameScoreJson = loadFixture('test-assets/training-scenario-2.gamescore.json');
 
 		const rawRecords = parse(inputCsv, {
 			columns: true,
