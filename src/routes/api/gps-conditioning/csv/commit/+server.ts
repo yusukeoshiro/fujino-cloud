@@ -15,7 +15,7 @@ import {
 	FitogetherCsvProcessor,
 	buildUnmatchedPersonsResponse,
 } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
-import type { SessionType } from '$lib/gps-core.model';
+import type { SessionType } from '$lib/csv-processors/player-gps-session/gps-core.model';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
