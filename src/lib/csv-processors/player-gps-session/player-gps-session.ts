@@ -140,13 +140,13 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 				100,
 		);
 
-		console.log('----------------');
-		console.log(`${this.fullName}`);
-		console.log(`${this.totalDistanceM} / ${totalDistanceM}`);
-		console.log(`${this.highIntensityM} / ${highIntensityM}`);
-		console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
-		console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
-		console.log({ trainingConsumptionScore });
+		// console.log('----------------');
+		// console.log(`${this.fullName}`);
+		// console.log(`${this.totalDistanceM} / ${totalDistanceM}`);
+		// console.log(`${this.highIntensityM} / ${highIntensityM}`);
+		// console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
+		// console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
+		// console.log({ trainingConsumptionScore });
 
 		return trainingConsumptionScore;
 	}

@@ -12,6 +12,7 @@
 		{ label: 'ゲームスコアの管理', path: `${base}/game-score` },
 		{ label: 'トレーニング予算の管理', path: `${base}/budget` },
 		{ label: '日次GPSデータのアップロード', path: `${base}/upload` },
+		{ label: 'アップロード履歴', path: `${base}/performance-assessments` },
 	]);
 
 	const isActive = (item: Item) =>

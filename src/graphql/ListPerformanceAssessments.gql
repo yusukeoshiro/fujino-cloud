@@ -1,0 +1,39 @@
+query ListPerformanceAssessments($orgId: String!, $nextToken: String, $prevToken: String) {
+	listPerformanceAssessments(
+		data: {
+			conditions: { orgId: $orgId }
+			pageOption: {
+				size: 20
+				nextToken: $nextToken
+				prevToken: $prevToken
+				sortOptions: [{ sortKey: "date", sortOrder: desc }]
+			}
+		}
+	) {
+		count
+		hasNext
+		hasPrev
+		nextToken
+		prevToken
+		records {
+			id
+			name
+			date
+			description
+			orgId
+			participantsCount
+			ready
+			exported
+			inProgressExport
+			inProgressSyncSheet
+			downloadLink
+			spreadsheetUrl
+			createdAt
+			updatedAt
+			metadata {
+				key
+				value
+			}
+		}
+	}
+}
