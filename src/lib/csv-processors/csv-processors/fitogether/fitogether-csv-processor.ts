@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { DateTime } from 'luxon';
-import { GpsSessionParser } from '$lib/gps-session-parser.model';
+import { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
 
 export const PLAYER_NAME_FIELD = 'Player Name';
 export const JERSEY_NO_FIELD = 'Jersey No.';
@@ -21,7 +21,7 @@ export interface FitogetherCsvProcessorOptions {
 }
 
 export interface FitogetherBuildParsersOptions {
-	trainingBaseline: ConstructorParameters<typeof GpsSessionParser>[1];
+	trainingBaseline: ConstructorParameters<typeof PlayerGpsSession>[1];
 	fallbackBirthday?: string;
 }
 
@@ -37,7 +37,7 @@ export interface FitogetherCsvProcessedEntry {
 
 export interface FitogetherCsvProcessResult {
 	entries: FitogetherCsvProcessedEntry[];
-	parsers: GpsSessionParser[];
+	parsers: PlayerGpsSession[];
 	unmatched: UnmatchedPerson[];
 	headers: string[];
 	headerMap: Array<{ field: string; metricDefinitionId: string }>;
@@ -96,7 +96,7 @@ export class FitogetherCsvProcessor {
 				entry.resolvedBirthday && entry.resolvedBirthday !== '0000-00-00'
 					? entry.resolvedBirthday
 					: fallbackBirthday;
-			return new GpsSessionParser(
+			return new PlayerGpsSession(
 				{
 					type: 'TRAINING',
 					date: DateTime.fromFormat(entry.values['Date'] as string, 'yyyy/M/d').toFormat(
@@ -126,6 +126,10 @@ export class FitogetherCsvProcessor {
 					speedZone3DistanceM: Number(entry.values['Speed Zone 3 Distance (m)']),
 					speedZone4DistanceM: Number(entry.values['Speed Zone 4 Distance (m)']),
 					speedZone5DistanceM: Number(entry.values['Speed Zone 5 Distance (m)']),
+					speedZone6DistanceM: Number(entry.values['Speed Zone 6 Distance (m)']),
+					speedZone7DistanceM: Number(entry.values['Speed Zone 7 Distance (m)']),
+					speedZone8DistanceM: Number(entry.values['Speed Zone 8 Distance (m)']),
+					speedZone9DistanceM: Number(entry.values['Speed Zone 9 Distance (m)']),
 
 					accelerationZone4EntryCount: Number(
 						entry.values['Acceleration Zone 4 Entry Count (times)'],

@@ -1,6 +1,7 @@
 import type { GpsCore, SessionMeta, SessionType } from './gps-core.model';
 
-export class GpsSessionParser implements GpsCore, SessionMeta {
+// PlayerGpsSession models a single player's GPS session row and exposes derived metrics and score calculations.
+export class PlayerGpsSession implements GpsCore, SessionMeta {
 	// raw fields (same as before)
 	type: SessionType;
 	date: string;
@@ -24,6 +25,10 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 	speedZone3DistanceM: number;
 	speedZone4DistanceM: number;
 	speedZone5DistanceM: number;
+	speedZone6DistanceM: number;
+	speedZone7DistanceM: number;
+	speedZone8DistanceM: number;
+	speedZone9DistanceM: number;
 
 	accelerationZone4EntryCount: number;
 	accelerationZone5EntryCount: number;
@@ -66,6 +71,10 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 		this.speedZone3DistanceM = params.speedZone3DistanceM;
 		this.speedZone4DistanceM = params.speedZone4DistanceM;
 		this.speedZone5DistanceM = params.speedZone5DistanceM;
+		this.speedZone6DistanceM = params.speedZone6DistanceM;
+		this.speedZone7DistanceM = params.speedZone7DistanceM;
+		this.speedZone8DistanceM = params.speedZone8DistanceM;
+		this.speedZone9DistanceM = params.speedZone9DistanceM;
 
 		this.accelerationZone4EntryCount = params.accelerationZone4EntryCount;
 		this.accelerationZone5EntryCount = params.accelerationZone5EntryCount;
@@ -81,22 +90,29 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 
 	// computed, from raw:
 	get highIntensityM() {
-		return this.speedZone5DistanceM + this.speedZone4DistanceM + this.speedZone3DistanceM;
+		// Derived: distance covered in speed zones Z8–Z9.
+		return this.speedZone8DistanceM + this.speedZone9DistanceM;
 	}
 	get highIntensityRate() {
+		// Derived: high-intensity distance as a share of total distance.
 		return this.highIntensityM / this.totalDistanceM;
 	}
 	get walkingRate() {
+		// Derived: low-intensity (Z1) share of total distance.
 		return this.speedZone1DistanceM / this.totalDistanceM;
 	}
 	get accelerationCountTotal() {
+		// Derived: higher acceleration zone counts used in scoring.
 		return this.accelerationZone5EntryCount + this.accelerationZone6EntryCount;
 	}
 	get decelerationCountTotal() {
+		// Derived: higher deceleration zone counts used in scoring.
 		return this.decelerationZone5EntryCount + this.decelerationZone6EntryCount;
 	}
 
 	get trainingScoreConsumption(): number | null {
+		// Derived: average of four ratios vs baseline (total distance, high intensity, accel, decel) * 100, rounded.
+		// Returns null if baseline is missing/invalid to avoid divide-by-zero or NaN.
 		const baseline = this.trainingBaseline;
 		if (!baseline) return null;
 		const { totalDistanceM, highIntensityM, accelerationCountTotal, decelerationCountTotal } =
@@ -115,7 +131,7 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 			return null;
 		}
 
-		return Math.round(
+		const trainingConsumptionScore = Math.round(
 			((this.totalDistanceM / totalDistanceM +
 				this.highIntensityM / highIntensityM +
 				this.accelerationCountTotal / accelerationCountTotal +
@@ -123,9 +139,20 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 				4) *
 				100,
 		);
+
+		console.log('----------------');
+		console.log(`${this.fullName}`);
+		console.log(`${this.totalDistanceM} / ${totalDistanceM}`);
+		console.log(`${this.highIntensityM} / ${highIntensityM}`);
+		console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
+		console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
+		console.log({ trainingConsumptionScore });
+
+		return trainingConsumptionScore;
 	}
 
 	toJson() {
+		// Format the session into a display/export-friendly shape with derived metrics included.
 		const iso = (d?: Date) => (d ? d.toISOString() : null);
 
 		const base = {
@@ -152,6 +179,10 @@ export class GpsSessionParser implements GpsCore, SessionMeta {
 			'Z3距離(m)': this.speedZone3DistanceM,
 			'Z4距離(m)': this.speedZone4DistanceM,
 			'Z5距離(m)': this.speedZone5DistanceM,
+			'Z6距離(m)': this.speedZone6DistanceM,
+			'Z7距離(m)': this.speedZone7DistanceM,
+			'Z8距離(m)': this.speedZone8DistanceM,
+			'Z9距離(m)': this.speedZone9DistanceM,
 
 			加速Z4回数: this.accelerationZone4EntryCount,
 			加速Z5回数: this.accelerationZone5EntryCount,

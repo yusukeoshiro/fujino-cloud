@@ -24,6 +24,7 @@ type AnonymizeResultDto {
 input AutoRecordMetric {
   isOfficial: Boolean = false
   isPriority: Boolean = false
+  metadata: [MetadataEntryInput!]
   metricDefinitionId: String!
   orgUniqueToken: String!
   performanceAssessmentId: String!
@@ -43,14 +44,12 @@ enum BlockingState {
 type CaptureOptions {
   metricDefinition(orgId: ID!): MetricDefinition
   metricDefinitionId: String!
-  name: String
   relativeToStepIndex: Int
   type: CaptureType!
 }
 
 input CaptureOptionsInput {
   metricDefinitionId: String!
-  name: String
   relativeToStepIndex: Int
   type: CaptureType!
 }
@@ -87,14 +86,18 @@ type ContentProvider {
 }
 
 type ContentProviderCapabilities {
+  deviceInputConfigs: Boolean!
   metricDefinitions: Boolean!
   performanceAssessments: Boolean!
+  referenceLevels: Boolean!
   scoreProviders: Boolean!
 }
 
 input ContentProviderCapabilitiesInput {
+  deviceInputConfigs: Boolean! = false
   metricDefinitions: Boolean! = false
   performanceAssessments: Boolean! = false
+  referenceLevels: Boolean! = false
   scoreProviders: Boolean! = false
 }
 
@@ -209,34 +212,41 @@ enum DerivedOperation {
 
 type DeviceInputConfig {
   allowStaggeredStart: Boolean
-  bindToCloudMetricDefinitions: Boolean
   collectionMode: CollectionMode!
+  contentProviderId: String
   deviceType: DeviceType!
   gatePathSteps: [GatePathStep!]!
   id: String!
-  mainMetricDefinition(orgId: ID!): MetricDefinition
+  mainMetricDefinition(orgId: ID): MetricDefinition
   mainMetricDefinitionId: String!
-  name: String!
+  orgId: ID!
   readyConditions: [ReadyCondition!]!
-  roundingPrecision: Int!
-  unit: String
 }
 
 input DeviceInputConfigCreate {
   allowStaggeredStart: Boolean
-  bindToCloudMetricDefinitions: Boolean
   collectionMode: CollectionMode!
+  contentProviderId: String
   deviceType: DeviceType!
   gatePathSteps: [GatePathStepInput!]!
   mainMetricDefinitionId: String!
-  name: String!
+  orgId: ID!
   readyConditions: [ReadyConditionInput!]!
-  roundingPrecision: Int!
-  unit: String
+}
+
+input DeviceInputConfigDelete {
+  id: ID!
+  orgId: ID!
+}
+
+input DeviceInputConfigGet {
+  id: ID!
+  orgId: ID!
 }
 
 input DeviceInputConfigListConditions {
   mainMetricDefinitionId: String
+  orgId: ID
 }
 
 input DeviceInputConfigListDto {
@@ -257,16 +267,14 @@ type DeviceInputConfigListPage {
 
 input DeviceInputConfigUpdate {
   allowStaggeredStart: Boolean
-  bindToCloudMetricDefinitions: Boolean
   collectionMode: CollectionMode
+  contentProviderId: String
   deviceType: DeviceType
   gatePathSteps: [GatePathStepInput!]
   id: String!
   mainMetricDefinitionId: String
-  name: String
+  orgId: ID!
   readyConditions: [ReadyConditionInput!]
-  roundingPrecision: Int
-  unit: String
 }
 
 type DeviceToken {
@@ -378,6 +386,7 @@ type Metric {
   globalUniqueToken: String!
   id: ID!
   isOfficial: Boolean
+  metadata: [MetadataEntry!]
   metricDefinition: MetricDefinition!
   metricDefinitionId: String!
   orgId: String!
@@ -496,6 +505,7 @@ enum MetricUnit {
 
 input MetricUpdate {
   id: ID!
+  metadata: [MetadataEntryInput!]
   score: Float
   updateScore: Boolean = false
   value: Float
@@ -525,7 +535,7 @@ type Mutation {
   deleteContentProvider(data: InputDelete!): ContentProvider!
   deleteContentSubscription(data: InputDelete!): ContentSubscription!
   deleteDatasetOrg(data: DatasetOrgInput!): Org!
-  deleteDeviceInputConfig(data: InputDelete!): DeviceInputConfig!
+  deleteDeviceInputConfig(data: DeviceInputConfigDelete!): DeviceInputConfig!
   deleteDeviceToken(data: InputDelete!): DeviceToken!
   deleteMetricDefinition(data: MetricDefinitionDelete!): MetricDefinition!
   deleteOrg(data: InputDelete!): Org!
@@ -542,6 +552,7 @@ type Mutation {
   scoreMetric(data: InputDetail!): Metric!
   sendAllReportsPerformanceAssessment(data: InputSendAllReports!): PerformanceAssessment!
   sendResultEmailPerformanceAssessmentParticipant(data: InputDetail!): PerformanceAssessmentParticipant!
+  syncContentSubscription(data: InputDetail!): ContentSubscription!
   syncSpreadsheetPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   updateContentProvider(data: ContentProviderUpdate!): ContentProvider!
   updateContentSubscription(data: ContentSubscriptionUpdate!): ContentSubscription!
@@ -948,7 +959,7 @@ type Query {
   anonymize(data: AnonymizeDto!): AnonymizeResultDto!
   getContentProvider(data: InputDetail!): ContentProvider!
   getContentSubscription(data: InputDetail!): ContentSubscription!
-  getDeviceInputConfig(data: InputDetail!): DeviceInputConfig!
+  getDeviceInputConfig(data: DeviceInputConfigGet!): DeviceInputConfig!
   getDeviceToken(data: InputDetail!): DeviceToken!
   getMetric(data: InputDetail!): Metric!
   getMetricDefinition(data: MetricDefinitionGet!): MetricDefinition!

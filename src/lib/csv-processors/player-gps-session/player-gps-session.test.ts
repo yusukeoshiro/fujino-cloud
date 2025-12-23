@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { GpsSessionParser } from './gps-session-parser.model';
+import { PlayerGpsSession } from './player-gps-session';
 import type { GpsCore, SessionMeta } from './gps-core.model';
 
-describe('GpsSessionParser', () => {
+describe('PlayerGpsSession', () => {
 	const mockData: GpsCore & SessionMeta = {
 		type: 'TRAINING',
 		date: '2023-10-27',
@@ -25,6 +25,10 @@ describe('GpsSessionParser', () => {
 		speedZone3DistanceM: 1000,
 		speedZone4DistanceM: 500,
 		speedZone5DistanceM: 200,
+		speedZone6DistanceM: 120,
+		speedZone7DistanceM: 80,
+		speedZone8DistanceM: 150,
+		speedZone9DistanceM: 50,
 
 		accelerationZone4EntryCount: 5,
 		accelerationZone5EntryCount: 3,
@@ -39,7 +43,7 @@ describe('GpsSessionParser', () => {
 	};
 
 	it('should initialize correctly', () => {
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 
 		expect(parser.fullName).toBe('Test Player');
 		expect(parser.totalDistanceM).toBe(10000);
@@ -47,49 +51,49 @@ describe('GpsSessionParser', () => {
 	});
 
 	it('should calculate highIntensityM correctly', () => {
-		// Z5 + Z4 + Z3 = 200 + 500 + 1000 = 1700
-		const parser = new GpsSessionParser(mockData);
-		expect(parser.highIntensityM).toBe(1700);
+		// Z8 + Z9 = 150 + 50 = 200
+		const parser = new PlayerGpsSession(mockData);
+		expect(parser.highIntensityM).toBe(200);
 	});
 
 	it('should calculate highIntensityRate correctly', () => {
-		// 1700 / 10000 = 0.17
-		const parser = new GpsSessionParser(mockData);
-		expect(parser.highIntensityRate).toBe(0.17);
+		// 200 / 10000 = 0.02
+		const parser = new PlayerGpsSession(mockData);
+		expect(parser.highIntensityRate).toBe(0.02);
 	});
 
 	it('should calculate walkingRate correctly', () => {
 		// Z1 / total = 4000 / 10000 = 0.4
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.walkingRate).toBe(0.4);
 	});
 
 	it('should calculate accelerationCountTotal correctly', () => {
 		// Acc Z5 + Z6 = 3 + 1 = 4
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.accelerationCountTotal).toBe(4);
 	});
 
 	it('should calculate decelerationCountTotal correctly', () => {
 		// Dec Z5 + Z6 = 4 + 2 = 6
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		expect(parser.decelerationCountTotal).toBe(6);
 	});
 
 	describe('trainingScoreConsumption', () => {
 		it('should return null if no baseline provided', () => {
-			const parser = new GpsSessionParser(mockData);
+			const parser = new PlayerGpsSession(mockData);
 			expect(parser.trainingScoreConsumption).toBeNull();
 		});
 
 		it('should calculate score correctly with valid baseline', () => {
 			const baseline = {
 				totalDistanceM: 10000, // 100%
-				highIntensityM: 1700, // 100%
+				highIntensityM: 200, // 100%
 				accelerationCountTotal: 4, // 100%
 				decelerationCountTotal: 6, // 100%
 			};
-			const parser = new GpsSessionParser(mockData, baseline);
+			const parser = new PlayerGpsSession(mockData, baseline);
 
 			// (1 + 1 + 1 + 1) / 4 * 100 = 100
 			expect(parser.trainingScoreConsumption).toBe(100);
@@ -98,11 +102,11 @@ describe('GpsSessionParser', () => {
 		it('should calculate score correctly with mixed baseline', () => {
 			const baseline = {
 				totalDistanceM: 20000, // parser is 50%
-				highIntensityM: 3400, // parser is 50%
+				highIntensityM: 400, // parser is 50%
 				accelerationCountTotal: 8, // parser is 50%
 				decelerationCountTotal: 12, // parser is 50%
 			};
-			const parser = new GpsSessionParser(mockData, baseline);
+			const parser = new PlayerGpsSession(mockData, baseline);
 
 			// (0.5 + 0.5 + 0.5 + 0.5) / 4 * 100 = 50
 			expect(parser.trainingScoreConsumption).toBe(50);
@@ -111,22 +115,22 @@ describe('GpsSessionParser', () => {
 		it('should handle zero in baseline (return null to avoid division by zero)', () => {
 			const baseline = {
 				totalDistanceM: 0,
-				highIntensityM: 1700,
+				highIntensityM: 200,
 				accelerationCountTotal: 4,
 				decelerationCountTotal: 6,
 			};
-			const parser = new GpsSessionParser(mockData, baseline);
+			const parser = new PlayerGpsSession(mockData, baseline);
 			expect(parser.trainingScoreConsumption).toBeNull();
 		});
 	});
 
 	it('should generate toJson object correctly', () => {
-		const parser = new GpsSessionParser(mockData);
+		const parser = new PlayerGpsSession(mockData);
 		const json = parser.toJson();
 
 		expect(json['氏名']).toBe('Test Player');
 		expect(json['総走行距離(m)']).toBe(10000);
-		expect(json['高強度距離(m)']).toBe(1700);
+		expect(json['高強度距離(m)']).toBe(200);
 		expect(json['トレーニングスコア消費']).toBeNull();
 	});
 });

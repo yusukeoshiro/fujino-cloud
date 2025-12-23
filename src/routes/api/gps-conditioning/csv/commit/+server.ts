@@ -14,8 +14,8 @@ import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids'
 import {
 	FitogetherCsvProcessor,
 	buildUnmatchedPersonsResponse,
-} from '$lib/utils/fitogether-csv-processor';
-import type { SessionType } from '$lib/gps-core.model';
+} from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import type { SessionType } from '$lib/csv-processors/player-gps-session/gps-core.model';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;

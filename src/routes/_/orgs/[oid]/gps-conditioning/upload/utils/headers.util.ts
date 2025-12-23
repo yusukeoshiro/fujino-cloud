@@ -25,6 +25,10 @@ export const DISPLAY_COLS = [
 	// 'Z3距離(m)',
 	// 'Z4距離(m)',
 	// 'Z5距離(m)',
+	// 'Z6距離(m)',
+	// 'Z7距離(m)',
+	// 'Z8距離(m)',
+	// 'Z9距離(m)',
 	// '加速Z4回数',
 	'加速Z5回数', // kCZxKxfA9MfWVgBmdTbo
 	'加速Z6回数', // YR3ZEOZLTLwJk23XKVpj

@@ -24,6 +24,10 @@ export interface GpsCore {
 	speedZone3DistanceM: number;
 	speedZone4DistanceM: number;
 	speedZone5DistanceM: number;
+	speedZone6DistanceM: number;
+	speedZone7DistanceM: number;
+	speedZone8DistanceM: number;
+	speedZone9DistanceM: number;
 
 	accelerationZone4EntryCount: number;
 	accelerationZone5EntryCount: number;
@@ -46,8 +50,7 @@ export interface DerivedMetrics {
 }
 
 export function computeDerived(core: GpsCore): DerivedMetrics {
-	const highIntensityM =
-		core.speedZone5DistanceM + core.speedZone4DistanceM + core.speedZone3DistanceM;
+	const highIntensityM = core.speedZone8DistanceM + core.speedZone9DistanceM;
 
 	return {
 		highIntensityM,
