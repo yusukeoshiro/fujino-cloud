@@ -8,6 +8,8 @@
 	import { auth } from '$lib/firebase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { t } from 'svelte-i18n';
+	import { get } from 'svelte/store';
 
 	const loginWithGoogle = () => {
 		const provider = new GoogleAuthProvider();
@@ -37,16 +39,16 @@
 		error = null;
 		message = null;
 		if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-			error = '有効なメールアドレスを入力してください。';
+			error = get(t)('login.error.invalid_email');
 			return;
 		}
 		sending = true;
 		try {
 			await sendLoginLink(email);
-			message = 'ログインリンクを送信しました。メールをご確認ください。';
+			message = get(t)('login.success.sent');
 		} catch (e: unknown) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			error = (e as any)?.message ?? 'リンク送信に失敗しました。';
+			error = (e as any)?.message ?? get(t)('login.error.send_failed');
 		} finally {
 			sending = false;
 		}
@@ -87,7 +89,7 @@
 		<div
 			class="flex flex-col items-center gap-6 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur sm:p-8"
 		>
-			<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-24 sm:h-32 md:h-40 lg:h-48" />
+			<img src="/logo.png" alt={$t('login.alt_logo')} class="h-24 sm:h-32 md:h-40 lg:h-48" />
 
 			<div class="flex w-full flex-col items-stretch gap-3">
 				<!-- Google -->
@@ -97,7 +99,7 @@
 					onclick={loginWithGoogle}
 					disabled={sending}
 				>
-					Google でログインする
+					{$t('login.google_button')}
 				</button>
 
 				<!-- Either "メールでログインする" OR email form -->
@@ -108,14 +110,14 @@
 						onclick={() => (showEmail = true)}
 						disabled={sending}
 					>
-						メール でログインする
+						{$t('login.email_button')}
 					</button>
 				{:else}
 					<form class="flex w-full flex-col items-stretch gap-3" onsubmit={onEmailSubmit}>
 						<input
 							type="email"
 							class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-300 focus:outline-none"
-							placeholder="your@email.com"
+							placeholder={$t('login.email_placeholder')}
 							bind:value={email}
 						/>
 
@@ -126,7 +128,7 @@
 								onclick={cancelEmail}
 								disabled={sending}
 							>
-								キャンセル
+								{$t('login.cancel_button')}
 							</button>
 							<button
 								type="submit"
@@ -156,9 +158,9 @@
 											stroke-linecap="round"
 										/>
 									</svg>
-									送信中…
+									{$t('login.sending_button')}
 								{:else}
-									メールでログイン
+									{$t('login.submit_button')}
 								{/if}
 							</button>
 						</div>
@@ -174,13 +176,12 @@
 			</div>
 
 			<p class="text-center text-xs text-gray-500">
-				事前に契約をしているユーザーのみに提供されています。<br />
-				利用規約に同意したことを確認しログインしてください。
+				{@html $t('login.disclaimer')}
 			</p>
 		</div>
 
 		<div class="mt-4 text-center text-xs text-gray-500">
-			© 2025 Hideaki Fujino. All rights reserved.
+			{$t('login.copyright')}
 		</div>
 	</div>
 </div>

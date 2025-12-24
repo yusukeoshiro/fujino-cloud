@@ -1,5 +1,7 @@
 <script lang="ts">
 	import '../app.css';
+	import '$lib/i18n';
+	import { isLoading } from 'svelte-i18n';
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
 	import { onAuthStateChanged } from 'firebase/auth';
@@ -20,4 +22,8 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-{@render children?.()}
+{#if $isLoading}
+	<div>Loading...</div>
+{:else}
+	{@render children?.()}
+{/if}
