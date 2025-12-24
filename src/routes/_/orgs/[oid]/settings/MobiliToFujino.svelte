@@ -136,14 +136,14 @@
 		</div>
 		{#if contentsProviderApiToken.updatedAt}
 			<p class="mt-3 text-xs text-slate-400">
-				<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
+				<!-- eslint-disable @typescript-eslint/no-explicit-any -->
 				{$t('api_token.last_updated', {
 					date: formatTimestamp(contentsProviderApiToken.updatedAt),
 				} as any)}
 				{#if contentsProviderApiToken.lastFour}
-					<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
 					{$t('api_token.last_four', { lastFour: contentsProviderApiToken.lastFour } as any)}
 				{/if}
+				<!-- eslint-enable @typescript-eslint/no-explicit-any -->
 			</p>
 		{/if}
 	</div>

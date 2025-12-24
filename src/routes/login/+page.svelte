@@ -176,6 +176,7 @@
 			</div>
 
 			<p class="text-center text-xs text-gray-500">
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -->
 				{@html $t('login.disclaimer')}
 			</p>
 		</div>
