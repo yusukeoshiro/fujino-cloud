@@ -8,7 +8,7 @@
 	import { auth } from '$lib/firebase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { t } from '$lib/i18n';
+	import { locale, setLocale, supportedLocales, t, type Locale } from '$lib/i18n';
 	import { get } from 'svelte/store';
 
 	const loginWithGoogle = () => {
@@ -187,4 +187,40 @@
 			© 2025 Hideaki Fujino. All rights reserved.
 		</div>
 	</div>
+</div>
+
+<div
+	class="fixed right-4 bottom-4 flex items-center gap-2 rounded-full bg-transparent px-3 py-1 text-xs text-gray-600 transition hover:text-gray-900"
+>
+	<span class="flex items-center gap-1.5 font-semibold">
+		<svg
+			class="h-3.5 w-3.5"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.8"
+			aria-hidden="true"
+		>
+			<circle cx="12" cy="12" r="9" />
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"
+			/>
+		</svg>
+		{$t('profile.languageLabel')}
+	</span>
+	<select
+		id="login-language"
+		class="rounded-md border border-transparent bg-transparent px-2 py-1 text-xs focus:outline-none"
+		value={$locale}
+		onchange={(event) => {
+			const target = event.currentTarget as HTMLSelectElement;
+			setLocale(target.value as Locale);
+		}}
+	>
+		{#each supportedLocales as option (option)}
+			<option value={option}>{$t(`settings.language.${option}`)}</option>
+		{/each}
+	</select>
 </div>
