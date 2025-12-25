@@ -1,18 +1,19 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { type Snippet } from 'svelte';
+	import { t } from '$lib/i18n';
 
 	let { children }: { children: Snippet<[]> } = $props();
 
-	type Item = { label: string; path: string; exact?: boolean };
+	type Item = { labelKey: string; path: string; exact?: boolean };
 
 	const base = $derived(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	const items: Item[] = $derived([
-		{ label: 'ダッシュボード', path: base, exact: true },
-		{ label: 'ゲームスコアの管理', path: `${base}/game-score` },
-		{ label: 'トレーニング予算の管理', path: `${base}/budget` },
-		{ label: '日次GPSデータのアップロード', path: `${base}/upload` },
-		{ label: 'アップロード履歴', path: `${base}/performance-assessments` },
+		{ labelKey: 'gps.nav.dashboard', path: base, exact: true },
+		{ labelKey: 'gps.nav.gameScore', path: `${base}/game-score` },
+		{ labelKey: 'gps.nav.budget', path: `${base}/budget` },
+		{ labelKey: 'gps.nav.upload', path: `${base}/upload` },
+		{ labelKey: 'gps.nav.history', path: `${base}/performance-assessments` },
 	]);
 
 	const isActive = (item: Item) =>
@@ -29,7 +30,7 @@
 					href={item.path}
 					class={`rounded-md px-3 py-1.5 transition-colors ${isActive(item) ? 'bg-blue-600 text-white' : 'hover:bg-slate-100'}`}
 				>
-					{item.label}
+					{$t(item.labelKey)}
 				</a>
 			</li>
 		{/each}

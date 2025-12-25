@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { COLUMNS, FOOTER_COLS, HEADER_COLS } from './utils/headers.util';
+	import { locale, t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	const orgId = page.params.oid;
 	const stickyLeft =
@@ -17,7 +19,7 @@
 
 	function fmt(v: unknown): string {
 		if (v === null || v === undefined || v === '') return '—';
-		if (typeof v === 'number' && Number.isFinite(v)) return v.toLocaleString();
+		if (typeof v === 'number' && Number.isFinite(v)) return v.toLocaleString($locale);
 		return String(v);
 	}
 
@@ -38,9 +40,9 @@
 
 	let result = $state<UploadPreviewResponse | null>(null);
 	type GpsCategory = 'training' | 'game';
-	const gpsCategoryOptions: ReadonlyArray<{ value: GpsCategory; label: string }> = [
-		{ value: 'training', label: 'トレーニング' },
-		{ value: 'game', label: '試合' },
+	const gpsCategoryOptions: ReadonlyArray<{ value: GpsCategory; labelKey: string }> = [
+		{ value: 'training', labelKey: 'gps.upload.type.training' },
+		{ value: 'game', labelKey: 'gps.upload.type.game' },
 	];
 	let gpsCategory = $state<GpsCategory>('training');
 	let rowSelections = $state<Record<number, boolean>>({});
@@ -50,6 +52,8 @@
 	let errorDetails: string[] = $state([]);
 	let fileInput: HTMLInputElement | null = $state(null);
 	let lastFile: File | null = $state(null);
+
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
 
 	// ✅ post-commit hook (write your logic here)
 	function onCommitSuccess() {
@@ -93,7 +97,7 @@
 	async function uploadFile(file: File) {
 		if (!file) return;
 		if (!orgId) {
-			setError('組織IDが特定できません。');
+			setError(translate('gps.upload.orgMissing'));
 			return;
 		}
 		setError(null);
@@ -117,13 +121,11 @@
 				if (contentType.includes('application/json')) {
 					const payload = await res.json();
 					const errorDetailsPayload = Array.isArray(payload?.details) ? payload.details : [];
-					const err = new Error(
-						typeof payload?.message === 'string' ? payload.message : 'アップロードに失敗しました。',
-					) as Error & { details?: unknown };
+					const err = new Error(translate('gps.upload.failed')) as Error & { details?: unknown };
 					err.details = errorDetailsPayload;
 					throw err;
 				}
-				throw new Error(await res.text());
+				throw new Error(translate('gps.upload.failed'));
 			}
 			const payload = (await res.json()) as UploadPreviewResponse;
 			result = payload;
@@ -150,15 +152,19 @@
 					) {
 						const row =
 							typeof (item as { row?: unknown }).row === 'number'
-								? `行${(item as { row: number }).row}`
+								? translate('gps.upload.issueRow', { row: (item as { row: number }).row })
 								: '';
 						const playerName =
 							typeof (item as { playerName?: unknown }).playerName === 'string'
-								? `選手名「${(item as { playerName: string }).playerName}」`
+								? translate('gps.upload.issuePlayer', {
+										playerName: (item as { playerName: string }).playerName,
+									})
 								: '';
 						const jerseyNo =
 							typeof (item as { jerseyNo?: unknown }).jerseyNo === 'string'
-								? `背番号「${(item as { jerseyNo: string }).jerseyNo}」`
+								? translate('gps.upload.issueJersey', {
+										jerseyNo: (item as { jerseyNo: string }).jerseyNo,
+									})
 								: '';
 						const parts = [row, playerName, jerseyNo].filter(Boolean);
 						if (parts.length) {
@@ -172,7 +178,7 @@
 				typeof (e as any)?.message === 'string'
 					? // eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(e as any).message
-					: 'アップロードに失敗しました。',
+					: translate('gps.upload.failed'),
 				details,
 			);
 		} finally {
@@ -213,11 +219,11 @@
 
 	async function commitUpload() {
 		if (!lastFile) {
-			setError('先にファイルを選択してください。');
+			setError(translate('gps.upload.selectFileFirst'));
 			return;
 		}
 		if (!orgId) {
-			setError('組織IDが特定できません。');
+			setError(translate('gps.upload.orgMissing'));
 			return;
 		}
 		committing = true; // ✅ start spinner
@@ -239,7 +245,7 @@
 					body: fd,
 				},
 			);
-			if (!res.ok) throw new Error(await res.text());
+			if (!res.ok) throw new Error(translate('gps.upload.commitFailed'));
 			onCommitSuccess(); // ✅ your hook
 		} catch (e: unknown) {
 			setError(
@@ -247,7 +253,7 @@
 				typeof (e as any)?.message === 'string'
 					? // eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(e as any).message
-					: 'コミットに失敗しました。もう一度お試しください。',
+					: translate('gps.upload.commitFailed'),
 			);
 		} finally {
 			committing = false; // ✅ stop spinner
@@ -311,17 +317,15 @@
 
 <section class="mx-auto max-w-screen-2xl px-4 py-6 text-slate-900">
 	<header class="mb-6 space-y-2">
-		<h1 class="text-xl font-semibold">日次GPSデータのアップロード</h1>
-		<p class="text-sm text-slate-600">
-			Fitogether の CSV をアップロードしてプレビューし、取り込み前に未照合選手や重複を確認できます。
-		</p>
+		<h1 class="text-xl font-semibold">{$t('gps.upload.title')}</h1>
+		<p class="text-sm text-slate-600">{$t('gps.upload.description')}</p>
 	</header>
 
 	<div
 		class="mb-6 flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white/60 p-4 shadow-sm"
 	>
 		<div>
-			<p class="text-sm font-semibold text-slate-800">データの種別</p>
+			<p class="text-sm font-semibold text-slate-800">{$t('gps.upload.dataType')}</p>
 		</div>
 		<div class="inline-flex rounded-xl bg-slate-100 p-1 text-sm font-medium text-slate-700">
 			{#each gpsCategoryOptions as option (option.value)}
@@ -334,7 +338,7 @@
 					onclick={() => (gpsCategory = option.value)}
 					aria-pressed={gpsCategory === option.value}
 				>
-					{option.label}
+					{$t(option.labelKey)}
 				</button>
 			{/each}
 		</div>
@@ -353,8 +357,8 @@
 			ondragleave={onDragLeave}
 			onclick={() => fileInput?.click()}
 		>
-			<p class="mb-2 font-semibold text-slate-800">CSVファイルをここにドロップ</p>
-			<p class="text-sm text-slate-500">またはクリックして選択</p>
+			<p class="mb-2 font-semibold text-slate-800">{$t('gps.upload.dropTitle')}</p>
+			<p class="text-sm text-slate-500">{$t('gps.upload.dropSubtitle')}</p>
 			<input
 				bind:this={fileInput}
 				type="file"
@@ -367,8 +371,8 @@
 
 	{#if result}
 		<div class="mt-6 space-y-1">
-			<h2 class="text-lg font-semibold">CSV解析結果</h2>
-			<p class="text-sm text-slate-600">Fitogether の形式として認識しました。</p>
+			<h2 class="text-lg font-semibold">{$t('gps.upload.analysisTitle')}</h2>
+			<p class="text-sm text-slate-600">{$t('gps.upload.analysisDetected')}</p>
 		</div>
 	{/if}
 
@@ -393,7 +397,7 @@
 					stroke-linecap="round"
 				/>
 			</svg>
-			アップロード中…
+			{$t('gps.upload.uploading')}
 		</p>
 	{/if}
 
@@ -413,8 +417,10 @@
 	{#if result}
 		<div class="mt-6 space-y-4">
 			<div>
-				<p class="font-medium text-slate-700">サマリー</p>
-				<p class="text-sm text-slate-600">行数: {result.rows}</p>
+				<p class="font-medium text-slate-700">{$t('gps.upload.summary')}</p>
+				<p class="text-sm text-slate-600">
+					{$t('gps.upload.rows', { rows: result.rows })}
+				</p>
 			</div>
 
 			<!-- Data table -->
@@ -435,9 +441,9 @@
 											onchange={(event) =>
 												toggleAllRows((event.target as HTMLInputElement).checked)}
 											disabled={!rows.length || uploading || committing}
-											aria-label="全ての選手を切り替え"
+											aria-label={$t('gps.upload.toggleAllPlayers')}
 										/>
-										<nobr>計算に含める</nobr>
+										<nobr>{$t('gps.upload.includeInCalc')}</nobr>
 									</div>
 								</th>
 								{#each COLUMNS as col (col)}
@@ -462,7 +468,7 @@
 											checked={row.selected}
 											onchange={(event) =>
 												toggleSelection(row.record, (event.target as HTMLInputElement).checked)}
-											aria-label="選手を取り込み対象に含める"
+											aria-label={$t('gps.upload.includePlayer')}
 										/>
 									</td>
 									{#each COLUMNS as col (col)}
@@ -478,7 +484,7 @@
 					</table>
 				</div>
 			{:else}
-				<p class="text-sm text-slate-500">表示できるレコードがありません。</p>
+				<p class="text-sm text-slate-500">{$t('gps.upload.noRecords')}</p>
 			{/if}
 		</div>
 
@@ -490,7 +496,7 @@
 					onclick={resetPreview}
 					disabled={!result || uploading || committing}
 				>
-					やり直す
+					{$t('gps.upload.retry')}
 				</button>
 				<button
 					type="button"
@@ -519,9 +525,9 @@
 								stroke-linecap="round"
 							/>
 						</svg>
-						コミット中…
+						{$t('gps.upload.committing')}
 					{:else}
-						このデータをアップロードする
+						{$t('gps.upload.commit')}
 					{/if}
 				</button>
 			</div>

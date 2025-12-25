@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
+	import { locale, t } from '$lib/i18n';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -10,16 +11,16 @@
 
 <div class="rounded-xl border border-slate-200 bg-white shadow-sm">
 	<div class="border-b border-slate-100 px-6 py-4">
-		<h2 class="text-lg font-medium text-slate-900">メンバー管理</h2>
+		<h2 class="text-lg font-medium text-slate-900">{$t('settings.members.title')}</h2>
 		<p class="text-sm text-slate-500">
-			この組織に所属するメンバーを管理します。追加したいユーザーのメールアドレスを入力して招待してください。
+			{$t('settings.members.description')}
 		</p>
 	</div>
 
 	<div class="space-y-6 px-6 py-6">
 		<!-- Invite Form -->
 		<div class="rounded-lg border border-gray-100 bg-gray-50 p-4">
-			<h3 class="mb-2 text-sm font-semibold">メンバーを招待</h3>
+			<h3 class="mb-2 text-sm font-semibold">{$t('settings.members.inviteTitle')}</h3>
 			<form
 				method="POST"
 				action="?/invite"
@@ -45,11 +46,15 @@
 						required
 					/>
 					{#if form?.notFound}
-						<p class="mt-1 text-xs text-red-600">ユーザーが見つかりません。</p>
+						<p class="mt-1 text-xs text-red-600">{$t('settings.members.notFound')}</p>
 					{:else if form?.alreadyExists}
-						<p class="mt-1 text-xs text-red-600">このユーザーは既にメンバーです。</p>
+						<p class="mt-1 text-xs text-red-600">
+							{$t('settings.members.alreadyMember')}
+						</p>
 					{:else if form?.error}
-						<p class="mt-1 text-xs text-red-600">{form.error}</p>
+						<p class="mt-1 text-xs text-red-600">
+							{$locale === 'ja' ? form.error : $t('settings.members.genericError')}
+						</p>
 					{/if}
 				</div>
 				<button
@@ -58,7 +63,7 @@
 					class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
 				>
 					<nobr>
-						{isInviting ? '招待中...' : '招待'}
+						{isInviting ? $t('settings.members.inviting') : $t('settings.members.invite')}
 					</nobr>
 				</button>
 			</form>
@@ -70,13 +75,13 @@
 				<thead class="bg-gray-50">
 					<tr>
 						<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-							>メールアドレス</th
+							>{$t('settings.members.email')}</th
 						>
 						<th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-							>権限</th
+							>{$t('settings.members.role')}</th
 						>
 						<th scope="col" class="relative py-3.5 pr-4 pl-3 sm:pr-6">
-							<span class="sr-only">操作</span>
+							<span class="sr-only">{$t('settings.members.actions')}</span>
 						</th>
 					</tr>
 				</thead>
@@ -95,13 +100,15 @@
 										<input type="hidden" name="memberId" value={member.id} />
 										<button
 											type="submit"
-											class="text-xs font-semibold text-red-600 hover:text-red-900">削除</button
+											class="text-xs font-semibold text-red-600 hover:text-red-900"
+											>{$t('settings.members.delete')}</button
 										>
 									</form>
 								{:else}
 									<span
 										class="cursor-not-allowed text-xs text-gray-400"
-										title="自分自身は削除できません">削除</span
+										title={$t('settings.members.cannotDeleteSelf')}
+										>{$t('settings.members.delete')}</span
 									>
 								{/if}
 							</td>
@@ -129,9 +136,11 @@
 						</svg>
 					</div>
 					<div class="ml-3">
-						<h3 class="text-sm font-medium text-red-800">操作エラー</h3>
+						<h3 class="text-sm font-medium text-red-800">
+							{$t('settings.members.actionErrorTitle')}
+						</h3>
 						<div class="mt-2 text-sm text-red-700">
-							<p>自分自身を組織から削除することはできません。</p>
+							<p>{$t('settings.members.actionErrorBody')}</p>
 						</div>
 					</div>
 				</div>

@@ -6,6 +6,8 @@
 		entriesFromValuesMap,
 		valuesMapFromEntries,
 	} from './columns';
+	import { t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	let { data }: { data: PageData } = $props();
 
@@ -26,6 +28,8 @@
 	let activeColumn = $state<number | null>(null);
 	let selectAllOnNextFocus = false;
 	let editDraft: Record<string, string> = {};
+
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const updateCellValue = (column: GameScoreColumn, value: string, _target?: HTMLElement) => {
@@ -146,13 +150,13 @@
 			lastSavedToken = savedAt;
 
 			notification = {
-				text: payload?.message ?? 'ゲームスコアを保存しました。',
+				text: translate('gps.gameScore.saved'),
 				tone: 'success',
 			};
 		} catch (error) {
 			console.error('Failed to save game score', error);
 			notification = {
-				text: '保存に失敗しました。接続状況を確認してください。',
+				text: translate('gps.gameScore.saveFailed'),
 				tone: 'error',
 			};
 		} finally {
@@ -173,10 +177,8 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-xl font-semibold">ゲームスコアの管理</h1>
-			<p class="text-slate-600">
-				チーム全体のゲームスコアをExcelライクに調整できます。コピー＆ペーストや矢印キーでの移動に対応し、数値をまとめて更新できます。
-			</p>
+			<h1 class="text-xl font-semibold">{$t('gps.gameScore.title')}</h1>
+			<p class="text-slate-600">{$t('gps.gameScore.description')}</p>
 		</div>
 		<div class="flex items-center gap-2">
 			<button
@@ -184,7 +186,9 @@
 				class="rounded-lg bg-blue-600 px-3 py-2 text-white disabled:bg-slate-400"
 				disabled={saving}
 			>
-				<span class="whitespace-nowrap">{saving ? '保存中...' : '保存する'}</span>
+				<span class="whitespace-nowrap">
+					{saving ? $t('gps.gameScore.saving') : $t('gps.gameScore.save')}
+				</span>
 			</button>
 		</div>
 	</div>
@@ -204,9 +208,9 @@
 
 	<!-- Hints -->
 	<ul class="flex flex-wrap gap-4 text-sm text-slate-600">
-		<li>Enter / 矢印キーでセル移動</li>
-		<li>Ctrl / Command + V で複数セル貼り付け</li>
-		<li>すべての値がチーム共通で保存されます</li>
+		<li>{$t('gps.gameScore.tipMove')}</li>
+		<li>{$t('gps.gameScore.tipPaste')}</li>
+		<li>{$t('gps.gameScore.tipShared')}</li>
 	</ul>
 
 	<!-- Table -->

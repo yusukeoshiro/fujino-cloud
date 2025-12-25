@@ -3,6 +3,7 @@
 	import FujinoToMobili from './FujinoToMobili.svelte';
 	import MobiliToFujino from './MobiliToFujino.svelte';
 	import UserManagement from './UserManagement.svelte';
+	import { t } from '$lib/i18n';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -11,8 +12,8 @@
 
 <section class="space-y-6 px-6 py-8">
 	<header class="flex flex-col gap-2">
-		<h1 class="text-2xl font-semibold text-slate-900">設定</h1>
-		<p class="text-sm text-slate-600">システム連携設定およびユーザー管理を行います。</p>
+		<h1 class="text-2xl font-semibold text-slate-900">{$t('settings.title')}</h1>
+		<p class="text-sm text-slate-600">{$t('settings.description')}</p>
 	</header>
 
 	<!-- Tab Navigation -->
@@ -27,7 +28,7 @@
 				} border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
 				aria-current={activeTab === 'system' ? 'page' : undefined}
 			>
-				システム連携
+				{$t('settings.tab.system')}
 			</button>
 			<button
 				onclick={() => (activeTab = 'users')}
@@ -38,7 +39,7 @@
 				} border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
 				aria-current={activeTab === 'users' ? 'page' : undefined}
 			>
-				ユーザー管理
+				{$t('settings.tab.users')}
 			</button>
 		</nav>
 	</div>

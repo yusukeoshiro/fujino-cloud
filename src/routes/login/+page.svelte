@@ -8,6 +8,8 @@
 	import { auth } from '$lib/firebase';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	const loginWithGoogle = () => {
 		const provider = new GoogleAuthProvider();
@@ -20,6 +22,8 @@
 	let sending = false;
 	let message: string | null = null;
 	let error: string | null = null;
+
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
 
 	async function sendLoginLink(to: string) {
 		const url = `${window.location.origin}/login/email-callback`; // ✅ dynamically uses current host
@@ -37,16 +41,16 @@
 		error = null;
 		message = null;
 		if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-			error = '有効なメールアドレスを入力してください。';
+			error = translate('login.invalidEmail');
 			return;
 		}
 		sending = true;
 		try {
 			await sendLoginLink(email);
-			message = 'ログインリンクを送信しました。メールをご確認ください。';
+			message = translate('login.linkSent');
 		} catch (e: unknown) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			error = (e as any)?.message ?? 'リンク送信に失敗しました。';
+			error = (e as any)?.message ?? translate('login.linkSendFailed');
 		} finally {
 			sending = false;
 		}
@@ -87,7 +91,7 @@
 		<div
 			class="flex flex-col items-center gap-6 rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-xl backdrop-blur sm:p-8"
 		>
-			<img src="/logo.png" alt="藤野クラウド ロゴ" class="h-24 sm:h-32 md:h-40 lg:h-48" />
+			<img src="/logo.png" alt={$t('app.logoAlt')} class="h-24 sm:h-32 md:h-40 lg:h-48" />
 
 			<div class="flex w-full flex-col items-stretch gap-3">
 				<!-- Google -->
@@ -97,10 +101,10 @@
 					onclick={loginWithGoogle}
 					disabled={sending}
 				>
-					Google でログインする
+					{$t('login.google')}
 				</button>
 
-				<!-- Either "メールでログインする" OR email form -->
+				<!-- Either email login button or email form -->
 				{#if !showEmail}
 					<button
 						type="button"
@@ -108,7 +112,7 @@
 						onclick={() => (showEmail = true)}
 						disabled={sending}
 					>
-						メール でログインする
+						{$t('login.emailToggle')}
 					</button>
 				{:else}
 					<form class="flex w-full flex-col items-stretch gap-3" onsubmit={onEmailSubmit}>
@@ -126,7 +130,7 @@
 								onclick={cancelEmail}
 								disabled={sending}
 							>
-								キャンセル
+								{$t('login.cancel')}
 							</button>
 							<button
 								type="submit"
@@ -156,9 +160,9 @@
 											stroke-linecap="round"
 										/>
 									</svg>
-									送信中…
+									{$t('login.sending')}
 								{:else}
-									メールでログイン
+									{$t('login.emailSubmit')}
 								{/if}
 							</button>
 						</div>
@@ -174,8 +178,8 @@
 			</div>
 
 			<p class="text-center text-xs text-gray-500">
-				事前に契約をしているユーザーのみに提供されています。<br />
-				利用規約に同意したことを確認しログインしてください。
+				{$t('login.precontractNotice')}<br />
+				{$t('login.termsConfirm')}
 			</p>
 		</div>
 

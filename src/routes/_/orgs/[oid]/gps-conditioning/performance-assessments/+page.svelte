@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { RefreshCw } from 'lucide-svelte';
+	import { locale, t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	type PerformanceAssessmentRecord = {
 		id: string;
@@ -54,9 +56,11 @@
 	let deleting = $state(false);
 	let pendingDetailId = $state<string | null>(null);
 
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
+
 	function gpsTypeLabel(value: string | null | undefined) {
-		if (value === 'GAME') return '試合';
-		if (value === 'TRAINING') return 'トレーニング';
+		if (value === 'GAME') return translate('gps.assessments.type.game');
+		if (value === 'TRAINING') return translate('gps.assessments.type.training');
 		return null;
 	}
 
@@ -64,12 +68,12 @@
 		if (!value) return '—';
 		const parsed = new Date(value);
 		if (Number.isNaN(parsed.getTime())) return value;
-		return parsed.toLocaleString('ja-JP');
+		return parsed.toLocaleString($locale);
 	}
 
 	function formatScore(value: number | null | undefined) {
 		if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
-		return value.toLocaleString('ja-JP');
+		return value.toLocaleString($locale);
 	}
 
 	function calcTeamConsumptionScore(
@@ -137,7 +141,7 @@
 			}
 		} catch (err: unknown) {
 			errorMessage =
-				err instanceof Error && err.message ? err.message : '一覧の取得に失敗しました。';
+				err instanceof Error && err.message ? err.message : translate('gps.assessments.listFailed');
 		} finally {
 			loading = false;
 		}
@@ -159,7 +163,7 @@
 			);
 			if (!res.ok) {
 				if (res.status === 403) {
-					throw new Error('このアプリで作成された評価のみ詳細を確認できます。');
+					throw new Error(translate('gps.assessments.detailNotSupported'));
 				}
 				throw new Error(await res.text());
 			}
@@ -167,7 +171,9 @@
 			detail = payload.record;
 		} catch (err: unknown) {
 			detailError =
-				err instanceof Error && err.message ? err.message : '詳細の取得に失敗しました。';
+				err instanceof Error && err.message
+					? err.message
+					: translate('gps.assessments.detailFailed');
 		} finally {
 			pendingDetailId = null;
 			detailLoading = false;
@@ -177,7 +183,7 @@
 	async function deleteSelected() {
 		if (!orgId || !detail || !detail.isFujinoCreated) return;
 		const targetId = detail.id;
-		if (!confirm(`「${detail.name}」を削除しますか？`)) return;
+		if (!confirm(translate('gps.assessments.deleteConfirm', { name: detail.name }))) return;
 		deleting = true;
 		detailError = null;
 		try {
@@ -192,7 +198,10 @@
 			if (!res.ok) throw new Error(await res.text());
 			await loadList();
 		} catch (err: unknown) {
-			detailError = err instanceof Error && err.message ? err.message : '削除に失敗しました。';
+			detailError =
+				err instanceof Error && err.message
+					? err.message
+					: translate('gps.assessments.deleteFailed');
 		} finally {
 			deleting = false;
 		}
@@ -219,7 +228,7 @@
 <!-- eslint-disable svelte/no-navigation-without-resolve -->
 <section class="mx-auto max-w-screen-2xl px-4 py-6 text-slate-900">
 	<header class="mb-6 space-y-2">
-		<h1 class="text-xl font-semibold">アップロード履歴</h1>
+		<h1 class="text-xl font-semibold">{$t('gps.assessments.title')}</h1>
 	</header>
 
 	<div class="mb-4 flex flex-wrap items-center gap-3">
@@ -228,12 +237,12 @@
 			class="rounded-xl border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
 			onclick={() => loadList()}
 			disabled={loading}
-			aria-label="再読み込み"
+			aria-label={$t('gps.assessments.refresh')}
 		>
 			<RefreshCw class="h-4 w-4" aria-hidden="true" />
 		</button>
 		{#if loading}
-			<span class="text-sm text-slate-500">読み込み中…</span>
+			<span class="text-sm text-slate-500">{$t('gps.assessments.loading')}</span>
 		{/if}
 	</div>
 
@@ -245,7 +254,7 @@
 
 	<div class="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
 		<div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-			<h2 class="mb-4 text-lg font-semibold text-slate-800">一覧</h2>
+			<h2 class="mb-4 text-lg font-semibold text-slate-800">{$t('gps.assessments.listTitle')}</h2>
 
 			{#if records.length}
 				<ul class="space-y-3">
@@ -269,7 +278,11 @@
 											{gpsTypeLabel(record.gpsType)}
 										</span>
 									{/if}
-									<span class="text-xs text-slate-500">参加人数: {record.participantsCount}</span>
+									<span class="text-xs text-slate-500">
+										{$t('gps.assessments.participantsCount', {
+											count: record.participantsCount,
+										})}
+									</span>
 								</div>
 							</div>
 							<div
@@ -282,7 +295,7 @@
 										onclick={() => loadDetail(record.id)}
 										disabled={detailLoading && selectedId === record.id}
 									>
-										詳細を見る
+										{$t('gps.assessments.viewDetail')}
 									</button>
 								{/if}
 							</div>
@@ -290,7 +303,7 @@
 					{/each}
 				</ul>
 			{:else}
-				<p class="text-sm text-slate-500">表示できるパフォーマンス評価がありません。</p>
+				<p class="text-sm text-slate-500">{$t('gps.assessments.empty')}</p>
 			{/if}
 
 			<div class="mt-4 flex items-center justify-between text-sm text-slate-500">
@@ -300,27 +313,29 @@
 					onclick={() => loadList({ prevToken: pageInfo.prevToken })}
 					disabled={loading || !pageInfo.hasPrev}
 				>
-					前へ
+					{$t('gps.assessments.prev')}
 				</button>
-				<span>{pageInfo.count} 件</span>
+				<span>{$t('gps.assessments.count', { count: pageInfo.count })}</span>
 				<button
 					type="button"
 					class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
 					onclick={() => loadList({ nextToken: pageInfo.nextToken })}
 					disabled={loading || !pageInfo.hasNext}
 				>
-					次へ
+					{$t('gps.assessments.next')}
 				</button>
 			</div>
 		</div>
 
 		<div class="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-			<h2 class="mb-4 text-lg font-semibold text-slate-800">詳細</h2>
+			<h2 class="mb-4 text-lg font-semibold text-slate-800">
+				{$t('gps.assessments.detailTitle')}
+			</h2>
 
 			{#if !selectedId}
-				<p class="text-sm text-slate-500">一覧から評価を選択してください。</p>
+				<p class="text-sm text-slate-500">{$t('gps.assessments.selectFromList')}</p>
 			{:else if detailLoading || pendingDetailId || !detail || detail.id !== selectedId}
-				<p class="text-sm text-slate-500">詳細を読み込み中…</p>
+				<p class="text-sm text-slate-500">{$t('gps.assessments.detailLoading')}</p>
 			{:else if detailError}
 				<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
 					{detailError}
@@ -328,7 +343,7 @@
 			{:else if detail}
 				<div class="space-y-4 text-sm text-slate-700">
 					<div class="space-y-1">
-						<p class="text-xs text-slate-500">評価名</p>
+						<p class="text-xs text-slate-500">{$t('gps.assessments.nameLabel')}</p>
 						<div class="flex flex-wrap items-center gap-2">
 							<p class="text-base font-semibold text-slate-900">{detail.name}</p>
 							{#if gpsTypeLabel(detail.gpsType)}
@@ -342,25 +357,29 @@
 					</div>
 					<div class="grid gap-3 sm:grid-cols-2">
 						<div>
-							<p class="text-xs text-slate-500">日付</p>
+							<p class="text-xs text-slate-500">{$t('gps.assessments.dateLabel')}</p>
 							<p>{detail.date}</p>
 						</div>
 						<div>
-							<p class="text-xs text-slate-500">参加人数</p>
+							<p class="text-xs text-slate-500">
+								{$t('gps.assessments.participantsLabel')}
+							</p>
 							<p>{detail.participantsCount}</p>
 						</div>
 						<div>
-							<p class="text-xs text-slate-500">作成日時</p>
+							<p class="text-xs text-slate-500">{$t('gps.assessments.createdAt')}</p>
 							<p>{formatDateTime(detail.createdAt)}</p>
 						</div>
 						<div>
-							<p class="text-xs text-slate-500">更新日時</p>
+							<p class="text-xs text-slate-500">{$t('gps.assessments.updatedAt')}</p>
 							<p>{formatDateTime(detail.updatedAt)}</p>
 						</div>
 					</div>
 
 					<div class="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center">
-						<p class="text-xs font-semibold text-blue-600">チーム消費ポイント</p>
+						<p class="text-xs font-semibold text-blue-600">
+							{$t('gps.assessments.teamPoints')}
+						</p>
 						<p class="mt-2 text-3xl font-semibold text-blue-900">
 							{formatScore(calcTeamConsumptionScore(detail.gpsType, detail.participants))}
 						</p>
@@ -368,21 +387,29 @@
 
 					{#if detail.description}
 						<div>
-							<p class="text-xs text-slate-500">説明</p>
+							<p class="text-xs text-slate-500">{$t('gps.assessments.descriptionLabel')}</p>
 							<p>{detail.description}</p>
 						</div>
 					{/if}
 
 					<div class="space-y-2">
-						<p class="text-xs font-semibold text-slate-500">参加者</p>
+						<p class="text-xs font-semibold text-slate-500">
+							{$t('gps.assessments.participantsTitle')}
+						</p>
 						{#if detail.participants && detail.participants.length}
 							<div class="overflow-hidden rounded-xl border border-slate-200">
 								<table class="min-w-full border-collapse text-left text-sm">
 									<thead class="bg-slate-50 text-xs text-slate-500">
 										<tr>
-											<th class="px-3 py-2 font-semibold">氏名</th>
-											<th class="px-3 py-2 font-semibold">消費スコア</th>
-											<th class="px-3 py-2 font-semibold">状態</th>
+											<th class="px-3 py-2 font-semibold">
+												{$t('gps.assessments.tableName')}
+											</th>
+											<th class="px-3 py-2 font-semibold">
+												{$t('gps.assessments.tableScore')}
+											</th>
+											<th class="px-3 py-2 font-semibold">
+												{$t('gps.assessments.tableStatus')}
+											</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -393,7 +420,9 @@
 													{formatScore(participant.trainingConsumptionScore)}
 												</td>
 												<td class="px-3 py-2 text-xs text-slate-500">
-													{participant.skipped ? 'スキップ' : '有効'}
+													{participant.skipped
+														? $t('gps.assessments.statusSkipped')
+														: $t('gps.assessments.statusActive')}
 												</td>
 											</tr>
 										{/each}
@@ -401,7 +430,9 @@
 								</table>
 							</div>
 						{:else}
-							<p class="text-xs text-slate-400">参加者が見つかりません。</p>
+							<p class="text-xs text-slate-400">
+								{$t('gps.assessments.participantsEmpty')}
+							</p>
 						{/if}
 					</div>
 
@@ -413,7 +444,7 @@
 								rel="noreferrer"
 								class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
 							>
-								スプレッドシート
+								{$t('gps.assessments.spreadsheet')}
 							</a>
 						{/if}
 						<button
@@ -422,12 +453,12 @@
 							onclick={deleteSelected}
 							disabled={deleting || !detail.isFujinoCreated}
 						>
-							{deleting ? '削除中…' : '削除する'}
+							{deleting ? $t('gps.assessments.deleting') : $t('gps.assessments.delete')}
 						</button>
 					</div>
 				</div>
 			{:else}
-				<p class="text-sm text-slate-500">詳細の表示に失敗しました。</p>
+				<p class="text-sm text-slate-500">{$t('gps.assessments.detailDisplayFailed')}</p>
 			{/if}
 		</div>
 	</div>

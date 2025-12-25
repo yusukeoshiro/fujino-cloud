@@ -7,6 +7,8 @@
 		WeeklyTrainingBudget,
 	} from '$lib/services/training-budget.service';
 	import { alignToWeekStart, getCalendarYearRange } from '$lib/utils/calendar.util';
+	import { locale, t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	let { data }: { data: PageData } = $props();
 
@@ -23,16 +25,37 @@
 	let loadingYear = $state(false);
 	let notification = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
 
-	const weekDayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
+
+	const weekDayLabels = $derived([
+		$t('gps.budget.weekday.mon'),
+		$t('gps.budget.weekday.tue'),
+		$t('gps.budget.weekday.wed'),
+		$t('gps.budget.weekday.thu'),
+		$t('gps.budget.weekday.fri'),
+		$t('gps.budget.weekday.sat'),
+		$t('gps.budget.weekday.sun'),
+	]);
 	const rotatedWeekdayLabels = $derived(
 		weekDayLabels.map(
 			(_, index) => weekDayLabels[(index + config.weekStartsOn) % weekDayLabels.length],
 		),
 	);
 
+	const dateLabelFormat = $derived(
+		$locale === 'ja' ? 'M月d日' : $locale === 'ko' ? 'M월 d일' : 'MMM d',
+	);
+
 	const eventsByDate = $derived(groupEvents(events));
 	const weeks = $derived(
-		buildWeeks(currentYear, config.weekStartsOn, config.startMonth, eventsByDate),
+		buildWeeks(
+			currentYear,
+			config.weekStartsOn,
+			config.startMonth,
+			eventsByDate,
+			dateLabelFormat,
+			$locale,
+		),
 	);
 
 	let selectedBudgetIndex = $state<number | null>(null);
@@ -51,20 +74,19 @@
 
 	const numericPattern = /^-?\d*(?:\.\d*)?$/;
 
-	const monthOptions = Array.from({ length: 12 }).map((_, index) => ({
-		value: index + 1,
-		label: `${index + 1}月`,
-	}));
+	const monthOptions = $derived(
+		Array.from({ length: 12 }).map((_, index) => ({
+			value: index + 1,
+			label: $t('gps.budget.monthLabel', { month: index + 1 }),
+		})),
+	);
 
-	const weekStartOptions = [
-		{ value: 0, label: '月' },
-		{ value: 1, label: '火' },
-		{ value: 2, label: '水' },
-		{ value: 3, label: '木' },
-		{ value: 4, label: '金' },
-		{ value: 5, label: '土' },
-		{ value: 6, label: '日' },
-	];
+	const weekStartOptions = $derived(
+		weekDayLabels.map((label, index) => ({
+			value: index,
+			label,
+		})),
+	);
 
 	$effect(() => {
 		if (!weeks.length) {
@@ -102,6 +124,8 @@
 		weekStartsOn: number,
 		startMonth: number,
 		eventMap: Record<string, TrainingKeyEvent[]>,
+		labelFormat: string,
+		localeValue: string,
 	) {
 		const { start, end } = getCalendarYearRange(year, startMonth, weekStartsOn);
 		const startMonthIndex = start.year * 12 + (start.month - 1);
@@ -128,7 +152,7 @@
 				const isAltMonth = (((monthIndex - startMonthIndex) % 2) + 2) % 2 === 1;
 				return {
 					iso,
-					label: date.toFormat('M月d日'),
+					label: date.setLocale(localeValue).toFormat(labelFormat),
 					isCurrentYear: date >= start && date < end,
 					isToday: iso === todayIso,
 					events: eventMap[iso] ?? [],
@@ -482,11 +506,11 @@
 			deletedEventIds = new Set();
 
 			if (showToast) {
-				notification = { text: 'トレーニング予算を保存しました。', tone: 'success' };
+				notification = { text: translate('gps.budget.saved'), tone: 'success' };
 			}
 		} catch (error) {
 			console.error(error);
-			notification = { text: '保存に失敗しました。', tone: 'error' };
+			notification = { text: translate('gps.budget.saveFailed'), tone: 'error' };
 		} finally {
 			if (showToast) {
 				saving = false;
@@ -531,7 +555,7 @@
 			selectedBudgetIndex = null;
 		} catch (error) {
 			console.error(error);
-			notification = { text: '年度データの取得に失敗しました。', tone: 'error' };
+			notification = { text: translate('gps.budget.fetchFailed'), tone: 'error' };
 		} finally {
 			loadingYear = false;
 		}
@@ -576,8 +600,8 @@
 	<!-- Header -->
 	<header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-xl font-semibold">トレーニング予算管理</h1>
-			<p class="text-slate-600">年間の週次予算と重要イベントを一元管理します。</p>
+			<h1 class="text-xl font-semibold">{$t('gps.budget.title')}</h1>
+			<p class="text-slate-600">{$t('gps.budget.description')}</p>
 		</div>
 		<div class="flex items-center gap-2">
 			<button
@@ -586,10 +610,10 @@
 				onclick={() => void changeYear(-1)}
 				disabled={loadingYear}
 			>
-				← 前年度
+				{$t('gps.budget.prevYear')}
 			</button>
 
-			<span class="font-semibold">{currentYear}年度</span>
+			<span class="font-semibold">{$t('gps.budget.fiscalYear', { year: currentYear })}</span>
 
 			<button
 				type="button"
@@ -597,7 +621,7 @@
 				onclick={() => void changeYear(1)}
 				disabled={loadingYear}
 			>
-				次年度 →
+				{$t('gps.budget.nextYear')}
 			</button>
 
 			<button
@@ -606,7 +630,11 @@
 				onclick={() => void queuePersist({ showToast: true })}
 				disabled={saving || autoSaving}
 			>
-				{saving ? '保存中...' : autoSaving ? '自動保存中...' : '保存する'}
+				{saving
+					? $t('gps.budget.saving')
+					: autoSaving
+						? $t('gps.budget.autoSaving')
+						: $t('gps.budget.save')}
 			</button>
 		</div>
 	</header>
@@ -614,7 +642,9 @@
 	<!-- Config -->
 	<div class="flex flex-col gap-3 sm:flex-row">
 		<div>
-			<label for="start-month" class="mb-1 block text-sm text-slate-700">年度開始月</label>
+			<label for="start-month" class="mb-1 block text-sm text-slate-700">
+				{$t('gps.budget.startMonth')}
+			</label>
 			<select
 				id="start-month"
 				bind:value={config.startMonth}
@@ -628,7 +658,9 @@
 		</div>
 
 		<div>
-			<label for="week-start" class="mb-1 block text-sm text-slate-700">週の開始曜日</label>
+			<label for="week-start" class="mb-1 block text-sm text-slate-700">
+				{$t('gps.budget.weekStart')}
+			</label>
 			<select
 				id="week-start"
 				bind:value={config.weekStartsOn}
@@ -669,13 +701,15 @@
 
 				<thead class="sticky top-0 z-20 bg-white shadow-sm">
 					<tr>
-						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">週#</th>
+						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
+							{$t('gps.budget.weekNumber')}
+						</th>
 						{#each rotatedWeekdayLabels as label (label)}
 							<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">{label}</th>
 						{/each}
 						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
-							<nobr>予算 </nobr><br />
-							<small><nobr> (100が実践と同等の負荷)</nobr> </small>
+							<nobr>{$t('gps.budget.budget')} </nobr><br />
+							<small><nobr>{$t('gps.budget.budgetHint')}</nobr> </small>
 						</th>
 					</tr>
 				</thead>
@@ -725,7 +759,7 @@
 											>
 												<input
 													type="text"
-													placeholder="イベント名"
+													placeholder={$t('gps.budget.eventPlaceholder')}
 													bind:value={addEventDraft}
 													bind:this={addEventInputEl}
 													class="rounded border border-slate-300 px-2 py-1"
@@ -737,13 +771,13 @@
 														class="rounded bg-blue-600 px-2 py-1 text-white"
 														onclick={() => submitAddEvent(day.iso)}
 													>
-														追加
+														{$t('gps.budget.add')}
 													</button>
 													<button
 														class="rounded border border-slate-300 px-2 py-1"
 														onclick={cancelAddEvent}
 													>
-														キャンセル
+														{$t('gps.budget.cancel')}
 													</button>
 												</div>
 											</div>
