@@ -3,6 +3,10 @@
 	import { onMount } from 'svelte';
 	import { auth } from '$lib/firebase';
 	import { goto } from '$app/navigation';
+	import { t } from '$lib/i18n';
+	import { get } from 'svelte/store';
+
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
 
 	onMount(async () => {
 		if (isSignInWithEmailLink(auth, window.location.href)) {
@@ -15,9 +19,7 @@
 			if (!email) {
 				// User opened the link on a different device. To prevent session fixation
 				// attacks, ask the user to provide the associated email again. For example:
-				email = window.prompt(
-					'ブラウザが変更されました。ログインしようとしたメールアドレスを入力してください。',
-				);
+				email = window.prompt(translate('login.emailChangedPrompt'));
 			}
 			// The client SDK will parse the code from the link for you.
 

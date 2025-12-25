@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import type { PageData } from './$types';
+	import { locale, t } from '$lib/i18n';
+	import { get } from 'svelte/store';
 
 	let { data }: { data: PageData } = $props();
 
@@ -16,14 +18,16 @@
 	let isIssuingContentsProvider = $state(false);
 	let isDeletingContentsProvider = $state(false);
 
+	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
+
 	const ensureOrg = () => {
 		if (!orgId) {
-			throw new Error('組織IDが特定できませんでした。');
+			throw new Error(translate('settings.contentsToken.orgMissing'));
 		}
 	};
 
 	const formatTimestamp = (value: string | null) =>
-		value ? new Date(value).toLocaleString() : null;
+		value ? new Date(value).toLocaleString($locale) : null;
 
 	const renewContentsProviderToken = async () => {
 		ensureOrg();
@@ -39,7 +43,7 @@
 			);
 			const result = await response.json();
 			if (!response.ok || !result?.token) {
-				throw new Error(result?.message ?? 'APIトークンの発行に失敗しました。');
+				throw new Error(translate('settings.contentsToken.issueFailed'));
 			}
 
 			contentsProviderApiToken = {
@@ -50,13 +54,14 @@
 			};
 			contentsProviderIssuedToken = result.token;
 			contentsProviderBanner = {
-				text: result.message ?? 'APIトークンを発行しました。',
+				text: translate('settings.contentsToken.issued'),
 				tone: 'success',
 			};
 		} catch (error) {
 			console.error(error);
 			contentsProviderBanner = {
-				text: error instanceof Error ? error.message : 'APIトークンの発行に失敗しました。',
+				text:
+					error instanceof Error ? error.message : translate('settings.contentsToken.issueFailed'),
 				tone: 'error',
 			};
 		} finally {
@@ -77,7 +82,7 @@
 			);
 			const result = await response.json();
 			if (!response.ok || !result?.success) {
-				throw new Error(result?.message ?? 'APIトークンの削除に失敗しました。');
+				throw new Error(translate('settings.contentsToken.deleteFailed'));
 			}
 			contentsProviderApiToken = {
 				hasToken: false,
@@ -86,13 +91,14 @@
 			};
 			contentsProviderIssuedToken = null;
 			contentsProviderBanner = {
-				text: result.message ?? 'APIトークンを削除しました。',
+				text: translate('settings.contentsToken.deleted'),
 				tone: 'success',
 			};
 		} catch (error) {
 			console.error(error);
 			contentsProviderBanner = {
-				text: error instanceof Error ? error.message : 'APIトークンの削除に失敗しました。',
+				text:
+					error instanceof Error ? error.message : translate('settings.contentsToken.deleteFailed'),
 				tone: 'error',
 			};
 		} finally {
@@ -119,8 +125,7 @@
 			<div>
 				<h2 class="text-lg font-medium text-slate-900">Mobili Platform → Fujino Cloud</h2>
 				<p class="text-sm text-slate-500">
-					Mobili Platform から Fujino Cloud のコンテンツ提供 API
-					を呼び出すためのトークンです。発行/再発行すると新しいトークンが一度だけ表示されます。
+					{$t('settings.contentsToken.description')}
 				</p>
 			</div>
 			<div
@@ -130,14 +135,20 @@
 						: 'bg-slate-100 text-slate-500'
 				}`}
 			>
-				{contentsProviderApiToken.hasToken ? '発行済み' : '未発行'}
+				{contentsProviderApiToken.hasToken
+					? $t('settings.contentsToken.issuedStatus')
+					: $t('settings.contentsToken.unissuedStatus')}
 			</div>
 		</div>
 		{#if contentsProviderApiToken.updatedAt}
 			<p class="mt-3 text-xs text-slate-400">
-				最終更新: {formatTimestamp(contentsProviderApiToken.updatedAt)}
+				{$t('settings.contentsToken.lastUpdated', {
+					timestamp: formatTimestamp(contentsProviderApiToken.updatedAt) ?? '',
+				})}
 				{#if contentsProviderApiToken.lastFour}
-					（末尾 {contentsProviderApiToken.lastFour}）
+					{$t('settings.contentsToken.lastFour', {
+						lastFour: contentsProviderApiToken.lastFour,
+					})}
 				{/if}
 			</p>
 		{/if}
@@ -152,10 +163,10 @@
 				disabled={isIssuingContentsProvider}
 			>
 				{isIssuingContentsProvider
-					? '発行中…'
+					? $t('settings.contentsToken.issuing')
 					: contentsProviderApiToken.hasToken
-						? '再発行する'
-						: '発行する'}
+						? $t('settings.contentsToken.reissue')
+						: $t('settings.contentsToken.issue')}
 			</button>
 			{#if contentsProviderApiToken.hasToken}
 				<button
@@ -164,7 +175,9 @@
 					class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 focus:ring-2 focus:ring-rose-200 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:text-rose-300"
 					disabled={isDeletingContentsProvider}
 				>
-					{isDeletingContentsProvider ? '削除中…' : 'トークンを削除'}
+					{isDeletingContentsProvider
+						? $t('settings.contentsToken.deleting')
+						: $t('settings.contentsToken.delete')}
 				</button>
 			{/if}
 		</div>
@@ -172,7 +185,7 @@
 		{#if contentsProviderIssuedToken}
 			<div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
 				<p class="text-sm font-medium text-amber-800">
-					このトークンは一度しか表示されません。必ず安全な場所に保管してください。
+					{$t('settings.contentsToken.warning')}
 				</p>
 				<div
 					class="mt-2 rounded-md bg-white px-3 py-2 font-mono text-xs text-slate-800 shadow-inner"

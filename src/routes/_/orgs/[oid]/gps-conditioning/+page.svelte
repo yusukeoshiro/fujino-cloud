@@ -2,6 +2,7 @@
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
+	import { t } from '$lib/i18n';
 
 	let { data }: { data: PageData } = $props();
 
@@ -34,7 +35,7 @@
 							 {isActive(30) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
 				onclick={() => applyRange(30)}
 			>
-				過去30日
+				{$t('gps.range.pastDays', { days: 30 })}
 			</button>
 			<button
 				type="button"
@@ -43,7 +44,7 @@
 							 {isActive(90) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
 				onclick={() => applyRange(90)}
 			>
-				過去90日
+				{$t('gps.range.pastDays', { days: 90 })}
 			</button>
 			<button
 				type="button"
@@ -52,7 +53,7 @@
 							 {isActive(180) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
 				onclick={() => applyRange(180)}
 			>
-				過去180日
+				{$t('gps.range.pastDays', { days: 180 })}
 			</button>
 			<button
 				type="button"
@@ -61,7 +62,7 @@
 							 {isActive(365) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
 				onclick={() => applyRange(365)}
 			>
-				過去365日
+				{$t('gps.range.pastDays', { days: 365 })}
 			</button>
 		</div>
 
@@ -78,9 +79,9 @@
 			<div class="flex min-h-[60vh] items-center justify-center">
 				<div class="rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
 					<h2 class="mb-3 text-lg font-semibold text-gray-800">
-						ダッシュボードの準備がされていません。
+						{$t('gps.dashboard.unavailable')}
 					</h2>
-					<p class="text-sm text-gray-500">管理者にお問い合わせください。</p>
+					<p class="text-sm text-gray-500">{$t('gps.dashboard.contactAdmin')}</p>
 				</div>
 			</div>
 		{/if}

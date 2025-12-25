@@ -1,0 +1,32 @@
+query GetPerformanceAssessment($id: ID!) {
+	getPerformanceAssessment(data: { id: $id }) {
+		id
+		name
+		date
+		description
+		orgId
+		participantsCount
+		ready
+		exported
+		inProgressExport
+		inProgressSyncSheet
+		downloadLink
+		spreadsheetUrl
+		createdAt
+		updatedAt
+		metadata {
+			key
+			value
+		}
+		participants {
+			id
+			fullName
+			attr1
+			metrics {
+				metricDefinitionId
+				value
+				score
+			}
+		}
+	}
+}
