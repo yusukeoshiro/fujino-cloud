@@ -8,6 +8,113 @@ type Age {
   years: Float!
 }
 
+enum AnalyticsAggregation {
+  ANY_VALUE
+  AVG
+  COUNT
+  COUNT_DISTINCT
+  MAX
+  MIN
+  STDDEV
+  STDDEV_POP
+  STDDEV_SAMP
+  SUM
+  VARIANCE
+  VAR_POP
+  VAR_SAMP
+}
+
+enum AnalyticsDataset {
+  METRICS_ENRICHED
+}
+
+input AnalyticsDimensionInput {
+  alias: String
+  entity: AnalyticsEntity
+  field: String!
+}
+
+type AnalyticsDimensionValue {
+  dimensionLabel: String
+  dimensionValue: JSON
+}
+
+enum AnalyticsEntity {
+  METRIC_DEFINITION
+  PERSON
+}
+
+input AnalyticsFilterInput {
+  field: String!
+  op: AnalyticsFilterOp!
+  value: JSON!
+}
+
+enum AnalyticsFilterOp {
+  BETWEEN
+  EQ
+  IN
+  NEQ
+  NOT_IN
+}
+
+input AnalyticsMeasureInput {
+  alias: String
+  field: String!
+  op: AnalyticsAggregation!
+}
+
+type AnalyticsMeta {
+  cacheHit: Boolean
+  queryId: String
+  rowCount: Int!
+}
+
+input AnalyticsOrderInput {
+  direction: SortOrder!
+  index: Int!
+  target: AnalyticsOrderTarget!
+}
+
+enum AnalyticsOrderTarget {
+  DIMENSION
+  MEASURE
+}
+
+input AnalyticsRequest {
+  dataset: AnalyticsDataset!
+  dimensions: [AnalyticsDimensionInput!]
+  filters: [AnalyticsFilterInput!]
+  limit: Int
+  measures: [AnalyticsMeasureInput!]!
+  orderBy: [AnalyticsOrderInput!]
+  orgId: ID!
+  time: AnalyticsTimeInput
+}
+
+type AnalyticsResponse {
+  meta: AnalyticsMeta!
+  rows: [AnalyticsRow!]!
+}
+
+type AnalyticsRow {
+  dimensions: [AnalyticsDimensionValue!]!
+  values: [JSON]!
+}
+
+enum AnalyticsTimeGrain {
+  DAY
+  MONTH
+  WEEK
+}
+
+input AnalyticsTimeInput {
+  end: String!
+  field: String!
+  grain: AnalyticsTimeGrain!
+  start: String!
+}
+
 input AnonymizeDto {
   birthday: String!
   name: String!
@@ -75,11 +182,14 @@ type ContentProvider {
   capabilities: ContentProviderCapabilities
   createdAt: DateTime!
   description: String
+  descriptionI18n: [LocalizedString!]
   headline: String
+  headlineI18n: [LocalizedString!]
   id: ID!
   isActive: Boolean!
   logoUrl: String
   providerLabel: String!
+  providerLabelI18n: [LocalizedString!]
   screenshotUrls: [String!]
   subscription(orgId: ID): ContentSubscription
   updatedAt: DateTime!
@@ -105,10 +215,13 @@ input ContentProviderCreate {
   baseUrl: String!
   capabilities: ContentProviderCapabilitiesInput
   description: String
+  descriptionI18n: [LocalizedStringInput!]
   headline: String
+  headlineI18n: [LocalizedStringInput!]
   isActive: Boolean! = true
   logoUrl: String
   providerLabel: String!
+  providerLabelI18n: [LocalizedStringInput!]
   screenshotUrls: [String!]
 }
 
@@ -136,11 +249,14 @@ input ContentProviderUpdate {
   baseUrl: String
   capabilities: ContentProviderCapabilitiesInput
   description: String
+  descriptionI18n: LocalizedStringModifier
   headline: String
+  headlineI18n: LocalizedStringModifier
   id: ID!
   isActive: Boolean
   logoUrl: String
   providerLabel: String
+  providerLabelI18n: LocalizedStringModifier
   screenshotUrls: [String!]
 }
 
@@ -367,6 +483,26 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+type LocalizedString {
+  locale: String!
+  value: String!
+}
+
+input LocalizedStringInput {
+  locale: String!
+  value: String!
+}
+
+input LocalizedStringInputModifier {
+  insert: [LocalizedStringInput!]
+  remove: [LocalizedStringInput!]
+  replaceWith: [LocalizedStringInput!]
+}
+
+input LocalizedStringModifier {
+  arrayOperation: LocalizedStringInputModifier
+}
+
 type MetadataEntry {
   key: String!
   value: String!
@@ -414,10 +550,12 @@ type MetricDefinition {
   contentProviderId: String
   createdAt: DateTime!
   description: String!
+  descriptionI18n: [LocalizedString!]
   formula: String
   id: ID!
   isPublic: Boolean! @deprecated(reason: "there is no more public metric definition anymore")
   name: String!
+  nameI18n: [LocalizedString!]
   operation: DerivedOperation @deprecated(reason: "use formula instead. operation will be removed in a future release")
   orgId: String!
   roundingPrecision: Float!
@@ -432,9 +570,11 @@ input MetricDefinitionCreate {
   betterDirection: BetterDirection!
   category: String!
   description: String! = ""
+  descriptionI18n: [LocalizedStringInput!]
   formula: String
   isPublic: Boolean!
   name: String!
+  nameI18n: [LocalizedStringInput!]
   operation: DerivedOperation
   orgId: String
   roundingPrecision: Float!
@@ -481,10 +621,12 @@ enum MetricDefinitionType {
 input MetricDefinitionUpdate {
   category: String
   description: String
+  descriptionI18n: LocalizedStringModifier
   formula: String
   id: ID!
   isPublic: Boolean
   name: String
+  nameI18n: LocalizedStringModifier
   orgId: ID!
   roundingPrecision: Float
   sourceMetricDefinitionIds: [String!]
@@ -524,11 +666,15 @@ type Mutation {
   createMetricDefinition(data: MetricDefinitionCreate!): MetricDefinition!
   createOrg(data: OrgCreate!): Org!
   createOrgMember(data: OrgMemberCreate!): OrgMember!
+  createOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupCreate!): OrgPersonMetadataKeyGroup!
   createPerformanceAssessment(data: PerformanceAssessmentCreate!): PerformanceAssessment!
   createPerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantCreate!): PerformanceAssessmentParticipant!
   createPerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateCreate!): PerformanceAssessmentTemplate!
   createPerformanceAssessmentWrapper(data: PerformanceAssessmentWrapperCreate!): PerformanceAssessment!
   createPerson(data: PersonCreate!): Person!
+  createPersonMetadataKey(data: PersonMetadataKeyCreate!): PersonMetadataKey!
+  createPersonMetadataKeyGroup(data: PersonMetadataKeyGroupCreate!): PersonMetadataKeyGroup!
+  createPersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemCreate!): PersonMetadataKeyGroupItem!
   createReference(data: ReferenceCreate!): Reference!
   createScoreProvider(data: ScoreProviderCreate!): ScoreProvider!
   createUser(data: UserCreate!): User!
@@ -540,9 +686,13 @@ type Mutation {
   deleteMetricDefinition(data: MetricDefinitionDelete!): MetricDefinition!
   deleteOrg(data: InputDelete!): Org!
   deleteOrgMember(data: InputDelete!): OrgMember!
+  deleteOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupDelete!): OrgPersonMetadataKeyGroup!
   deletePerformanceAssessment(data: InputDelete!): PerformanceAssessment!
   deletePerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateDelete!): PerformanceAssessmentTemplate!
   deletePerson(data: InputDelete!): Person!
+  deletePersonMetadataKey(data: PersonMetadataKeyDelete!): PersonMetadataKey!
+  deletePersonMetadataKeyGroup(data: PersonMetadataKeyGroupDelete!): PersonMetadataKeyGroup!
+  deletePersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemDelete!): PersonMetadataKeyGroupItem!
   deleteReference(data: InputDelete!): Reference!
   deleteScoreProvider(data: InputDelete!): ScoreProvider!
   deleteUser(data: UserDelete!): User!
@@ -559,12 +709,17 @@ type Mutation {
   updateDeviceInputConfig(data: DeviceInputConfigUpdate!): DeviceInputConfig!
   updateMetric(data: MetricUpdate!): Metric!
   updateMetricDefinition(data: MetricDefinitionUpdate!): MetricDefinition!
+  updateMyUserPreferences(data: UserPreferencesUpdateInput!): UserPreferences!
   updateOrg(data: OrgUpdate!): Org!
   updateOrgMember(data: OrgMemberUpdate!): OrgMember!
+  updateOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupUpdate!): OrgPersonMetadataKeyGroup!
   updatePerformanceAssessment(data: PerformanceAssessmentUpdate!): PerformanceAssessment!
   updatePerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantUpdate!): PerformanceAssessmentParticipant!
   updatePerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateUpdate!): PerformanceAssessmentTemplate!
   updatePerson(data: PersonUpdate!): Person!
+  updatePersonMetadataKey(data: PersonMetadataKeyUpdate!): PersonMetadataKey!
+  updatePersonMetadataKeyGroup(data: PersonMetadataKeyGroupUpdate!): PersonMetadataKeyGroup!
+  updatePersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemUpdate!): PersonMetadataKeyGroupItem!
   updateReference(data: ReferenceUpdate!): Reference!
   updateScoreProvider(data: ScoreProviderUpdate!): ScoreProvider!
   updateUser(data: UserUpdate!): User!
@@ -575,10 +730,12 @@ type Org {
   address: String!
   createdAt: DateTime!
   datasetAccessPermissions: [String!]
+  defaultLocale: String
   email: String
   id: ID!
   isActive: Boolean!
   name: String!
+  personMetadataKeys: [PersonMetadataKey!]
   privateDatasetId: String
   privateDatasetProject: String
   referenceLevels: [String!]
@@ -588,6 +745,7 @@ type Org {
 
 input OrgCreate {
   address: String!
+  defaultLocale: String
   email: String!
   name: String!
 }
@@ -657,7 +815,57 @@ input OrgMemberUpdate {
   role: UserRole
 }
 
+type OrgPersonMetadataKeyGroup {
+  active: Boolean!
+  createdAt: DateTime!
+  groupId: String!
+  id: ID!
+  orgId: String!
+  updatedAt: DateTime!
+}
+
+input OrgPersonMetadataKeyGroupCreate {
+  active: Boolean = true
+  groupId: ID!
+  orgId: ID!
+}
+
+input OrgPersonMetadataKeyGroupDelete {
+  id: ID!
+}
+
+input OrgPersonMetadataKeyGroupGet {
+  id: ID!
+}
+
+input OrgPersonMetadataKeyGroupList {
+  conditions: OrgPersonMetadataKeyGroupListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input OrgPersonMetadataKeyGroupListConditions {
+  active: Boolean
+  orgId: ID!
+}
+
+type OrgPersonMetadataKeyGroupListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [OrgPersonMetadataKeyGroup!]!
+}
+
+input OrgPersonMetadataKeyGroupUpdate {
+  active: Boolean
+  id: ID!
+}
+
 input OrgUpdate {
+  defaultLocale: String
   id: ID!
   referenceLevels: [String!]
 }
@@ -806,9 +1014,11 @@ type PerformanceAssessmentTemplate {
   contentProviderId: String
   createdAt: DateTime!
   description: String
+  descriptionI18n: [LocalizedString!]
   id: ID!
   items: [PerformanceAssessmentTemplateItem!]!
   name: String!
+  nameI18n: [LocalizedString!]
   orgId: String!
   updatedAt: DateTime!
 }
@@ -816,8 +1026,10 @@ type PerformanceAssessmentTemplate {
 input PerformanceAssessmentTemplateCreate {
   contentProviderId: String
   description: String
+  descriptionI18n: [LocalizedStringInput!]
   items: [PerformanceAssessmentTemplateItemInput!]!
   name: String!
+  nameI18n: [LocalizedStringInput!]
   orgId: String!
 }
 
@@ -866,9 +1078,11 @@ type PerformanceAssessmentTemplateListPage {
 input PerformanceAssessmentTemplateUpdate {
   contentProviderId: String
   description: String
+  descriptionI18n: LocalizedStringModifier
   id: ID!
   items: [PerformanceAssessmentTemplateItemInput!]
   name: String
+  nameI18n: LocalizedStringModifier
   orgId: ID!
 }
 
@@ -902,7 +1116,7 @@ type Person {
   orgId: String!
   orgUniqueToken: String!
   sex: PersonSex
-  teamRank: String
+  teamRank: String @deprecated(reason: "Use metadata instead.")
   updatedAt: DateTime!
 }
 
@@ -939,6 +1153,161 @@ type PersonListPage {
   records: [Person!]!
 }
 
+type PersonMetadataKey {
+  active: Boolean!
+  createdAt: DateTime!
+  description: String
+  descriptionI18n: [LocalizedString!]
+  id: ID!
+  key: String!
+  name: String!
+  nameI18n: [LocalizedString!]
+  updatedAt: DateTime!
+}
+
+input PersonMetadataKeyCreate {
+  active: Boolean = true
+  description: String
+  descriptionI18n: [LocalizedStringInput!]
+  key: String!
+  name: String!
+  nameI18n: [LocalizedStringInput!]
+}
+
+input PersonMetadataKeyDelete {
+  id: ID!
+}
+
+input PersonMetadataKeyGet {
+  id: ID!
+}
+
+type PersonMetadataKeyGroup {
+  createdAt: DateTime!
+  description: String
+  descriptionI18n: [LocalizedString!]
+  id: ID!
+  name: String!
+  nameI18n: [LocalizedString!]
+  updatedAt: DateTime!
+}
+
+input PersonMetadataKeyGroupCreate {
+  description: String
+  descriptionI18n: [LocalizedStringInput!]
+  name: String!
+  nameI18n: [LocalizedStringInput!]
+}
+
+input PersonMetadataKeyGroupDelete {
+  id: ID!
+}
+
+input PersonMetadataKeyGroupGet {
+  id: ID!
+}
+
+type PersonMetadataKeyGroupItem {
+  createdAt: DateTime!
+  groupId: String!
+  id: ID!
+  keyId: String!
+  order: Float
+  updatedAt: DateTime!
+}
+
+input PersonMetadataKeyGroupItemCreate {
+  groupId: ID!
+  keyId: ID!
+  order: Float
+}
+
+input PersonMetadataKeyGroupItemDelete {
+  id: ID!
+}
+
+input PersonMetadataKeyGroupItemGet {
+  id: ID!
+}
+
+input PersonMetadataKeyGroupItemList {
+  conditions: PersonMetadataKeyGroupItemListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input PersonMetadataKeyGroupItemListConditions {
+  groupId: String
+  keyId: String
+}
+
+type PersonMetadataKeyGroupItemListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [PersonMetadataKeyGroupItem!]!
+}
+
+input PersonMetadataKeyGroupItemUpdate {
+  id: ID!
+  order: Float
+}
+
+input PersonMetadataKeyGroupList {
+  pageOption: PageOption
+}
+
+type PersonMetadataKeyGroupListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [PersonMetadataKeyGroup!]!
+}
+
+input PersonMetadataKeyGroupUpdate {
+  description: String
+  descriptionI18n: LocalizedStringModifier
+  id: ID!
+  name: String
+  nameI18n: LocalizedStringModifier
+}
+
+input PersonMetadataKeyList {
+  conditions: PersonMetadataKeyListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input PersonMetadataKeyListConditions {
+  active: Boolean
+}
+
+type PersonMetadataKeyListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [PersonMetadataKey!]!
+}
+
+input PersonMetadataKeyUpdate {
+  active: Boolean
+  description: String
+  descriptionI18n: LocalizedStringModifier
+  id: ID!
+  key: String
+  name: String
+  nameI18n: LocalizedStringModifier
+}
+
 enum PersonSex {
   FEMALE
   MALE
@@ -956,6 +1325,7 @@ input PersonUpdate {
 }
 
 type Query {
+  analytics(data: AnalyticsRequest!): AnalyticsResponse!
   anonymize(data: AnonymizeDto!): AnonymizeResultDto!
   getContentProvider(data: InputDetail!): ContentProvider!
   getContentSubscription(data: InputDetail!): ContentSubscription!
@@ -965,9 +1335,13 @@ type Query {
   getMetricDefinition(data: MetricDefinitionGet!): MetricDefinition!
   getOrg(data: InputDetail!): Org!
   getOrgMember(data: InputDetail!): OrgMember!
+  getOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupGet!): OrgPersonMetadataKeyGroup!
   getPerformanceAssessment(data: InputDetail!): PerformanceAssessment!
   getPerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateGet!): PerformanceAssessmentTemplate!
   getPerson(data: InputDetail!): Person!
+  getPersonMetadataKey(data: PersonMetadataKeyGet!): PersonMetadataKey!
+  getPersonMetadataKeyGroup(data: PersonMetadataKeyGroupGet!): PersonMetadataKeyGroup!
+  getPersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemGet!): PersonMetadataKeyGroupItem!
   getReference(data: InputDetail!): Reference!
   getScoreProvider(data: InputDetail!): ScoreProvider!
   getUser(data: UserGet!): User!
@@ -977,13 +1351,18 @@ type Query {
   listDeviceTokens(data: DeviceTokenList!): DeviceTokenListPage!
   listMetricDefinitions(data: MetricDefinitionList!): MetricDefinitionListPage!
   listOrgMembers(data: OrgMemberList!): OrgMemberListPage!
+  listOrgPersonMetadataKeyGroups(data: OrgPersonMetadataKeyGroupList!): OrgPersonMetadataKeyGroupListPage!
   listOrgs(data: OrgList!): OrgListPage!
   listPerformanceAssessmentTemplates(data: PerformanceAssessmentTemplateList!): PerformanceAssessmentTemplateListPage!
   listPerformanceAssessments(data: PerformanceAssessmentList!): PerformanceAssessmentListPage!
+  listPersonMetadataKeyGroupItems(data: PersonMetadataKeyGroupItemList): PersonMetadataKeyGroupItemListPage!
+  listPersonMetadataKeyGroups(data: PersonMetadataKeyGroupList): PersonMetadataKeyGroupListPage!
+  listPersonMetadataKeys(data: PersonMetadataKeyList): PersonMetadataKeyListPage!
   listPersons(data: PersonList!): PersonListPage!
   listReferences(data: ReferenceList!): ReferenceListPage!
   listScoreProviders(data: ScoreProviderList!): ScoreProviderListPage!
   listUsers: [User!]!
+  myUserPreferences: UserPreferences
 }
 
 type ReadyCondition {
@@ -1130,6 +1509,14 @@ input UserGet {
 input UserInput {
   email: String
   userId: String
+}
+
+type UserPreferences {
+  preferredLocale: String
+}
+
+input UserPreferencesUpdateInput {
+  preferredLocale: String
 }
 
 enum UserRole {

@@ -196,17 +196,23 @@ components:
           properties:
             metricDefinitions:
               type: boolean
+            deviceInputConfigs:
+              type: boolean
             scoreProviders:
               type: boolean
             performanceAssessmentTemplates:
               type: boolean
-            deviceInputConfigs:
+            performanceAssessments:
+              type: boolean
+            referenceLevels:
               type: boolean
           required:
             - metricDefinitions
+            - deviceInputConfigs
             - scoreProviders
             - performanceAssessmentTemplates
-            - deviceInputConfigs
+            - performanceAssessments
+            - referenceLevels
       required:
         - version
         - capabilities
@@ -229,8 +235,18 @@ components:
           type: boolean
         name:
           type: string
+        nameI18n:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocalizedString'
+          nullable: true
         description:
           type: string
+        descriptionI18n:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocalizedString'
+          nullable: true
         type:
           $ref: '#/components/schemas/MetricDefinitionType'
         category:
@@ -509,8 +525,18 @@ components:
           type: string
         name:
           type: string
+        nameI18n:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocalizedString'
+          nullable: true
         description:
           type: string
+          nullable: true
+        descriptionI18n:
+          type: array
+          items:
+            $ref: '#/components/schemas/LocalizedString'
           nullable: true
         items:
           type: array
@@ -596,3 +622,13 @@ components:
           additionalProperties: true
       required:
         - error
+    LocalizedString:
+      type: object
+      properties:
+        locale:
+          type: string
+        value:
+          type: string
+      required:
+        - locale
+        - value
