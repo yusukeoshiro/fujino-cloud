@@ -57,6 +57,12 @@ raw_eligible AS (
       participant.attr1 IS NULL
       OR participant.attr1 != "skipped"
     )
+    AND NOT EXISTS (
+      SELECT 1
+      FROM UNNEST(participant.metadata) AS m
+      WHERE m.key = 'x-fujino-cloud-skip'
+        AND m.value = 'true'
+    )
 ),
 -- ====== Per-athlete daily totals ======
 athlete_daily AS (

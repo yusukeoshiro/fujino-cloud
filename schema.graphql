@@ -135,6 +135,7 @@ input AutoRecordMetric {
   metricDefinitionId: String!
   orgUniqueToken: String!
   performanceAssessmentId: String!
+  skipParticipantMetricsCacheRebuild: Boolean
   value: Float!
 }
 
@@ -649,6 +650,7 @@ input MetricUpdate {
   id: ID!
   metadata: [MetadataEntryInput!]
   score: Float
+  skipParticipantMetricsCacheRebuild: Boolean
   updateScore: Boolean = false
   value: Float
 }
@@ -700,6 +702,7 @@ type Mutation {
   deleteScoreProvider(data: InputDelete!): ScoreProvider!
   deleteUser(data: UserDelete!): User!
   exportPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  rebuildCachePerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   removeDatasetPermissionOrg(data: DatasetPermissionInput!): Org!
   scheduleScorePerformanceAssessment(data: InputDetail!): PerformanceAssessment!
   scoreMetric(data: InputDetail!): Metric!
@@ -945,11 +948,9 @@ type PerformanceAssessmentMetric {
   id: ID!
   metricDefinition: MetricDefinition!
   metricDefinitionId: String!
-  metrics: [Metric!]!
+  metrics: [Metric!]! @deprecated(reason: "Deprecated. Use listMetrics by performanceAssessmentMetricId instead.")
   orgId: String!
   performanceAssessmentId: String!
-  referenceMean: Float
-  referenceStd: Float
   scored: Boolean!
   updatedAt: DateTime!
 }
@@ -960,16 +961,12 @@ input PerformanceAssessmentMetricCreate {
   metricDefinitionId: String!
   orgId: String
   performanceAssessmentId: String
-  referenceMean: Float
-  referenceStd: Float
   scored: Boolean!
 }
 
 input PerformanceAssessmentMetricUpdate {
   displayOrder: Float
   id: ID!
-  referenceMean: Float
-  referenceStd: Float
   scored: Boolean
 }
 

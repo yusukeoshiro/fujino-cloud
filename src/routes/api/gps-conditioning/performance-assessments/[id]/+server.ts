@@ -51,10 +51,14 @@ export const GET: RequestHandler = async (event) => {
 		const rawScore = trainingScoreMetric?.value ?? trainingScoreMetric?.score ?? null;
 		const trainingConsumptionScore =
 			typeof rawScore === 'number' && Number.isFinite(rawScore) ? rawScore : null;
+		const metadata = participant.metadata ?? [];
+		const hasSkipMetadata = metadata.some(
+			(entry) => entry?.key === 'x-fujino-cloud-skip' && entry?.value === 'true',
+		);
 		return {
 			id: participant.id,
 			fullName: participant.fullName,
-			skipped: participant.attr1 === 'skipped',
+			skipped: participant.attr1 === 'skipped' || hasSkipMetadata,
 			trainingConsumptionScore,
 		};
 	});

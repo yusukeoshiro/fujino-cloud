@@ -165,7 +165,16 @@ export const POST: RequestHandler = async (event) => {
 					fullName: record.fullName,
 					number: i + 1,
 					...(record.birthday && { birthday: record.birthday }),
-					...(isSelected ? {} : { attr1: 'skipped' }),
+					...(isSelected
+						? {}
+						: {
+								metadata: [
+									{
+										key: 'x-fujino-cloud-skip',
+										value: 'true',
+									},
+								],
+							}),
 				},
 			},
 			{ event },

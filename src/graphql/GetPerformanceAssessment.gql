@@ -22,6 +22,10 @@ query GetPerformanceAssessment($id: ID!) {
 			id
 			fullName
 			attr1
+			metadata {
+				key
+				value
+			}
 			metrics {
 				metricDefinitionId
 				value
