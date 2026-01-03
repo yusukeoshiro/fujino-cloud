@@ -187,7 +187,11 @@ export const POST: RequestHandler = async (event) => {
 
 	for (const { record, result, isSelected } of results) {
 		if (result.errors) {
-			console.log(JSON.stringify(result.errors));
+			console.error('Failed to create performance assessment participant', {
+				fullName: record.fullName,
+				isSelected,
+				errors: result.errors,
+			});
 		} else {
 			console.log(`participant added ${record.fullName}${isSelected ? '' : ' (skipped)'}`);
 		}
@@ -218,7 +222,12 @@ export const POST: RequestHandler = async (event) => {
 				)
 				.then((r) => {
 					if (r.errors) {
-						console.log(`${record.fullName} ${key} is ERROR`);
+						console.error('Failed to auto record metric', {
+							fullName: record.fullName,
+							metricKey: key,
+							metricDefinitionId: FIELD_ID_MAP[key],
+							errors: r.errors,
+						});
 					} else {
 						console.log(`${record.fullName} ${key} is done with id ${r.data?.autoRecordMetric.id}`);
 					}
@@ -241,7 +250,7 @@ export const POST: RequestHandler = async (event) => {
 	console.log('done');
 
 	if (uploadResult.errors) {
-		console.log(uploadResult.errors);
+		console.error('Failed to export performance assessment', uploadResult.errors);
 	}
 
 	return new Response(JSON.stringify({}));

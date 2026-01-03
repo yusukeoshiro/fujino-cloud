@@ -1,0 +1,43 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "pwa-node",
+			"request": "launch",
+			"name": "SvelteKit: Dev Mode (Server Debug)",
+			"runtimeExecutable": "node",
+			"runtimeArgs": [
+				"--inspect=9229",
+				"--enable-source-maps",
+				"./node_modules/vite/bin/vite.js",
+				"dev"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "integratedTerminal",
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/.svelte-kit/**"],
+			"resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		},
+		{
+			"type": "pwa-node",
+			"request": "launch",
+			"name": "SvelteKit: Production Mode (Server Debug)",
+			"runtimeExecutable": "node",
+			"runtimeArgs": [
+				"--inspect=9230",
+				"--enable-source-maps",
+				"./node_modules/vite/bin/vite.js",
+				"dev",
+				"--mode",
+				"production"
+			],
+			"cwd": "${workspaceFolder}",
+			"console": "integratedTerminal",
+			"sourceMaps": true,
+			"outFiles": ["${workspaceFolder}/.svelte-kit/**"],
+			"resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+			"skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+		}
+	]
+}

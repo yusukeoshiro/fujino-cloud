@@ -10,6 +10,7 @@ query ListPersons($orgId: ID!) {
 			teamRank
 			sex
 			externalId
+			orgUniqueToken
 		}
 	}
 }
