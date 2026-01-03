@@ -30,7 +30,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const metricDefinitionId = body.metricDefinitionId?.trim();
 	const value = body.value;
-	const referenceLevel = body.referenceLevel ?? 'U16-U18';
+	const referenceLevel = body.referenceLevel;
 
 	if (!metricDefinitionId || typeof value !== 'number') {
 		throw error(400, 'metricDefinitionId and numeric value are required');
@@ -40,6 +40,8 @@ export const POST: RequestHandler = async (event) => {
 	if (!metric) {
 		throw error(404, 'metricDefinitionId not found');
 	}
+
+	if (!referenceLevel) return json({ score: null });
 
 	const band = referenceTable[metricDefinitionId]?.[referenceLevel];
 	if (!band) return json({ score: null });

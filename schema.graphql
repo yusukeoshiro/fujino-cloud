@@ -560,7 +560,7 @@ type MetricDefinition {
   orgId: String!
   roundingPrecision: Float!
   sourceMetricDefinitionIds: [String!]
-  sourceMetricDefinitionNames: [String!]!
+  sourceMetricDefinitions: [MetricDefinition!]
   type: MetricDefinitionType!
   unit: MetricUnit!
   updatedAt: DateTime!
@@ -668,6 +668,7 @@ type Mutation {
   createOrgMember(data: OrgMemberCreate!): OrgMember!
   createOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupCreate!): OrgPersonMetadataKeyGroup!
   createPerformanceAssessment(data: PerformanceAssessmentCreate!): PerformanceAssessment!
+  createPerformanceAssessmentMetric(data: PerformanceAssessmentMetricCreate!): PerformanceAssessmentMetric!
   createPerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantCreate!): PerformanceAssessmentParticipant!
   createPerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateCreate!): PerformanceAssessmentTemplate!
   createPerformanceAssessmentWrapper(data: PerformanceAssessmentWrapperCreate!): PerformanceAssessment!
@@ -688,6 +689,8 @@ type Mutation {
   deleteOrgMember(data: InputDelete!): OrgMember!
   deleteOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupDelete!): OrgPersonMetadataKeyGroup!
   deletePerformanceAssessment(data: InputDelete!): PerformanceAssessment!
+  deletePerformanceAssessmentMetric(data: InputDelete!): PerformanceAssessmentMetric!
+  deletePerformanceAssessmentParticipant(data: InputDelete!): PerformanceAssessmentParticipant!
   deletePerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateDelete!): PerformanceAssessmentTemplate!
   deletePerson(data: InputDelete!): Person!
   deletePersonMetadataKey(data: PersonMetadataKeyDelete!): PersonMetadataKey!
@@ -714,6 +717,7 @@ type Mutation {
   updateOrgMember(data: OrgMemberUpdate!): OrgMember!
   updateOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupUpdate!): OrgPersonMetadataKeyGroup!
   updatePerformanceAssessment(data: PerformanceAssessmentUpdate!): PerformanceAssessment!
+  updatePerformanceAssessmentMetric(data: PerformanceAssessmentMetricUpdate!): PerformanceAssessmentMetric!
   updatePerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantUpdate!): PerformanceAssessmentParticipant!
   updatePerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateUpdate!): PerformanceAssessmentTemplate!
   updatePerson(data: PersonUpdate!): Person!
@@ -883,9 +887,11 @@ type PerformanceAssessment {
   description: String
   downloadLink: String!
   exported: Boolean!
+  finalizedAt: DateTime
   id: ID!
   inProgressExport: Boolean
   inProgressSyncSheet: Boolean
+  lastDirtyUpdatedAt: DateTime
   metadata: [MetadataEntry!]
   metrics: [PerformanceAssessmentMetric!]!
   name: String!
@@ -894,6 +900,8 @@ type PerformanceAssessment {
   participantsCount: Float!
   ready: Boolean!
   referenceLevel: String
+  shouldFinalize: Boolean!
+  shouldRefinalize: Boolean!
   spreadsheetUrl: String
   updatedAt: DateTime!
 }
@@ -957,6 +965,14 @@ input PerformanceAssessmentMetricCreate {
   scored: Boolean!
 }
 
+input PerformanceAssessmentMetricUpdate {
+  displayOrder: Float
+  id: ID!
+  referenceMean: Float
+  referenceStd: Float
+  scored: Boolean
+}
+
 type PerformanceAssessmentParticipant {
   attr1: String
   attr2: String
@@ -1002,8 +1018,11 @@ input PerformanceAssessmentParticipantCreate {
 input PerformanceAssessmentParticipantUpdate {
   attr1: String
   attr2: String
+  birthday: String
   email: String
+  fullName: String
   id: ID!
+  isAnonymous: Boolean = false
   kana: String
   metadata: [MetadataEntryInput!]
   number: Float
@@ -1087,10 +1106,12 @@ input PerformanceAssessmentTemplateUpdate {
 }
 
 input PerformanceAssessmentUpdate {
+  date: String
   id: ID!
   metadata: [MetadataEntryInput!]
   name: String
   ready: Boolean
+  referenceLevel: String
   spreadsheetUrl: String
 }
 
