@@ -10,6 +10,7 @@ import {
 	FitogetherCsvProcessor,
 	buildUnmatchedPersonsResponse,
 } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
 
 // Field → MetricDefinitionId map
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
@@ -104,10 +105,9 @@ export const POST: RequestHandler = async (event) => {
 				rows: parsers.length,
 				headers,
 				headerMap,
-				records: parsers.map((r, index) => ({
-					__rowIndex: index,
-					...r.toJson(),
-				})),
+				records: parsers.map((parser, index) =>
+					useMetricIds ? buildMetricRecord(parser, index) : buildLabelRecord(parser, index),
+				),
 			},
 			null,
 			2,
@@ -115,6 +115,36 @@ export const POST: RequestHandler = async (event) => {
 		{ headers: { 'content-type': 'application/json' } },
 	);
 };
+
+function buildLabelRecord(parser: PlayerGpsSession, index: number) {
+	return {
+		__rowIndex: index,
+		...parser.toJson(),
+	};
+}
+
+function buildMetricRecord(parser: PlayerGpsSession, index: number) {
+	return {
+		__rowIndex: index,
+		fullName: parser.fullName,
+		[METRIC_DEFINITION_IDS.durationMin]: parser.durationMin,
+		[METRIC_DEFINITION_IDS.totalDistanceM]: parser.totalDistanceM,
+		[METRIC_DEFINITION_IDS.totalDistanceMPerMin]: parser.totalDistanceMPerMin,
+		[METRIC_DEFINITION_IDS.maxSpeedKMH]: parser.maxSpeedKMH,
+		[METRIC_DEFINITION_IDS.noOfHSR]: parser.noOfHSR,
+		[METRIC_DEFINITION_IDS.hsrDistanceM]: parser.hsrDistanceM,
+		[METRIC_DEFINITION_IDS.sprintCount]: parser.sprintCount,
+		[METRIC_DEFINITION_IDS.sprintDistanceM]: parser.sprintDistanceM,
+		[METRIC_DEFINITION_IDS.highIntensityDistanceM]: parser.highIntensityDistanceM,
+		[METRIC_DEFINITION_IDS.highIntensityRate]: parser.highIntensityRate,
+		[METRIC_DEFINITION_IDS.lowIntensityRate]: parser.lowIntensityRate,
+		[METRIC_DEFINITION_IDS.accelerationCountTotal]: parser.accelerationCountTotal,
+		[METRIC_DEFINITION_IDS.expAccCount]: parser.expAccCount,
+		[METRIC_DEFINITION_IDS.decelerationCountTotal]: parser.decelerationCountTotal,
+		[METRIC_DEFINITION_IDS.expDecCount]: parser.expDecCount,
+		[METRIC_DEFINITION_IDS.trainingScoreConsumption]: parser.trainingScoreConsumption,
+	};
+}
 
 function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
 	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
