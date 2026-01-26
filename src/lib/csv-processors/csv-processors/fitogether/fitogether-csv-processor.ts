@@ -17,7 +17,6 @@ export interface FitogetherCsvProcessorOptions {
 	originalHeaders: string[];
 	persons: FitogetherPersonRecord[];
 	fieldToMetricId?: Record<string, string | undefined>;
-	useMetricIds?: boolean;
 }
 
 export interface FitogetherBuildParsersOptions {
@@ -155,13 +154,13 @@ export class FitogetherCsvProcessor {
 	}
 
 	private getValue(entry: FitogetherCsvProcessedEntry, field: string): string | number {
-		const { fieldToMetricId, useMetricIds } = this.options;
-		const resolvedKey = useMetricIds && fieldToMetricId?.[field] ? fieldToMetricId[field] : field;
+		const { fieldToMetricId } = this.options;
+		const resolvedKey = fieldToMetricId?.[field] ?? field;
 		return entry.values[resolvedKey] ?? '';
 	}
 
 	private collectEntries(): CollectEntriesResult {
-		const { rawRecords, originalHeaders, fieldToMetricId, useMetricIds } = this.options;
+		const { rawRecords, originalHeaders, fieldToMetricId } = this.options;
 		const headers: string[] = [];
 		const headerSet = new Set<string>();
 		const headerMap = originalHeaders
@@ -177,7 +176,7 @@ export class FitogetherCsvProcessor {
 		rawRecords.forEach((row, rowIndex) => {
 			const values: Record<string, string | number> = {};
 			for (const [field, value] of Object.entries(row)) {
-				const key = useMetricIds && fieldToMetricId?.[field] ? fieldToMetricId[field]! : field;
+				const key = fieldToMetricId?.[field] ?? field;
 				values[key] = coerce(value);
 				if (!headerSet.has(key)) {
 					headerSet.add(key);

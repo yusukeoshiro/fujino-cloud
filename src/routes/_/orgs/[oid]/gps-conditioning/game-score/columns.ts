@@ -1,4 +1,5 @@
-import { COLUMN_LABELS, INTERMEDIATE_SCHEMA_COLS } from '../upload/utils/headers.util';
+import { INTERMEDIATE_SCHEMA_COLS } from '../upload/utils/headers.util';
+import { buildMetricLabels } from '$lib/contents-provider/metric-labels';
 import type { GameScoreValueEntry } from '$lib/services/game-score.service';
 
 export type ColumnSection = 'display' | 'footer';
@@ -13,9 +14,10 @@ export type GameScoreColumn = {
 
 export type GameScoreValues = Record<string, string>;
 
+const metricNameById = buildMetricLabels();
 const createColumns = (metricDefinitionIds: string[], section: ColumnSection): GameScoreColumn[] =>
 	metricDefinitionIds.map((metricDefinitionId) => {
-		const label = COLUMN_LABELS[metricDefinitionId] ?? metricDefinitionId;
+		const label = metricNameById.get(metricDefinitionId) ?? metricDefinitionId;
 		return {
 			label,
 			key: metricDefinitionId,

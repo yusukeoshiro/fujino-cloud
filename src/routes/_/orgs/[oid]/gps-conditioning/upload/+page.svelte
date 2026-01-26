@@ -1,19 +1,16 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { COLUMN_LABELS, FOOTER_COLS, HEADER_COLS } from './utils/headers.util';
+	import { HEADER_COLS } from './utils/headers.util';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
 
 	const orgId = page.params.oid;
 	const stickyLeft =
 		'sticky left-20 z-20 bg-gray-50 after:absolute after:inset-y-0 after:-right-px after:w-px after:bg-gray-200';
-	const stickyRight =
-		'sticky right-0 z-20 bg-gray-50 before:absolute before:inset-y-0 before:-left-px before:w-px before:bg-gray-200';
 
 	function colStickyClass(col: string) {
 		if (HEADER_COLS.includes(col)) return stickyLeft;
-		if (FOOTER_COLS.includes(col)) return stickyRight;
 		return '';
 	}
 
@@ -23,11 +20,8 @@
 		return String(v);
 	}
 
-	function labelForCol(key: string): string {
-		return COLUMN_LABELS[key] ?? key;
-	}
-
 	type UploadPreviewRecord = Record<string, unknown> & { __rowIndex: number };
+	type UploadPreviewColumn = { key: string; label: string };
 	type UploadPreviewRow = {
 		record: UploadPreviewRecord;
 		selected: boolean;
@@ -35,7 +29,7 @@
 	type UploadPreviewResponse = {
 		rows: number;
 		headers: string[];
-		columns: string[];
+		columns: UploadPreviewColumn[];
 		records: UploadPreviewRecord[];
 	};
 
@@ -115,7 +109,7 @@
 			fd.append('gpsCategory', gpsCategory);
 
 			const res = await fetch(
-				`/api/gps-conditioning/csv/preview?orgId=${encodeURIComponent(orgId)}&metricDefinitionId=1`,
+				`/api/gps-conditioning/csv/preview?orgId=${encodeURIComponent(orgId)}`,
 				{
 					method: 'POST',
 					body: fd,
@@ -452,13 +446,13 @@
 										<nobr>{$t('gps.upload.includeInCalc')}</nobr>
 									</div>
 								</th>
-								{#each columns as col (col)}
+								{#each columns as col (col.key)}
 									<th
 										class={'px-3 py-2 text-left font-semibold whitespace-nowrap text-slate-700 ' +
-											colStickyClass(col)}
+											colStickyClass(col.key)}
 									>
 										<nobr>
-											{labelForCol(col)}
+											{col.label}
 										</nobr>
 									</th>
 								{/each}
@@ -477,10 +471,10 @@
 											aria-label={$t('gps.upload.includePlayer')}
 										/>
 									</td>
-									{#each columns as col (col)}
-										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col)}>
+									{#each columns as col (col.key)}
+										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col.key)}>
 											<nobr>
-												{fmt(row.record[col])}
+												{fmt(row.record[col.key])}
 											</nobr>
 										</td>
 									{/each}

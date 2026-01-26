@@ -73,15 +73,13 @@ export function createFitogetherProcessor(params: {
 	rawRecords: Array<Record<string, string>>;
 	originalHeaders: string[];
 	persons: FitogetherPersonRecord[];
-	useMetricIds: boolean;
 }) {
-	const { rawRecords, originalHeaders, persons, useMetricIds } = params;
+	const { rawRecords, originalHeaders, persons } = params;
 	return new FitogetherCsvProcessor({
 		rawRecords,
 		originalHeaders,
 		persons,
 		fieldToMetricId: FITOGETHER_FIELD_TO_METRIC_ID,
-		useMetricIds,
 	});
 }
 
@@ -102,9 +100,8 @@ export async function buildFitogetherParseResult(params: {
 	orgId: string;
 	file: File;
 	fallbackBirthday: string;
-	useMetricIds: boolean;
 }) {
-	const { event, orgId, file, fallbackBirthday, useMetricIds } = params;
+	const { event, orgId, file, fallbackBirthday } = params;
 
 	const listUsersStore = new ListPersonsStore();
 	const personsResult = await listUsersStore.fetch({
@@ -129,7 +126,6 @@ export async function buildFitogetherParseResult(params: {
 		rawRecords,
 		originalHeaders,
 		persons,
-		useMetricIds,
 	});
 
 	const { parsers, unmatched, headers, headerMap } = processor.process({

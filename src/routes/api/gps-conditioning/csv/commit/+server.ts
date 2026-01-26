@@ -27,7 +27,6 @@ export const POST: RequestHandler = async (event) => {
 		orgId,
 		file,
 		fallbackBirthday: '2000-01-01',
-		useMetricIds: true,
 	});
 
 	if (unmatched.length > 0) {
