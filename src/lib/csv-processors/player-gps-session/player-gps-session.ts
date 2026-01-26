@@ -76,7 +76,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		return this.lowIntensityDistanceM / this.totalDistanceM;
 	}
 
-	get trainingScoreConsumption(): number | null {
+	get workloadConsumptionPoints(): number | null {
 		// Derived: average of four ratios vs baseline (total distance, high intensity, accel, decel) * 100, rounded.
 		// Returns null if baseline is missing/invalid to avoid divide-by-zero or NaN.
 		const baseline = this.trainingBaseline;
@@ -101,7 +101,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			return null;
 		}
 
-		const trainingConsumptionScore = Math.round(
+		const workloadConsumptionPoints = Math.round(
 			((this.totalDistanceM / totalDistanceM +
 				this.highIntensityDistanceM / highIntensityDistanceM +
 				this.accelerationCountTotal / accelerationCountTotal +
@@ -116,9 +116,9 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		// console.log(`${this.highIntensityDistanceM} / ${highIntensityDistanceM}`);
 		// console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
 		// console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
-		// console.log({ trainingConsumptionScore });
+		// console.log({ workloadConsumptionPoints });
 
-		return trainingConsumptionScore;
+		return workloadConsumptionPoints;
 	}
 
 	toJson() {
@@ -154,7 +154,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			爆発的加速回数: this.expAccCount,
 			爆発的減速回数: this.expDecCount,
 
-			トレーニングスコア消費: this.trainingScoreConsumption,
+			ワークロード消費ポイント: this.workloadConsumptionPoints,
 		} as const;
 
 		return base;

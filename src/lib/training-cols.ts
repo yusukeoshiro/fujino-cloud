@@ -17,7 +17,7 @@ export const trainigMetricDefinitionIds = [
 	METRIC_DEFINITION_IDS.expDecCount,
 	METRIC_DEFINITION_IDS.noOfHSR,
 	METRIC_DEFINITION_IDS.hsrDistanceM,
-	METRIC_DEFINITION_IDS.trainingScoreConsumption,
+	METRIC_DEFINITION_IDS.workloadConsumptionPoints,
 ];
 
 export const FIELD_ID_MAP: Record<string, string> = {
@@ -37,5 +37,5 @@ export const FIELD_ID_MAP: Record<string, string> = {
 	expDecCount: METRIC_DEFINITION_IDS.expDecCount,
 	noOfHSR: METRIC_DEFINITION_IDS.noOfHSR,
 	hsrDistanceM: METRIC_DEFINITION_IDS.hsrDistanceM,
-	trainingScoreConsumption: METRIC_DEFINITION_IDS.trainingScoreConsumption,
+	workloadConsumptionPoints: METRIC_DEFINITION_IDS.workloadConsumptionPoints,
 };

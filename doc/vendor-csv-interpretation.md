@@ -31,7 +31,7 @@ Core (non-nullable) fields:
 - `highIntensityDistanceM`
 - `accelerationCountTotal`
 - `decelerationCountTotal`
-- `trainingScoreConsumption`
+- `workloadConsumptionPoints`
 
 Nullable fields (show-only or optional inputs):
 
@@ -48,7 +48,7 @@ Nullable fields (show-only or optional inputs):
 - `expAccCount`
 - `expDecCount`
 
-The intermediate schema is used for display and the training consumption score.
+The intermediate schema is used for display and workload consumption points.
 Zone-specific fields (for example, `SPD_D_Z6`) are considered ambiguous and are
 not stored directly.
 
@@ -135,25 +135,25 @@ Knows:
 
 ### Intermediate schema fields
 
-| API name                   | Description                                  | Vendors           | Type    | Core     | metricDefinitionId     |
-| -------------------------- | -------------------------------------------- | ----------------- | ------- | -------- | ---------------------- |
-| `totalDistanceM`           | Total distance in meters                     | Fitogether, Knows | raw     | core     | `P6Zu5epLjDOaDQq20Stx` |
-| `highIntensityDistanceM`   | High-intensity distance (vendor-configured)  | Fitogether, Knows | derived | core     | `Kn39OEkrpQCMQAtMQb5J` |
-| `accelerationCountTotal`   | Total acceleration count (vendor-configured) | Fitogether, Knows | derived | core     | `XYpyu5CZTDZmMY9DbfNG` |
-| `decelerationCountTotal`   | Total deceleration count (vendor-configured) | Fitogether, Knows | derived | core     | `D7aoPeenTMYu3CxfR6v7` |
-| `lowIntensityDistanceM`    | Low-intensity (walking) distance             | Fitogether, Knows | derived | non-core | `0xbH1n71xspfVRddG92Q` |
-| `durationMin`              | Session duration in minutes (floored)        | Fitogether, Knows | raw     | non-core | `KkLOxGTCHY2uVOMjLtQE` |
-| `maxSpeedKMH`              | Max speed in km/h                            | Fitogether, Knows | raw     | non-core | `Q4dPRJ2eqeNR0Bg4DI3E` |
-| `sprintCount`              | Sprint count                                 | Fitogether, Knows | raw     | non-core | `ZfqkRYcNfvwYioquCx5h` |
-| `highIntensityRate`        | High-intensity distance share of total       | Fitogether, Knows | derived | non-core | `RObqK0yOMf4NXhiWig6p` |
-| `lowIntensityRate`         | Low-intensity distance share of total        | Fitogether, Knows | derived | non-core | `oOQMjHICxmf3nLwvDitk` |
-| `totalDistanceMPerMin`     | Distance per minute                          | Fitogether        | raw     | non-core | `I7i8bessV96ciVnFw5IB` |
-| `noOfHSR`                  | High-speed run count                         | Fitogether        | raw     | non-core | `yZ0yLsB60V8NTKrn3Hkw` |
-| `hsrDistanceM`             | High-speed run distance in meters            | Fitogether        | raw     | non-core | `Lnznq7uAwamZD683xQ5b` |
-| `sprintDistanceM`          | Sprint distance in meters                    | Fitogether        | raw     | non-core | `mVykVPzBokSZ0l4C7YhJ` |
-| `expAccCount`              | Explosive acceleration count                 | Fitogether        | raw     | non-core | `XLp9zGyDi0PgkNHn61ln` |
-| `expDecCount`              | Explosive deceleration count                 | Fitogether        | raw     | non-core | `vMV5RRPagpuPxkoU8F2T` |
-| `trainingScoreConsumption` | Training score consumption                   |                   | derived | core     | `b3DroV7arY2KLRUJpdtq` |
+| API name                    | Description                                  | Vendors           | Type    | Core     | metricDefinitionId     |
+| --------------------------- | -------------------------------------------- | ----------------- | ------- | -------- | ---------------------- |
+| `totalDistanceM`            | Total distance in meters                     | Fitogether, Knows | raw     | core     | `P6Zu5epLjDOaDQq20Stx` |
+| `highIntensityDistanceM`    | High-intensity distance (vendor-configured)  | Fitogether, Knows | derived | core     | `Kn39OEkrpQCMQAtMQb5J` |
+| `accelerationCountTotal`    | Total acceleration count (vendor-configured) | Fitogether, Knows | derived | core     | `XYpyu5CZTDZmMY9DbfNG` |
+| `decelerationCountTotal`    | Total deceleration count (vendor-configured) | Fitogether, Knows | derived | core     | `D7aoPeenTMYu3CxfR6v7` |
+| `lowIntensityDistanceM`     | Low-intensity (walking) distance             | Fitogether, Knows | derived | non-core | `0xbH1n71xspfVRddG92Q` |
+| `durationMin`               | Session duration in minutes (floored)        | Fitogether, Knows | raw     | non-core | `KkLOxGTCHY2uVOMjLtQE` |
+| `maxSpeedKMH`               | Max speed in km/h                            | Fitogether, Knows | raw     | non-core | `Q4dPRJ2eqeNR0Bg4DI3E` |
+| `sprintCount`               | Sprint count                                 | Fitogether, Knows | raw     | non-core | `ZfqkRYcNfvwYioquCx5h` |
+| `highIntensityRate`         | High-intensity distance share of total       | Fitogether, Knows | derived | non-core | `RObqK0yOMf4NXhiWig6p` |
+| `lowIntensityRate`          | Low-intensity distance share of total        | Fitogether, Knows | derived | non-core | `oOQMjHICxmf3nLwvDitk` |
+| `totalDistanceMPerMin`      | Distance per minute                          | Fitogether        | raw     | non-core | `I7i8bessV96ciVnFw5IB` |
+| `noOfHSR`                   | High-speed run count                         | Fitogether        | raw     | non-core | `yZ0yLsB60V8NTKrn3Hkw` |
+| `hsrDistanceM`              | High-speed run distance in meters            | Fitogether        | raw     | non-core | `Lnznq7uAwamZD683xQ5b` |
+| `sprintDistanceM`           | Sprint distance in meters                    | Fitogether        | raw     | non-core | `mVykVPzBokSZ0l4C7YhJ` |
+| `expAccCount`               | Explosive acceleration count                 | Fitogether        | raw     | non-core | `XLp9zGyDi0PgkNHn61ln` |
+| `expDecCount`               | Explosive deceleration count                 | Fitogether        | raw     | non-core | `vMV5RRPagpuPxkoU8F2T` |
+| `workloadConsumptionPoints` | Workload consumption points                  |                   | derived | core     | `b3DroV7arY2KLRUJpdtq` |
 
 ### Ambiguous buckets
 

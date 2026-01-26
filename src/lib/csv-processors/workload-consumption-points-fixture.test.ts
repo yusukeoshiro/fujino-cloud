@@ -33,7 +33,7 @@ const buildTrainingBaseline = (fixture: GameScoreFixture) => {
 	};
 };
 
-describe('training score consumption fixtures', () => {
+describe('workload consumption points fixtures', () => {
 	it('matches training-scenario-2 output expectations', () => {
 		const inputCsv = loadFixture('test-assets/training-scenario-2.input.csv');
 		const outputCsv = loadFixture('test-assets/training-scenario-2.output.csv');
@@ -78,7 +78,7 @@ describe('training score consumption fixtures', () => {
 			.filter(Boolean)
 			.map((value) => Number(value));
 
-		const actualScores = parsers.map((parser) => parser.trainingScoreConsumption);
+		const actualScores = parsers.map((parser) => parser.workloadConsumptionPoints);
 
 		expect(actualScores).toHaveLength(expectedScores.length);
 		expect(actualScores).toEqual(expectedScores);

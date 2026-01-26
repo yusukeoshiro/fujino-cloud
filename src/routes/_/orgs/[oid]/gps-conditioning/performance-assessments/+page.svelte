@@ -25,7 +25,7 @@
 		id: string;
 		fullName: string;
 		skipped: boolean;
-		trainingConsumptionScore: number | null;
+		workloadConsumptionPoints: number | null;
 	};
 
 	type PageInfo = {
@@ -78,14 +78,14 @@
 		return value.toLocaleString($locale);
 	}
 
-	function calcTeamConsumptionScore(
+	function calcTeamWorkloadConsumptionPoints(
 		gpsType: string | null | undefined,
 		participants: ParticipantSummary[] | null | undefined,
 	) {
 		if (!gpsType || !participants || participants.length === 0) return null;
 		const scores = participants
 			.filter((participant) => !participant.skipped)
-			.map((participant) => participant.trainingConsumptionScore)
+			.map((participant) => participant.workloadConsumptionPoints)
 			.filter((score): score is number => typeof score === 'number' && Number.isFinite(score));
 		if (scores.length === 0) return null;
 		if (gpsType === 'GAME') {
@@ -405,7 +405,7 @@
 							{$t('gps.assessments.teamPoints')}
 						</p>
 						<p class="mt-2 text-3xl font-semibold text-blue-900">
-							{formatScore(calcTeamConsumptionScore(detail.gpsType, detail.participants))}
+							{formatScore(calcTeamWorkloadConsumptionPoints(detail.gpsType, detail.participants))}
 						</p>
 					</div>
 
@@ -441,7 +441,7 @@
 											<tr class="border-t border-slate-100">
 												<td class="px-3 py-2 text-slate-800">{participant.fullName}</td>
 												<td class="px-3 py-2 text-slate-700 tabular-nums">
-													{formatScore(participant.trainingConsumptionScore)}
+													{formatScore(participant.workloadConsumptionPoints)}
 												</td>
 												<td class="px-3 py-2 text-xs text-slate-500">
 													{participant.skipped

@@ -186,7 +186,7 @@ export const translations: Record<Locale, Record<string, string>> = {
 		'gps.assessments.participantsLabel': 'Participants',
 		'gps.assessments.createdAt': 'Created at',
 		'gps.assessments.updatedAt': 'Updated at',
-		'gps.assessments.teamPoints': 'Team consumption points',
+		'gps.assessments.teamPoints': 'Team workload consumption points',
 		'gps.assessments.descriptionLabel': 'Description',
 		'gps.assessments.participantsTitle': 'Participants',
 		'gps.assessments.tableName': 'Name',

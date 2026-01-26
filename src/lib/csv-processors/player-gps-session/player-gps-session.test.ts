@@ -64,10 +64,10 @@ describe('PlayerGpsSession', () => {
 		expect(parser.decelerationCountTotal).toBe(6);
 	});
 
-	describe('trainingScoreConsumption', () => {
+	describe('workloadConsumptionPoints', () => {
 		it('should return null if no baseline provided', () => {
 			const parser = new PlayerGpsSession(mockData);
-			expect(parser.trainingScoreConsumption).toBeNull();
+			expect(parser.workloadConsumptionPoints).toBeNull();
 		});
 
 		it('should calculate score correctly with valid baseline', () => {
@@ -80,7 +80,7 @@ describe('PlayerGpsSession', () => {
 			const parser = new PlayerGpsSession(mockData, baseline);
 
 			// (1 + 1 + 1 + 1) / 4 * 100 = 100
-			expect(parser.trainingScoreConsumption).toBe(100);
+			expect(parser.workloadConsumptionPoints).toBe(100);
 		});
 
 		it('should calculate score correctly with mixed baseline', () => {
@@ -93,7 +93,7 @@ describe('PlayerGpsSession', () => {
 			const parser = new PlayerGpsSession(mockData, baseline);
 
 			// (0.5 + 0.5 + 0.5 + 0.5) / 4 * 100 = 50
-			expect(parser.trainingScoreConsumption).toBe(50);
+			expect(parser.workloadConsumptionPoints).toBe(50);
 		});
 
 		it('should handle zero in baseline (return null to avoid division by zero)', () => {
@@ -104,7 +104,7 @@ describe('PlayerGpsSession', () => {
 				decelerationCountTotal: 6,
 			};
 			const parser = new PlayerGpsSession(mockData, baseline);
-			expect(parser.trainingScoreConsumption).toBeNull();
+			expect(parser.workloadConsumptionPoints).toBeNull();
 		});
 	});
 
@@ -115,6 +115,6 @@ describe('PlayerGpsSession', () => {
 		expect(json['氏名']).toBe('Test Player');
 		expect(json['総走行距離(m)']).toBe(10000);
 		expect(json['高強度距離(m)']).toBe(200);
-		expect(json['トレーニングスコア消費']).toBeNull();
+		expect(json['ワークロード消費ポイント']).toBeNull();
 	});
 });

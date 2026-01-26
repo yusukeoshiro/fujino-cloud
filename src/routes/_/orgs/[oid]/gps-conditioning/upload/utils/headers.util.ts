@@ -19,5 +19,5 @@ export const INTERMEDIATE_SCHEMA_COLS: string[] = [
 	METRIC_DEFINITION_IDS.expAccCount,
 	METRIC_DEFINITION_IDS.decelerationCountTotal,
 	METRIC_DEFINITION_IDS.expDecCount,
-	METRIC_DEFINITION_IDS.trainingScoreConsumption,
+	METRIC_DEFINITION_IDS.workloadConsumptionPoints,
 ];
