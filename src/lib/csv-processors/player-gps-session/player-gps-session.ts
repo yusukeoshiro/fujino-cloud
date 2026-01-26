@@ -17,29 +17,18 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	maxSpeedKMH: number;
 
 	noOfHSR: number;
-	HSRDistanceM: number;
+	hsrDistanceM: number;
 
-	noOfSprint: number;
+	sprintCount: number;
 	sprintDistanceM: number;
-	speedZone1DistanceM: number;
-	speedZone3DistanceM: number;
-	speedZone4DistanceM: number;
-	speedZone5DistanceM: number;
-	speedZone6DistanceM: number;
-	speedZone7DistanceM: number;
-	speedZone8DistanceM: number;
-	speedZone9DistanceM: number;
+	highIntensityDistanceM: number;
+	lowIntensityDistanceM: number;
 
-	accelerationZone4EntryCount: number;
-	accelerationZone5EntryCount: number;
-	accelerationZone6EntryCount: number;
+	accelerationCountTotal: number;
+	decelerationCountTotal: number;
 
-	decelerationZone4EntryCount: number;
-	decelerationZone5EntryCount: number;
-	decelerationZone6EntryCount: number;
-
-	noOfExpAcc: number;
-	noOfExpDec: number;
+	expAccCount: number;
+	expDecCount: number;
 
 	trainingBaseline?: TrainingBaseline;
 
@@ -63,51 +52,28 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		this.maxSpeedKMH = params.maxSpeedKMH;
 
 		this.noOfHSR = params.noOfHSR;
-		this.HSRDistanceM = params.HSRDistanceM;
+		this.hsrDistanceM = params.hsrDistanceM;
 
-		this.noOfSprint = params.noOfSprint;
+		this.sprintCount = params.sprintCount;
 		this.sprintDistanceM = params.sprintDistanceM;
-		this.speedZone1DistanceM = params.speedZone1DistanceM;
-		this.speedZone3DistanceM = params.speedZone3DistanceM;
-		this.speedZone4DistanceM = params.speedZone4DistanceM;
-		this.speedZone5DistanceM = params.speedZone5DistanceM;
-		this.speedZone6DistanceM = params.speedZone6DistanceM;
-		this.speedZone7DistanceM = params.speedZone7DistanceM;
-		this.speedZone8DistanceM = params.speedZone8DistanceM;
-		this.speedZone9DistanceM = params.speedZone9DistanceM;
+		this.highIntensityDistanceM = params.highIntensityDistanceM;
+		this.lowIntensityDistanceM = params.lowIntensityDistanceM;
 
-		this.accelerationZone4EntryCount = params.accelerationZone4EntryCount;
-		this.accelerationZone5EntryCount = params.accelerationZone5EntryCount;
-		this.accelerationZone6EntryCount = params.accelerationZone6EntryCount;
+		this.accelerationCountTotal = params.accelerationCountTotal;
+		this.decelerationCountTotal = params.decelerationCountTotal;
 
-		this.decelerationZone4EntryCount = params.decelerationZone4EntryCount;
-		this.decelerationZone5EntryCount = params.decelerationZone5EntryCount;
-		this.decelerationZone6EntryCount = params.decelerationZone6EntryCount;
-
-		this.noOfExpAcc = params.noOfExpAcc;
-		this.noOfExpDec = params.noOfExpDec;
+		this.expAccCount = params.expAccCount;
+		this.expDecCount = params.expDecCount;
 	}
 
 	// computed, from raw:
-	get highIntensityM() {
-		// Derived: distance covered in speed zones Z8–Z9.
-		return this.speedZone8DistanceM + this.speedZone9DistanceM;
-	}
 	get highIntensityRate() {
 		// Derived: high-intensity distance as a share of total distance.
-		return this.highIntensityM / this.totalDistanceM;
+		return this.highIntensityDistanceM / this.totalDistanceM;
 	}
-	get walkingRate() {
+	get lowIntensityRate() {
 		// Derived: low-intensity (Z1) share of total distance.
-		return this.speedZone1DistanceM / this.totalDistanceM;
-	}
-	get accelerationCountTotal() {
-		// Derived: higher acceleration zone counts used in scoring.
-		return this.accelerationZone5EntryCount + this.accelerationZone6EntryCount;
-	}
-	get decelerationCountTotal() {
-		// Derived: higher deceleration zone counts used in scoring.
-		return this.decelerationZone5EntryCount + this.decelerationZone6EntryCount;
+		return this.lowIntensityDistanceM / this.totalDistanceM;
 	}
 
 	get trainingScoreConsumption(): number | null {
@@ -115,14 +81,18 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		// Returns null if baseline is missing/invalid to avoid divide-by-zero or NaN.
 		const baseline = this.trainingBaseline;
 		if (!baseline) return null;
-		const { totalDistanceM, highIntensityM, accelerationCountTotal, decelerationCountTotal } =
-			baseline;
+		const {
+			totalDistanceM,
+			highIntensityDistanceM,
+			accelerationCountTotal,
+			decelerationCountTotal,
+		} = baseline;
 
 		if (
 			!isFinite(totalDistanceM) ||
 			totalDistanceM <= 0 ||
-			!isFinite(highIntensityM) ||
-			highIntensityM <= 0 ||
+			!isFinite(highIntensityDistanceM) ||
+			highIntensityDistanceM <= 0 ||
 			!isFinite(accelerationCountTotal) ||
 			accelerationCountTotal <= 0 ||
 			!isFinite(decelerationCountTotal) ||
@@ -133,7 +103,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 
 		const trainingConsumptionScore = Math.round(
 			((this.totalDistanceM / totalDistanceM +
-				this.highIntensityM / highIntensityM +
+				this.highIntensityDistanceM / highIntensityDistanceM +
 				this.accelerationCountTotal / accelerationCountTotal +
 				this.decelerationCountTotal / decelerationCountTotal) /
 				4) *
@@ -143,7 +113,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		// console.log('----------------');
 		// console.log(`${this.fullName}`);
 		// console.log(`${this.totalDistanceM} / ${totalDistanceM}`);
-		// console.log(`${this.highIntensityM} / ${highIntensityM}`);
+		// console.log(`${this.highIntensityDistanceM} / ${highIntensityDistanceM}`);
 		// console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
 		// console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
 		// console.log({ trainingConsumptionScore });
@@ -170,37 +140,19 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			'最高速度(km/h)': this.maxSpeedKMH,
 
 			HSR回数: this.noOfHSR,
-			'HSR距離(m)': this.HSRDistanceM,
+			'HSR距離(m)': this.hsrDistanceM,
 
-			スプリント回数: this.noOfSprint,
+			スプリント回数: this.sprintCount,
 			'スプリント距離(m)': this.sprintDistanceM,
 
-			'Z1距離(m)': this.speedZone1DistanceM,
-			'Z3距離(m)': this.speedZone3DistanceM,
-			'Z4距離(m)': this.speedZone4DistanceM,
-			'Z5距離(m)': this.speedZone5DistanceM,
-			'Z6距離(m)': this.speedZone6DistanceM,
-			'Z7距離(m)': this.speedZone7DistanceM,
-			'Z8距離(m)': this.speedZone8DistanceM,
-			'Z9距離(m)': this.speedZone9DistanceM,
-
-			加速Z4回数: this.accelerationZone4EntryCount,
-			加速Z5回数: this.accelerationZone5EntryCount,
-			加速Z6回数: this.accelerationZone6EntryCount,
-
-			減速Z4回数: this.decelerationZone4EntryCount,
-			減速Z5回数: this.decelerationZone5EntryCount,
-			減速Z6回数: this.decelerationZone6EntryCount,
-
-			爆発的加速回数: this.noOfExpAcc,
-			爆発的減速回数: this.noOfExpDec,
-
-			// Derived
-			'高強度距離(m)': this.highIntensityM,
+			'高強度距離(m)': this.highIntensityDistanceM,
+			'低強度距離(m)': this.lowIntensityDistanceM,
 			高強度割合: this.highIntensityRate,
-			ウォーキング割合: this.walkingRate,
+			ウォーキング割合: this.lowIntensityRate,
 			加速合計回数: this.accelerationCountTotal,
 			減速合計回数: this.decelerationCountTotal,
+			爆発的加速回数: this.expAccCount,
+			爆発的減速回数: this.expDecCount,
 
 			トレーニングスコア消費: this.trainingScoreConsumption,
 		} as const;
@@ -212,7 +164,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		// 	...base,
 		// 	// Baseline (GamePoint) if available
 		// 	'ベースライン_総距離(m)': this.gamePointParser.totalDistanceM,
-		// 	'ベースライン_高強度距離(m)': this.gamePointParser.highIntensityM,
+		// 	'ベースライン_高強度距離(m)': this.gamePointParser.highIntensityDistanceM,
 		// 	ベースライン_加速合計: this.gamePointParser.accelerationCountTotal,
 		// 	ベースライン_減速合計: this.gamePointParser.decelerationCountTotal,
 		// };
@@ -221,7 +173,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 
 type TrainingBaseline = {
 	totalDistanceM: number;
-	highIntensityM: number;
+	highIntensityDistanceM: number;
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 };

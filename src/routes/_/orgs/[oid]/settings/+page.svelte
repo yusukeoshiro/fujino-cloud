@@ -2,12 +2,13 @@
 	import type { PageData, ActionData } from './$types';
 	import FujinoToMobili from './FujinoToMobili.svelte';
 	import MobiliToFujino from './MobiliToFujino.svelte';
+	import GpsConfigs from './GpsConfigs.svelte';
 	import UserManagement from './UserManagement.svelte';
 	import { t } from '$lib/i18n';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
-	let activeTab = $state('system'); // 'system' or 'users'
+	let activeTab = $state('system'); // 'system' | 'users' | 'gps'
 </script>
 
 <section class="space-y-6 px-6 py-8">
@@ -41,6 +42,17 @@
 			>
 				{$t('settings.tab.users')}
 			</button>
+			<button
+				onclick={() => (activeTab = 'gps')}
+				class={`${
+					activeTab === 'gps'
+						? 'border-indigo-500 text-indigo-600'
+						: 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+				} border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap`}
+				aria-current={activeTab === 'gps' ? 'page' : undefined}
+			>
+				{$t('settings.tab.gps')}
+			</button>
 		</nav>
 	</div>
 
@@ -54,6 +66,9 @@
 		</div>
 		<div class={activeTab === 'users' ? 'block' : 'hidden'}>
 			<UserManagement {data} {form} />
+		</div>
+		<div class={activeTab === 'gps' ? 'block' : 'hidden'}>
+			<GpsConfigs {data} />
 		</div>
 	</div>
 </section>

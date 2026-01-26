@@ -17,7 +17,6 @@ export interface FitogetherCsvProcessorOptions {
 	originalHeaders: string[];
 	persons: FitogetherPersonRecord[];
 	fieldToMetricId?: Record<string, string | undefined>;
-	useMetricIds?: boolean;
 }
 
 export interface FitogetherBuildParsersOptions {
@@ -92,67 +91,57 @@ export class FitogetherCsvProcessor {
 		const fallbackBirthday = options.fallbackBirthday ?? '0000-00-00';
 
 		const parsers = entries.map((entry) => {
+			const valueFor = (field: string) => this.getValue(entry, field);
 			const resolvedBirthday =
 				entry.resolvedBirthday && entry.resolvedBirthday !== '0000-00-00'
 					? entry.resolvedBirthday
 					: fallbackBirthday;
+			const speedZone1DistanceM = Number(valueFor('Speed Zone 1 Distance (m)'));
+			const speedZone8DistanceM = Number(valueFor('Speed Zone 8 Distance (m)'));
+			const speedZone9DistanceM = Number(valueFor('Speed Zone 9 Distance (m)'));
+			const accelerationZone5EntryCount = Number(
+				valueFor('Acceleration Zone 5 Entry Count (times)'),
+			);
+			const accelerationZone6EntryCount = Number(
+				valueFor('Acceleration Zone 6 Entry Count (times)'),
+			);
+			const decelerationZone5EntryCount = Number(
+				valueFor('Deceleration Zone 5 Entry Count (times)'),
+			);
+			const decelerationZone6EntryCount = Number(
+				valueFor('Deceleration Zone 6 Entry Count (times)'),
+			);
 			return new PlayerGpsSession(
 				{
 					type: 'TRAINING',
-					date: DateTime.fromFormat(entry.values['Date'] as string, 'yyyy/M/d').toFormat(
-						'yyyy-MM-dd',
-					),
-					startTime: DateTime.fromFormat(entry.values['Start Time'] as string, 'yyyy/M/d H:mm', {
+					date: DateTime.fromFormat(valueFor('Date') as string, 'yyyy/M/d').toFormat('yyyy-MM-dd'),
+					startTime: DateTime.fromFormat(valueFor('Start Time') as string, 'yyyy/M/d H:mm', {
 						zone: 'Asia/Tokyo',
 					}).toJSDate(),
-					endTime: DateTime.fromFormat(entry.values['End Time'] as string, 'yyyy/M/d H:mm', {
+					endTime: DateTime.fromFormat(valueFor('End Time') as string, 'yyyy/M/d H:mm', {
 						zone: 'Asia/Tokyo',
 					}).toJSDate(),
 
 					fullName: entry.resolvedFullName,
 					birthday: resolvedBirthday,
 
-					durationMin: Number(entry.values['Duration (min)']),
-					totalDistanceM: Number(entry.values['Total Distance (m)']),
-					totalDistanceMPerMin: Number(entry.values['Total Distance/min (m/min)']),
-					maxSpeedKMH: Number(entry.values['Max Speed (km/h)']),
+					durationMin: Number(valueFor('Duration (min)')),
+					totalDistanceM: Number(valueFor('Total Distance (m)')),
+					totalDistanceMPerMin: Number(valueFor('Total Distance/min (m/min)')),
+					maxSpeedKMH: Number(valueFor('Max Speed (km/h)')),
 
-					noOfHSR: Number(entry.values['No. of HSR (times)']),
-					HSRDistanceM: Number(entry.values['HSR Distance (m)']),
+					noOfHSR: Number(valueFor('No. of HSR (times)')),
+					hsrDistanceM: Number(valueFor('HSR Distance (m)')),
 
-					noOfSprint: Number(entry.values['No. of Sprint (times)']),
-					sprintDistanceM: Number(entry.values['Sprint Distance (m)']),
-					speedZone1DistanceM: Number(entry.values['Speed Zone 1 Distance (m)']),
-					speedZone3DistanceM: Number(entry.values['Speed Zone 3 Distance (m)']),
-					speedZone4DistanceM: Number(entry.values['Speed Zone 4 Distance (m)']),
-					speedZone5DistanceM: Number(entry.values['Speed Zone 5 Distance (m)']),
-					speedZone6DistanceM: Number(entry.values['Speed Zone 6 Distance (m)']),
-					speedZone7DistanceM: Number(entry.values['Speed Zone 7 Distance (m)']),
-					speedZone8DistanceM: Number(entry.values['Speed Zone 8 Distance (m)']),
-					speedZone9DistanceM: Number(entry.values['Speed Zone 9 Distance (m)']),
+					sprintCount: Number(valueFor('No. of Sprint (times)')),
+					sprintDistanceM: Number(valueFor('Sprint Distance (m)')),
+					highIntensityDistanceM: speedZone8DistanceM + speedZone9DistanceM,
+					lowIntensityDistanceM: speedZone1DistanceM,
+					accelerationCountTotal: accelerationZone5EntryCount + accelerationZone6EntryCount,
+					decelerationCountTotal: decelerationZone5EntryCount + decelerationZone6EntryCount,
 
-					accelerationZone4EntryCount: Number(
-						entry.values['Acceleration Zone 4 Entry Count (times)'],
-					),
-					accelerationZone5EntryCount: Number(
-						entry.values['Acceleration Zone 5 Entry Count (times)'],
-					),
-					accelerationZone6EntryCount: Number(
-						entry.values['Acceleration Zone 6 Entry Count (times)'],
-					),
-
-					decelerationZone4EntryCount: Number(
-						entry.values['Deceleration Zone 4 Entry Count (times)'],
-					),
-					decelerationZone5EntryCount: Number(
-						entry.values['Deceleration Zone 5 Entry Count (times)'],
-					),
-					decelerationZone6EntryCount: Number(
-						entry.values['Deceleration Zone 6 Entry Count (times)'],
-					),
-
-					noOfExpAcc: Number(entry.values['No. of Exp. Acc. (times)']),
-					noOfExpDec: Number(entry.values['No. of Exp. Dec. (times)']),
+					expAccCount: Number(valueFor('No. of Exp. Acc. (times)')),
+					expDecCount: Number(valueFor('No. of Exp. Dec. (times)')),
 				},
 				options.trainingBaseline,
 			);
@@ -167,8 +156,14 @@ export class FitogetherCsvProcessor {
 		};
 	}
 
+	private getValue(entry: FitogetherCsvProcessedEntry, field: string): string | number {
+		const { fieldToMetricId } = this.options;
+		const resolvedKey = fieldToMetricId?.[field] ?? field;
+		return entry.values[resolvedKey] ?? '';
+	}
+
 	private collectEntries(): CollectEntriesResult {
-		const { rawRecords, originalHeaders, fieldToMetricId, useMetricIds } = this.options;
+		const { rawRecords, originalHeaders, fieldToMetricId } = this.options;
 		const headers: string[] = [];
 		const headerSet = new Set<string>();
 		const headerMap = originalHeaders
@@ -184,7 +179,7 @@ export class FitogetherCsvProcessor {
 		rawRecords.forEach((row, rowIndex) => {
 			const values: Record<string, string | number> = {};
 			for (const [field, value] of Object.entries(row)) {
-				const key = useMetricIds && fieldToMetricId?.[field] ? fieldToMetricId[field]! : field;
+				const key = fieldToMetricId?.[field] ?? field;
 				values[key] = coerce(value);
 				if (!headerSet.has(key)) {
 					headerSet.add(key);

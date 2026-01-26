@@ -53,6 +53,8 @@
 	let detailLoading = $state(false);
 	let detailError = $state<string | null>(null);
 	let detail = $state<PerformanceAssessmentRecord | null>(null);
+	let csvDownloadUrl = $state<string | null>(null);
+	let csvLoading = $state(false);
 	let deleting = $state(false);
 	let pendingDetailId = $state<string | null>(null);
 
@@ -154,6 +156,7 @@
 		detailLoading = true;
 		detailError = null;
 		detail = null;
+		csvDownloadUrl = null;
 		if (options?.updateUrl !== false) {
 			await syncAssessmentId(id);
 		}
@@ -169,6 +172,9 @@
 			}
 			const payload = (await res.json()) as { record: PerformanceAssessmentRecord };
 			detail = payload.record;
+			if (detail.isFujinoCreated) {
+				await loadCsvDownloadLink(id);
+			}
 		} catch (err: unknown) {
 			detailError =
 				err instanceof Error && err.message
@@ -177,6 +183,24 @@
 		} finally {
 			pendingDetailId = null;
 			detailLoading = false;
+		}
+	}
+
+	async function loadCsvDownloadLink(id: string) {
+		if (!orgId) return;
+		csvLoading = true;
+		csvDownloadUrl = null;
+		try {
+			const res = await fetch(
+				`/api/gps-conditioning/performance-assessments/${encodeURIComponent(id)}/csv?orgId=${encodeURIComponent(orgId)}`,
+			);
+			if (!res.ok) throw new Error(await res.text());
+			const payload = (await res.json()) as { url?: string | null };
+			csvDownloadUrl = payload.url ?? null;
+		} catch {
+			csvDownloadUrl = null;
+		} finally {
+			csvLoading = false;
 		}
 	}
 
@@ -446,6 +470,22 @@
 							>
 								{$t('gps.assessments.spreadsheet')}
 							</a>
+						{/if}
+						{#if csvDownloadUrl}
+							<a
+								href={csvDownloadUrl}
+								target="_blank"
+								rel="noreferrer"
+								class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+							>
+								{$t('gps.assessments.csvDownload')}
+							</a>
+						{:else if csvLoading}
+							<span
+								class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-400"
+							>
+								{$t('gps.assessments.csvChecking')}
+							</span>
 						{/if}
 						<button
 							type="button"

@@ -149,6 +149,31 @@ enum BlockingState {
   NON_BLOCKING
 }
 
+type BulkMessageError {
+  message: String!
+}
+
+type BulkMessageResult {
+  errors: [BulkMessageError!]!
+  failureCount: Int!
+  successCount: Int!
+}
+
+enum BulkThreadCreateRelatedEntityType {
+  organization
+  performance_assessment
+}
+
+input BulkThreadMessageCreate {
+  allowReply: Boolean
+  allowReplyUntil: String
+  message: String!
+  orgId: String!
+  relatedEntityId: String!
+  relatedEntityType: BulkThreadCreateRelatedEntityType!
+  type: ThreadType!
+}
+
 type CaptureOptions {
   metricDefinition(orgId: ID!): MetricDefinition
   metricDefinitionId: String!
@@ -436,6 +461,10 @@ enum DeviceType {
   GATE
 }
 
+input DropPersonSearchIndexInput {
+  orgId: ID!
+}
+
 type GatePathStep {
   captureOptions: CaptureOptions
   captureTimestamp: Boolean!
@@ -502,6 +531,12 @@ input LocalizedStringInputModifier {
 
 input LocalizedStringModifier {
   arrayOperation: LocalizedStringInputModifier
+}
+
+enum MessageNotificationFrequency {
+  EveryDay
+  EveryHour
+  Immediately
 }
 
 type MetadataEntry {
@@ -658,6 +693,7 @@ input MetricUpdate {
 type Mutation {
   addDatasetPermissionOrg(data: DatasetPermissionInput!): Org!
   autoRecordMetric(data: AutoRecordMetric!): Metric!
+  bulkCreateThreadMessages(data: BulkThreadMessageCreate!): BulkMessageResult!
   bulkSendResultEmailsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   consolidateMetricsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   createContentProvider(data: ContentProviderCreate!): ContentProvider!
@@ -669,6 +705,7 @@ type Mutation {
   createOrg(data: OrgCreate!): Org!
   createOrgMember(data: OrgMemberCreate!): OrgMember!
   createOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupCreate!): OrgPersonMetadataKeyGroup!
+  createOrgUser(data: OrgUserCreate!): OrgUser!
   createPerformanceAssessment(data: PerformanceAssessmentCreate!): PerformanceAssessment!
   createPerformanceAssessmentMetric(data: PerformanceAssessmentMetricCreate!): PerformanceAssessmentMetric!
   createPerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantCreate!): PerformanceAssessmentParticipant!
@@ -680,6 +717,7 @@ type Mutation {
   createPersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemCreate!): PersonMetadataKeyGroupItem!
   createReference(data: ReferenceCreate!): Reference!
   createScoreProvider(data: ScoreProviderCreate!): ScoreProvider!
+  createThreadMessage(data: ThreadMessageCreate!): ThreadMessage!
   createUser(data: UserCreate!): User!
   deleteContentProvider(data: InputDelete!): ContentProvider!
   deleteContentSubscription(data: InputDelete!): ContentSubscription!
@@ -690,6 +728,7 @@ type Mutation {
   deleteOrg(data: InputDelete!): Org!
   deleteOrgMember(data: InputDelete!): OrgMember!
   deleteOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupDelete!): OrgPersonMetadataKeyGroup!
+  deleteOrgUser(data: InputDelete!): OrgUser!
   deletePerformanceAssessment(data: InputDelete!): PerformanceAssessment!
   deletePerformanceAssessmentMetric(data: InputDelete!): PerformanceAssessmentMetric!
   deletePerformanceAssessmentParticipant(data: InputDelete!): PerformanceAssessmentParticipant!
@@ -700,9 +739,26 @@ type Mutation {
   deletePersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemDelete!): PersonMetadataKeyGroupItem!
   deleteReference(data: InputDelete!): Reference!
   deleteScoreProvider(data: InputDelete!): ScoreProvider!
+  deleteThread(data: ThreadDelete!): Thread!
   deleteUser(data: UserDelete!): User!
+  dropPersonSearchIndex(data: DropPersonSearchIndexInput!): Boolean!
+  ensureThread(data: ThreadCreate!): Thread!
   exportPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  joinThread(data: ThreadParticipationUpdate!): Thread!
+  joinThreadForUser(data: ThreadParticipationOverride!): Thread!
+  leaveThread(data: ThreadParticipationUpdate!): Thread!
+  leaveThreadForUser(data: ThreadParticipationOverride!): Thread!
+  lockThread(data: ThreadUpdate!): Thread!
+  myCreateThreadMessage(data: ThreadMessageCreate!): ThreadMessage!
+  myEnsureThread(data: ThreadCreate!): Thread!
+  myJoinThread(data: ThreadParticipationUpdate!): Thread!
+  myLeaveThread(data: ThreadParticipationUpdate!): Thread!
+  myRegisterFcmToken(data: UserFcmTokenCreate!): UserFcmToken!
+  myRemoveFcmToken(data: UserFcmTokenDelete!): UserFcmToken
+  myUpdateUserPreferences(data: UserPreferencesUpdateInput!): UserPreferences!
+  publicCreatePerformanceAssessmentParticipant(data: PublicPerformanceAssessmentParticipantCreate!): PublicPerformanceAssessmentParticipant!
   rebuildCachePerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  reloadPersonSearchIndex(data: ReloadPersonSearchIndexInput!): Boolean!
   removeDatasetPermissionOrg(data: DatasetPermissionInput!): Org!
   scheduleScorePerformanceAssessment(data: InputDetail!): PerformanceAssessment!
   scoreMetric(data: InputDetail!): Metric!
@@ -715,10 +771,10 @@ type Mutation {
   updateDeviceInputConfig(data: DeviceInputConfigUpdate!): DeviceInputConfig!
   updateMetric(data: MetricUpdate!): Metric!
   updateMetricDefinition(data: MetricDefinitionUpdate!): MetricDefinition!
-  updateMyUserPreferences(data: UserPreferencesUpdateInput!): UserPreferences!
   updateOrg(data: OrgUpdate!): Org!
   updateOrgMember(data: OrgMemberUpdate!): OrgMember!
   updateOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupUpdate!): OrgPersonMetadataKeyGroup!
+  updateOrgUser(data: OrgUserUpdate!): OrgUser!
   updatePerformanceAssessment(data: PerformanceAssessmentUpdate!): PerformanceAssessment!
   updatePerformanceAssessmentMetric(data: PerformanceAssessmentMetricUpdate!): PerformanceAssessmentMetric!
   updatePerformanceAssessmentParticipant(data: PerformanceAssessmentParticipantUpdate!): PerformanceAssessmentParticipant!
@@ -730,11 +786,18 @@ type Mutation {
   updateReference(data: ReferenceUpdate!): Reference!
   updateScoreProvider(data: ScoreProviderUpdate!): ScoreProvider!
   updateUser(data: UserUpdate!): User!
+  uploadPersonPhoto(data: UploadPersonPhotoInput!): Person!
   upsertPerson(data: PersonCreate!): Person!
+}
+
+input MyPerformanceAssessmentParticipantsInput {
+  orgId: String
+  orgUniqueToken: String!
 }
 
 type Org {
   address: String!
+  chatEnabled: Boolean
   createdAt: DateTime!
   datasetAccessPermissions: [String!]
   defaultLocale: String
@@ -752,6 +815,7 @@ type Org {
 
 input OrgCreate {
   address: String!
+  chatEnabled: Boolean
   defaultLocale: String
   email: String!
   name: String!
@@ -872,9 +936,73 @@ input OrgPersonMetadataKeyGroupUpdate {
 }
 
 input OrgUpdate {
+  chatEnabled: Boolean
   defaultLocale: String
   id: ID!
   referenceLevels: [String!]
+}
+
+type OrgUser {
+  createdAt: DateTime!
+  id: ID!
+  org: Org!
+  orgId: String!
+  personIds: [String!]
+  persons: [Person!]
+  relationship: String
+  threads: [Thread!]
+  updatedAt: DateTime!
+  user: User
+  userId: String!
+}
+
+input OrgUserCreate {
+  email: String
+  orgId: ID!
+  personIds: [String!]
+  relationship: String
+  userId: ID
+}
+
+input OrgUserGet {
+  id: ID!
+}
+
+input OrgUserList {
+  conditions: OrgUserListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input OrgUserListConditions {
+  orgId: ID!
+  userId: ID
+}
+
+type OrgUserListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [OrgUser!]!
+}
+
+input OrgUserPersonIdsModifier {
+  insert: [String!]
+  remove: [String!]
+  replaceWith: [String!]
+}
+
+input OrgUserPersonIdsOperation {
+  arrayOperation: OrgUserPersonIdsModifier
+}
+
+input OrgUserUpdate {
+  id: ID!
+  personIds: OrgUserPersonIdsOperation
+  relationship: String
 }
 
 input PageOption {
@@ -894,6 +1022,7 @@ type PerformanceAssessment {
   id: ID!
   inProgressExport: Boolean
   inProgressSyncSheet: Boolean
+  isPublicLive: Boolean!
   lastDirtyUpdatedAt: DateTime
   metadata: [MetadataEntry!]
   metrics: [PerformanceAssessmentMetric!]!
@@ -901,6 +1030,9 @@ type PerformanceAssessment {
   orgId: String
   participants: [PerformanceAssessmentParticipant!]!
   participantsCount: Float!
+  publicAccessExpiresAt: String
+  publicAccessQrCode: String
+  publicAccessUrl: String
   ready: Boolean!
   referenceLevel: String
   shouldFinalize: Boolean!
@@ -917,6 +1049,7 @@ input PerformanceAssessmentCreate {
   metadata: [MetadataEntryInput!]
   name: String!
   orgId: String
+  publicAccessExpiresAt: String
   referenceLevel: String
   spreadsheetUrl: String
 }
@@ -987,6 +1120,7 @@ type PerformanceAssessmentParticipant {
   number: Float
   orgId: String!
   orgUniqueToken: String
+  performanceAssessment: PerformanceAssessment!
   performanceAssessmentId: String!
   person: Person
   personId: String
@@ -1012,6 +1146,28 @@ input PerformanceAssessmentParticipantCreate {
   teamRank: String
 }
 
+input PerformanceAssessmentParticipantList {
+  conditions: PerformanceAssessmentParticipantListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input PerformanceAssessmentParticipantListConditions {
+  orgId: String!
+  orgUniqueToken: String!
+  performanceAssessmentId: String
+}
+
+type PerformanceAssessmentParticipantListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [PerformanceAssessmentParticipant!]!
+}
+
 input PerformanceAssessmentParticipantUpdate {
   attr1: String
   attr2: String
@@ -1024,6 +1180,13 @@ input PerformanceAssessmentParticipantUpdate {
   metadata: [MetadataEntryInput!]
   number: Float
   teamRank: String
+}
+
+type PerformanceAssessmentPublic {
+  date: String!
+  description: String
+  id: ID!
+  name: String!
 }
 
 type PerformanceAssessmentTemplate {
@@ -1104,9 +1267,11 @@ input PerformanceAssessmentTemplateUpdate {
 
 input PerformanceAssessmentUpdate {
   date: String
+  description: String
   id: ID!
   metadata: [MetadataEntryInput!]
   name: String
+  publicAccessExpiresAt: String
   ready: Boolean
   referenceLevel: String
   spreadsheetUrl: String
@@ -1133,6 +1298,8 @@ type Person {
   metadata: [MetadataEntry!]
   orgId: String!
   orgUniqueToken: String!
+  orgUsers: [OrgUser!]
+  photoUrl(size: PhotoSize): String
   sex: PersonSex
   teamRank: String @deprecated(reason: "Use metadata instead.")
   updatedAt: DateTime!
@@ -1342,11 +1509,27 @@ input PersonUpdate {
   teamRank: String
 }
 
+enum PhotoSize {
+  LARGE
+  SMALL
+}
+
+type PublicPerformanceAssessmentParticipant {
+  id: ID!
+}
+
+input PublicPerformanceAssessmentParticipantCreate {
+  birthday: String!
+  fullName: String!
+  performanceAssessmentId: ID!
+}
+
 type Query {
   analytics(data: AnalyticsRequest!): AnalyticsResponse!
   anonymize(data: AnonymizeDto!): AnonymizeResultDto!
   getContentProvider(data: InputDetail!): ContentProvider!
   getContentSubscription(data: InputDetail!): ContentSubscription!
+  getContextualThread(data: ThreadContextGet!): Thread
   getDeviceInputConfig(data: DeviceInputConfigGet!): DeviceInputConfig!
   getDeviceToken(data: InputDetail!): DeviceToken!
   getMetric(data: InputDetail!): Metric!
@@ -1354,7 +1537,9 @@ type Query {
   getOrg(data: InputDetail!): Org!
   getOrgMember(data: InputDetail!): OrgMember!
   getOrgPersonMetadataKeyGroup(data: OrgPersonMetadataKeyGroupGet!): OrgPersonMetadataKeyGroup!
+  getOrgUser(data: OrgUserGet!): OrgUser!
   getPerformanceAssessment(data: InputDetail!): PerformanceAssessment!
+  getPerformanceAssessmentParticipant(data: InputDetail!): PerformanceAssessmentParticipant!
   getPerformanceAssessmentTemplate(data: PerformanceAssessmentTemplateGet!): PerformanceAssessmentTemplate!
   getPerson(data: InputDetail!): Person!
   getPersonMetadataKey(data: PersonMetadataKeyGet!): PersonMetadataKey!
@@ -1362,6 +1547,7 @@ type Query {
   getPersonMetadataKeyGroupItem(data: PersonMetadataKeyGroupItemGet!): PersonMetadataKeyGroupItem!
   getReference(data: InputDetail!): Reference!
   getScoreProvider(data: InputDetail!): ScoreProvider!
+  getThread(data: ThreadGet!): Thread!
   getUser(data: UserGet!): User!
   listContentProviders(data: ContentProviderList): ContentProviderListPage!
   listContentSubscriptions(data: ContentSubscriptionList): ContentSubscriptionListPage!
@@ -1370,7 +1556,9 @@ type Query {
   listMetricDefinitions(data: MetricDefinitionList!): MetricDefinitionListPage!
   listOrgMembers(data: OrgMemberList!): OrgMemberListPage!
   listOrgPersonMetadataKeyGroups(data: OrgPersonMetadataKeyGroupList!): OrgPersonMetadataKeyGroupListPage!
+  listOrgUsers(data: OrgUserList!): OrgUserListPage!
   listOrgs(data: OrgList!): OrgListPage!
+  listPerformanceAssessmentParticipants(data: PerformanceAssessmentParticipantList!): PerformanceAssessmentParticipantListPage!
   listPerformanceAssessmentTemplates(data: PerformanceAssessmentTemplateList!): PerformanceAssessmentTemplateListPage!
   listPerformanceAssessments(data: PerformanceAssessmentList!): PerformanceAssessmentListPage!
   listPersonMetadataKeyGroupItems(data: PersonMetadataKeyGroupItemList): PersonMetadataKeyGroupItemListPage!
@@ -1379,8 +1567,28 @@ type Query {
   listPersons(data: PersonList!): PersonListPage!
   listReferences(data: ReferenceList!): ReferenceListPage!
   listScoreProviders(data: ScoreProviderList!): ScoreProviderListPage!
+  listThreadMessages(data: ThreadMessageList!): ThreadMessageListPage!
+  listThreads(data: ThreadList!): ThreadListPage!
   listUsers: [User!]!
-  myUserPreferences: UserPreferences
+  myGetContextualThread(data: ThreadContextGet!): Thread
+  myGetOrgUser(data: OrgUserGet!): OrgUser!
+  myGetPerformanceAssessmentParticipant(data: InputDetail!): PerformanceAssessmentParticipant!
+  myGetThread(data: ThreadGet!): Thread!
+  myGetUserPreferences: UserPreferences
+  myListFcmTokens: [UserFcmToken!]!
+  myListOrgUsers: [OrgUser!]!
+  myListPerformanceAssessmentParticipants(data: MyPerformanceAssessmentParticipantsInput!): [PerformanceAssessmentParticipant!]!
+  myListThreadMessages(data: ThreadMessageList!): ThreadMessageListPage!
+  myListThreads(data: ThreadList!): ThreadListPage!
+  publicGetPerformanceAssessment(data: InputDetail!): PerformanceAssessmentPublic!
+  queryPersonSearchIndex(data: QueryPersonSearchIndexInput!): [Person!]!
+}
+
+input QueryPersonSearchIndexInput {
+  limit: Float = 20
+  offset: Float = 0
+  orgId: ID!
+  q: String!
 }
 
 type ReadyCondition {
@@ -1440,6 +1648,27 @@ input ReferenceUpdate {
   std: Float
 }
 
+type RelatedEntity {
+  id: String!
+  name: String
+  type: RelatedEntityType!
+}
+
+input RelatedEntityInput {
+  id: String!
+  name: String
+  type: RelatedEntityType!
+}
+
+enum RelatedEntityType {
+  performance_assessment
+  performance_assessment_participant
+}
+
+input ReloadPersonSearchIndexInput {
+  orgId: ID!
+}
+
 type ScoreProvider {
   createdAt: DateTime!
   formula: String!
@@ -1495,6 +1724,141 @@ enum SystemRole {
   GOD
 }
 
+type Thread {
+  createdAt: DateTime!
+  createdBy: String!
+  entityId: String
+  entityType: String
+  id: ID!
+  lastActivityAt: DateTime!
+  lastMessage: ThreadMessage
+  lockAt: String
+  locked: Boolean!
+  lockedBy: String
+  orgId: String!
+  participants: [String!]!
+  person: Person
+  relatedEntities: [RelatedEntity!]
+  type: ThreadType!
+  unlockedBy: String
+  updatedAt: DateTime!
+  users: [User!]
+}
+
+input ThreadContextGet {
+  entityId: String!
+  entityType: String!
+  orgId: String!
+}
+
+input ThreadCreate {
+  lockAt: String
+  locked: Boolean
+  orgId: String!
+  participants: [String!]!
+  relatedEntities: [RelatedEntityInput!]
+  type: ThreadType!
+}
+
+input ThreadDelete {
+  id: ID!
+}
+
+input ThreadGet {
+  id: ID!
+}
+
+input ThreadList {
+  conditions: ThreadListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input ThreadListConditions {
+  entityId: String
+  entityType: String
+  locked: Boolean
+  orgId: ID
+  participantId: ID
+  type: ThreadType
+}
+
+type ThreadListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [Thread!]!
+}
+
+type ThreadMessage {
+  body: String!
+  createdAt: DateTime!
+  id: ID!
+  senderId: String!
+  senderUser: User
+  systemCode: String
+  threadId: ID!
+  type: ThreadMessageType
+  updatedAt: DateTime!
+}
+
+input ThreadMessageCreate {
+  body: String!
+  threadId: ID!
+}
+
+input ThreadMessageList {
+  pageOption: PageOption
+  threadId: ID!
+}
+
+type ThreadMessageListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [ThreadMessage!]!
+}
+
+enum ThreadMessageType {
+  system
+  user
+}
+
+input ThreadParticipationOverride {
+  id: ID!
+  userId: ID!
+}
+
+input ThreadParticipationUpdate {
+  id: ID!
+}
+
+enum ThreadType {
+  contextual
+  dm
+}
+
+input ThreadUpdate {
+  id: ID!
+  lockAt: String
+  locked: Boolean
+}
+
+input UploadPersonPhotoInput {
+  """
+  Base64-encoded PNG/JPG image (data URI prefix optional). Max 1MB decoded (~1,398,104 base64 chars).
+  """
+  imageBase64: String!
+  orgId: String!
+  personId: ID!
+}
+
 type User {
   contact: String!
   customClaims: CustomClaims
@@ -1518,6 +1882,26 @@ input UserDelete {
   id: ID!
 }
 
+type UserFcmToken {
+  createdAt: DateTime!
+  deviceId: String
+  id: ID!
+  platform: String
+  token: String!
+  updatedAt: DateTime!
+  userId: ID!
+}
+
+input UserFcmTokenCreate {
+  deviceId: String
+  platform: String
+  token: String!
+}
+
+input UserFcmTokenDelete {
+  token: String!
+}
+
 input UserGet {
   email: String
   phoneNumber: String
@@ -1530,10 +1914,12 @@ input UserInput {
 }
 
 type UserPreferences {
+  messageNotificationFrequency: MessageNotificationFrequency
   preferredLocale: String
 }
 
 input UserPreferencesUpdateInput {
+  messageNotificationFrequency: MessageNotificationFrequency
   preferredLocale: String
 }
 

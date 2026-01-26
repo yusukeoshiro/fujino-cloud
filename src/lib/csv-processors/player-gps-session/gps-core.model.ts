@@ -16,47 +16,21 @@ export interface GpsCore {
 	maxSpeedKMH: number;
 
 	noOfHSR: number;
-	HSRDistanceM: number;
+	hsrDistanceM: number;
 
-	noOfSprint: number;
+	sprintCount: number;
 	sprintDistanceM: number;
-	speedZone1DistanceM: number;
-	speedZone3DistanceM: number;
-	speedZone4DistanceM: number;
-	speedZone5DistanceM: number;
-	speedZone6DistanceM: number;
-	speedZone7DistanceM: number;
-	speedZone8DistanceM: number;
-	speedZone9DistanceM: number;
+	highIntensityDistanceM: number;
+	lowIntensityDistanceM: number;
 
-	accelerationZone4EntryCount: number;
-	accelerationZone5EntryCount: number;
-	accelerationZone6EntryCount: number;
+	accelerationCountTotal: number;
+	decelerationCountTotal: number;
 
-	decelerationZone4EntryCount: number;
-	decelerationZone5EntryCount: number;
-	decelerationZone6EntryCount: number;
-
-	noOfExpAcc: number;
-	noOfExpDec: number;
+	expAccCount: number;
+	expDecCount: number;
 }
 
 export interface DerivedMetrics {
-	highIntensityM: number;
 	highIntensityRate: number;
-	walkingRate: number;
-	accelerationCountTotal: number;
-	decelerationCountTotal: number;
-}
-
-export function computeDerived(core: GpsCore): DerivedMetrics {
-	const highIntensityM = core.speedZone8DistanceM + core.speedZone9DistanceM;
-
-	return {
-		highIntensityM,
-		highIntensityRate: highIntensityM / core.totalDistanceM,
-		walkingRate: core.speedZone1DistanceM / core.totalDistanceM,
-		accelerationCountTotal: core.accelerationZone5EntryCount + core.accelerationZone6EntryCount,
-		decelerationCountTotal: core.decelerationZone5EntryCount + core.decelerationZone6EntryCount,
-	};
+	lowIntensityRate: number;
 }

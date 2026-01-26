@@ -1,29 +1,88 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { COLUMNS, FOOTER_COLS, HEADER_COLS } from './utils/headers.util';
+	import type { PageData } from './$types';
+	import { HEADER_COLS } from './utils/headers.util';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import {
+		CSV_VENDOR_FORMATS,
+		DEFAULT_CSV_VENDOR_FORMAT,
+		type CsvVendorFormat,
+	} from '$lib/csv-processors/vendor-formats';
+
+	let { data }: { data: PageData } = $props();
 
 	const orgId = page.params.oid;
 	const stickyLeft =
 		'sticky left-20 z-20 bg-gray-50 after:absolute after:inset-y-0 after:-right-px after:w-px after:bg-gray-200';
-	const stickyRight =
-		'sticky right-0 z-20 bg-gray-50 before:absolute before:inset-y-0 before:-left-px before:w-px before:bg-gray-200';
 
 	function colStickyClass(col: string) {
 		if (HEADER_COLS.includes(col)) return stickyLeft;
-		if (FOOTER_COLS.includes(col)) return stickyRight;
 		return '';
 	}
 
-	function fmt(v: unknown): string {
+	function formatNumber(value: number, precision: number | undefined) {
+		const digits = typeof precision === 'number' ? precision : 0;
+		const factor = 10 ** digits;
+		const rounded = Math.round(value * factor) / factor;
+		return rounded.toLocaleString($locale, {
+			minimumFractionDigits: digits,
+			maximumFractionDigits: digits,
+		});
+	}
+
+	function unitLabel(unit?: string): string {
+		switch (unit) {
+			case 'CENTIMETER':
+				return 'cm';
+			case 'KILOGRAM':
+				return 'kg';
+			case 'COUNT':
+				return '回';
+			case 'PERCENT':
+				return '%';
+			case 'METER':
+				return 'm';
+			case 'SECOND':
+				return 's';
+			case 'MINUTE':
+				return 'min';
+			case 'HOUR':
+				return 'h';
+			case 'KMPH':
+				return 'km/h';
+			default:
+				return '';
+		}
+	}
+
+	function labelWithUnit(col: UploadPreviewColumn): string {
+		const unit = unitLabel(col.unit);
+		if (!unit) return col.label;
+		if (col.label.includes(`(${unit})`)) return col.label;
+		return `${col.label} (${unit})`;
+	}
+
+	function fmt(v: unknown, col?: UploadPreviewColumn): string {
 		if (v === null || v === undefined || v === '') return '—';
-		if (typeof v === 'number' && Number.isFinite(v)) return v.toLocaleString($locale);
+		if (typeof v === 'number' && Number.isFinite(v)) {
+			const unit = col?.unit;
+			const precision = col?.roundingPrecision;
+			const raw = unit === 'PERCENT' ? v * 100 : v;
+			const formatted = formatNumber(raw, precision);
+			return unit === 'PERCENT' ? `${formatted}%` : formatted;
+		}
 		return String(v);
 	}
 
 	type UploadPreviewRecord = Record<string, unknown> & { __rowIndex: number };
+	type UploadPreviewColumn = {
+		key: string;
+		label: string;
+		unit?: string;
+		roundingPrecision?: number;
+	};
 	type UploadPreviewRow = {
 		record: UploadPreviewRecord;
 		selected: boolean;
@@ -31,7 +90,9 @@
 	type UploadPreviewResponse = {
 		rows: number;
 		headers: string[];
+		columns: UploadPreviewColumn[];
 		records: UploadPreviewRecord[];
+		inferredSessionDate?: string | null;
 	};
 
 	let isOver = $state(false);
@@ -45,6 +106,11 @@
 		{ value: 'game', labelKey: 'gps.upload.type.game' },
 	];
 	let gpsCategory = $state<GpsCategory>('training');
+	let sessionDate = $state<string>('');
+	let vendorFormat = $state<CsvVendorFormat>(
+		data.defaultCsvVendorFormat ?? DEFAULT_CSV_VENDOR_FORMAT,
+	);
+	const vendorFormatOptions = CSV_VENDOR_FORMATS;
 	let rowSelections = $state<Record<number, boolean>>({});
 	let bulkSelectCheckbox: HTMLInputElement | null = $state(null);
 
@@ -108,6 +174,10 @@
 			const fd = new FormData();
 			fd.append('file', file);
 			fd.append('gpsCategory', gpsCategory);
+			fd.append('vendorFormat', vendorFormat);
+			if (sessionDate) {
+				fd.append('sessionDate', sessionDate);
+			}
 
 			const res = await fetch(
 				`/api/gps-conditioning/csv/preview?orgId=${encodeURIComponent(orgId)}`,
@@ -129,6 +199,9 @@
 			}
 			const payload = (await res.json()) as UploadPreviewResponse;
 			result = payload;
+			if (!sessionDate && payload.inferredSessionDate) {
+				sessionDate = payload.inferredSessionDate;
+			}
 			rowSelections = buildInitialSelections(payload.records);
 		} catch (e: unknown) {
 			const details: string[] = [];
@@ -226,12 +299,18 @@
 			setError(translate('gps.upload.orgMissing'));
 			return;
 		}
+		if (!sessionDate) {
+			setError(translate('gps.upload.dateRequired'));
+			return;
+		}
 		committing = true; // ✅ start spinner
 		setError(null);
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
 			fd.append('gpsCategory', gpsCategory);
+			fd.append('vendorFormat', vendorFormat);
+			fd.append('sessionDate', sessionDate);
 			const selectedRowIndices = Object.entries(rowSelections)
 				.filter(([, selected]) => selected)
 				.map(([index]) => Number(index))
@@ -282,6 +361,7 @@
 
 	const allRowsSelected = $derived(rows.length > 0 && rows.every((row) => row.selected));
 	const someRowsSelected = $derived(rows.some((row) => row.selected) && !allRowsSelected);
+	const columns = $derived(result?.columns ?? []);
 
 	$effect(() => {
 		if (bulkSelectCheckbox) {
@@ -342,6 +422,27 @@
 				</button>
 			{/each}
 		</div>
+		<div class="mt-3 grid gap-3 sm:grid-cols-2">
+			<label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+				<span>{$t('gps.upload.sessionDate')}</span>
+				<input
+					type="date"
+					class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+					bind:value={sessionDate}
+				/>
+			</label>
+			<label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+				<span>{$t('gps.upload.vendorFormat')}</span>
+				<select
+					class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+					bind:value={vendorFormat}
+				>
+					{#each vendorFormatOptions as option (option)}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			</label>
+		</div>
 	</div>
 
 	{#if !result}
@@ -372,7 +473,9 @@
 	{#if result}
 		<div class="mt-6 space-y-1">
 			<h2 class="text-lg font-semibold">{$t('gps.upload.analysisTitle')}</h2>
-			<p class="text-sm text-slate-600">{$t('gps.upload.analysisDetected')}</p>
+			<p class="text-sm text-slate-600">
+				{$t('gps.upload.analysisDetected', { format: vendorFormat })}
+			</p>
 		</div>
 	{/if}
 
@@ -446,13 +549,13 @@
 										<nobr>{$t('gps.upload.includeInCalc')}</nobr>
 									</div>
 								</th>
-								{#each COLUMNS as col (col)}
+								{#each columns as col (col.key)}
 									<th
 										class={'px-3 py-2 text-left font-semibold whitespace-nowrap text-slate-700 ' +
-											colStickyClass(col)}
+											colStickyClass(col.key)}
 									>
 										<nobr>
-											{col}
+											{labelWithUnit(col)}
 										</nobr>
 									</th>
 								{/each}
@@ -471,10 +574,10 @@
 											aria-label={$t('gps.upload.includePlayer')}
 										/>
 									</td>
-									{#each COLUMNS as col (col)}
-										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col)}>
+									{#each columns as col (col.key)}
+										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col.key)}>
 											<nobr>
-												{fmt(row.record[col])}
+												{fmt(row.record[col.key], col)}
 											</nobr>
 										</td>
 									{/each}

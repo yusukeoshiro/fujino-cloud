@@ -1,5 +1,5 @@
-import { DISPLAY_COLS } from '../upload/utils/headers.util';
-import { METRIC_DEFINITION_IDS } from '$lib/constants/metric-definition-ids';
+import { INTERMEDIATE_SCHEMA_COLS } from '../upload/utils/headers.util';
+import { buildMetricLabels } from '$lib/contents-provider/metric-labels';
 import type { GameScoreValueEntry } from '$lib/services/game-score.service';
 
 export type ColumnSection = 'display' | 'footer';
@@ -14,45 +14,22 @@ export type GameScoreColumn = {
 
 export type GameScoreValues = Record<string, string>;
 
-const METRIC_ID_BY_LABEL: Record<string, string> = {
-	'継続時間(分)': METRIC_DEFINITION_IDS.durationMin,
-	'総走行距離(m)': METRIC_DEFINITION_IDS.totalDistanceM,
-	'1分当たり距離(m/min)': METRIC_DEFINITION_IDS.totalDistancePerMin,
-	'最高速度(km/h)': METRIC_DEFINITION_IDS.maxSpeedKMH,
-	'高強度距離(m)': METRIC_DEFINITION_IDS.highIntensityM,
-	高強度割合: METRIC_DEFINITION_IDS.highIntensityRate,
-	スプリント回数: METRIC_DEFINITION_IDS.noOfSprint,
-	'スプリント距離(m)': METRIC_DEFINITION_IDS.sprintDistanceM,
-	'Z1距離(m)': METRIC_DEFINITION_IDS.speedZone1DistanceM,
-	'Z6距離(m)': METRIC_DEFINITION_IDS.speedZone6DistanceM,
-	'Z7距離(m)': METRIC_DEFINITION_IDS.speedZone7DistanceM,
-	'Z8距離(m)': METRIC_DEFINITION_IDS.speedZone8DistanceM,
-	'Z9距離(m)': METRIC_DEFINITION_IDS.speedZone9DistanceM,
-	ウォーキング割合: METRIC_DEFINITION_IDS.walkingRate,
-	加速Z5回数: METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
-	加速Z6回数: METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
-	加速合計回数: METRIC_DEFINITION_IDS.accelerationCountTotal,
-	爆発的加速回数: METRIC_DEFINITION_IDS.noOfExpAcc,
-	減速Z5回数: METRIC_DEFINITION_IDS.decelerationZone5EntryCount,
-	減速Z6回数: METRIC_DEFINITION_IDS.decelerationZone6EntryCount,
-	減速合計回数: METRIC_DEFINITION_IDS.decelerationCountTotal,
-	爆発的減速回数: METRIC_DEFINITION_IDS.noOfExpDec,
-	// 'トレーニングスコア消費': METRIC_DEFINITION_IDS.trainingScoreConsumption
-};
-
-const createColumns = (labels: string[], section: ColumnSection): GameScoreColumn[] =>
-	labels.map((label) => {
-		const metricDefinitionId = METRIC_ID_BY_LABEL[label];
+const metricNameById = buildMetricLabels();
+const createColumns = (metricDefinitionIds: string[], section: ColumnSection): GameScoreColumn[] =>
+	metricDefinitionIds.map((metricDefinitionId) => {
+		const label = metricNameById.get(metricDefinitionId) ?? metricDefinitionId;
 		return {
 			label,
-			key: metricDefinitionId ?? label,
+			key: metricDefinitionId,
 			metricDefinitionId,
 			section,
 			isNumeric: true,
 		};
 	});
 
-export const GAME_SCORE_COLUMNS: GameScoreColumn[] = [...createColumns(DISPLAY_COLS, 'display')];
+export const GAME_SCORE_COLUMNS: GameScoreColumn[] = [
+	...createColumns(INTERMEDIATE_SCHEMA_COLS, 'display'),
+];
 
 export const createEmptyValues = (): GameScoreValues =>
 	Object.fromEntries(GAME_SCORE_COLUMNS.map((column) => [column.key, '']));

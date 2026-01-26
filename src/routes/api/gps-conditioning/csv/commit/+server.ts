@@ -1,21 +1,17 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
-import { parse } from 'csv-parse/sync';
 import { DateTime } from 'luxon';
 import {
 	AutoRecordMetricMutateStore,
 	CreatePerformanceAssessmentParticipantStore,
 	CreatePerformanceAssessmentWrapperStore,
 	ExportPerformanceAssessmentStore,
-	ListPersonsStore,
 } from '$houdini';
-import { FIELD_ID_MAP, trainigMetricDefinitionIds } from '$lib/training-cols';
-import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
-import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
-import {
-	FitogetherCsvProcessor,
-	buildUnmatchedPersonsResponse,
-} from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
-import type { SessionType } from '$lib/csv-processors/player-gps-session/gps-core.model';
+import { trainigMetricDefinitionIds } from '$lib/training-cols';
+import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
+import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
+import { getAdminStorage } from '$lib/admin-firebase';
+import { buildCsvParseResult, parseForm, resolveVendorFormat } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -25,75 +21,42 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const form = await request.formData();
-	const file = form.get('file');
-	const sessionType = resolveSessionType(form);
-	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
+	const { file, sessionType, selectedRowIndexSet, sessionDate, vendorFormat } = parseForm(form);
+	if (!file) return new Response('No file field named "file".', { status: 400 });
+	if (!sessionDate) return new Response('sessionDate is required.', { status: 400 });
 
-	const selectedRowIndicesRaw = form.get('selectedRowIndices');
-	let selectedRowIndexSet: Set<number> | null = null;
-	if (typeof selectedRowIndicesRaw === 'string' && selectedRowIndicesRaw.trim().length > 0) {
-		try {
-			const parsed = JSON.parse(selectedRowIndicesRaw) as unknown;
-			if (Array.isArray(parsed)) {
-				selectedRowIndexSet = new Set(
-					parsed
-						.map((value) => Number(value))
-						.filter((value) => Number.isInteger(value) && value >= 0),
-				);
-			}
-		} catch (err) {
-			console.log('Failed to parse selectedRowIndices', err);
-		}
-	}
+	const requestedVendorFormat = await resolveVendorFormat(orgId, vendorFormat);
 
-	const listUsersStore = new ListPersonsStore();
-	const personsResult = await listUsersStore.fetch({
+	const {
+		parsers: parsedRows,
+		unmatched,
+		vendorFormat: resolvedVendorFormat,
+		headers,
+	} = await buildCsvParseResult({
 		event,
-		variables: {
-			orgId,
-		},
-	});
-	const persons = personsResult.data?.listPersons?.records ?? [];
-
-	const baselineDocument = await gameScoreService.getByOrgId(orgId);
-	if (!baselineDocument) {
-		throw error(404, `ゲームスコア基準値が未設定です (orgId=${orgId})`);
-	}
-	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
-
-	const text = await file.text();
-	const rawRecords = parse(text, {
-		columns: true,
-		skip_empty_lines: true,
-		bom: true,
-		relax_column_count: true,
-	}) as Array<Record<string, string>>;
-
-	const originalHeaders =
-		rawRecords.length > 0
-			? Object.keys(rawRecords[0])
-			: (text
-					.split(/\r?\n/)[0]
-					?.split(',')
-					.map((h) => h.trim()) ?? []);
-
-	const processor = new FitogetherCsvProcessor({
-		rawRecords,
-		originalHeaders,
-		persons,
-	});
-
-	const { parsers: parsedRows, unmatched } = processor.process({
-		trainingBaseline,
+		orgId,
+		file,
 		fallbackBirthday: '2000-01-01',
+		vendorFormat: requestedVendorFormat,
+		sessionDate,
 	});
 
 	if (unmatched.length > 0) {
-		const response = buildUnmatchedPersonsResponse(unmatched);
+		const response =
+			resolvedVendorFormat === 'KNOWS_V1'
+				? buildKnowsUnmatchedPersonsResponse(
+						unmatched.map((item) => ({ row: item.row, playerName: item.playerName })),
+						headers,
+					)
+				: buildUnmatchedPersonsResponse(
+						unmatched.map((item) => ({
+							row: item.row,
+							playerName: item.playerName,
+							jerseyNo: 'jerseyNo' in item ? String(item.jerseyNo ?? '') : '',
+						})),
+					);
 		if (response) return response;
 	}
-
-	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 
 	if (parsedRows.length === 0) return new Response('File is empty.', { status: 400 });
 
@@ -101,8 +64,14 @@ export const POST: RequestHandler = async (event) => {
 		selectedRowIndexSet === null ? true : selectedRowIndexSet.has(index),
 	);
 
-	const dt = DateTime.fromFormat(parsedRows[0].date, 'yyyy-MM-dd');
+	const dt = DateTime.fromISO(sessionDate);
+	if (!dt.isValid) {
+		return new Response('sessionDate must be a valid yyyy-MM-dd date.', { status: 400 });
+	}
 	const sessionLabel = sessionType === 'GAME' ? 'ゲーム' : 'トレーニング';
+	const effectiveVendorFormat = resolvedVendorFormat;
+
+	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 
 	const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
 		{
@@ -115,6 +84,10 @@ export const POST: RequestHandler = async (event) => {
 						{
 							key: 'x-fujino-cloud-gps-type',
 							value: sessionType,
+						},
+						{
+							key: 'x-fujino-cloud-gps-format',
+							value: effectiveVendorFormat,
 						},
 					],
 				},
@@ -152,6 +125,16 @@ export const POST: RequestHandler = async (event) => {
 			{ headers: { 'content-type': 'application/json' }, status: 500 },
 		);
 	}
+
+	await uploadRawCsvToStorage({
+		orgId,
+		performanceAssessmentId,
+		vendorFormat: effectiveVendorFormat,
+		sessionDate: dt.toFormat('yyyy-MM-dd'),
+		sessionType,
+		file,
+		rowCount: parsedRows.length,
+	});
 
 	const createParticipant = new CreatePerformanceAssessmentParticipantStore();
 
@@ -203,16 +186,16 @@ export const POST: RequestHandler = async (event) => {
 	const autoRecord = new AutoRecordMetricMutateStore();
 
 	for (const record of parsedRows) {
-		const promises = Object.keys(FIELD_ID_MAP).map((key) =>
+		const metricValues = buildMetricValues(record);
+		const promises = trainigMetricDefinitionIds.map((metricDefinitionId) =>
 			autoRecord
 				.mutate(
 					{
 						data: {
 							orgUniqueToken: record.orgUniqueToken!,
-							metricDefinitionId: FIELD_ID_MAP[key],
+							metricDefinitionId,
 							performanceAssessmentId,
-							// eslint-disable-next-line @typescript-eslint/no-explicit-any
-							value: (record as any)[key],
+							value: metricValues[metricDefinitionId] ?? 0,
 							isOfficial: true,
 						},
 					},
@@ -224,12 +207,13 @@ export const POST: RequestHandler = async (event) => {
 					if (r.errors) {
 						console.error('Failed to auto record metric', {
 							fullName: record.fullName,
-							metricKey: key,
-							metricDefinitionId: FIELD_ID_MAP[key],
+							metricDefinitionId,
 							errors: r.errors,
 						});
 					} else {
-						console.log(`${record.fullName} ${key} is done with id ${r.data?.autoRecordMetric.id}`);
+						console.log(
+							`${record.fullName} ${metricDefinitionId} is done with id ${r.data?.autoRecordMetric.id}`,
+						);
 					}
 				}),
 		);
@@ -256,31 +240,36 @@ export const POST: RequestHandler = async (event) => {
 	return new Response(JSON.stringify({}));
 };
 
-function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
-	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
+async function uploadRawCsvToStorage(params: {
+	orgId: string;
+	performanceAssessmentId: string;
+	vendorFormat: string;
+	sessionDate: string;
+	sessionType: string;
+	file: File;
+	rowCount: number;
+}) {
+	const { orgId, performanceAssessmentId, vendorFormat, sessionDate, sessionType, file, rowCount } =
+		params;
 
-	const requiredValues = Object.entries(TRAINING_BASELINE_METRICS).map(([key, metricId]) => {
-		const raw = map.get(metricId);
-		const value = typeof raw === 'number' ? raw : Number(raw);
-		if (!Number.isFinite(value) || value <= 0) {
-			throw error(
-				400,
-				`ゲームスコア基準値 ${metricId} (${key}) が無効です。orgId=${orgId}, value=${raw}`,
-			);
-		}
-		return [key, value] as const;
-	});
-
-	return Object.fromEntries(requiredValues) as {
-		totalDistanceM: number;
-		highIntensityM: number;
-		accelerationCountTotal: number;
-		decelerationCountTotal: number;
+	const buffer = Buffer.from(await file.arrayBuffer());
+	const objectPath = `gps-conditioning/${orgId}/${performanceAssessmentId}/${performanceAssessmentId}.csv`;
+	const metadata = {
+		metadata: {
+			orgId,
+			performanceAssessmentId,
+			vendorFormat,
+			sessionDate,
+			sessionType,
+			originalFilename: file.name,
+			rowCount: String(rowCount),
+		},
+		contentType: file.type || 'text/csv',
 	};
-}
 
-function resolveSessionType(form: FormData): SessionType {
-	const raw = form.get('gpsCategory');
-	if (typeof raw === 'string' && raw.toLowerCase() === 'game') return 'GAME';
-	return 'TRAINING';
+	const bucket = getAdminStorage();
+	await bucket.file(objectPath).save(buffer, {
+		resumable: false,
+		...metadata,
+	});
 }

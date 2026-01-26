@@ -1,43 +1,15 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
-import { parse } from 'csv-parse/sync';
-import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
+import { DateTime } from 'luxon';
+import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
+import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
+import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
+import { buildMetricMeta } from '$lib/contents-provider/metric-labels';
 import {
-	METRIC_DEFINITION_IDS,
-	TRAINING_BASELINE_METRICS,
-} from '$lib/constants/metric-definition-ids';
-import { ListPersonsStore } from '$houdini';
-import {
-	FitogetherCsvProcessor,
-	buildUnmatchedPersonsResponse,
-} from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
-
-// Field → MetricDefinitionId map
-const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
-	'Duration (min)': METRIC_DEFINITION_IDS.durationMin,
-	'Total Distance (m)': METRIC_DEFINITION_IDS.totalDistanceM,
-	'Total Distance/min (m/min)': METRIC_DEFINITION_IDS.totalDistancePerMin,
-	'Max Speed (km/h)': METRIC_DEFINITION_IDS.maxSpeedKMH,
-	'No. of HSR (times)': undefined,
-	'HSR Distance (m)': undefined,
-	'No. of Sprint (times)': METRIC_DEFINITION_IDS.noOfSprint,
-	'Sprint Distance (m)': METRIC_DEFINITION_IDS.sprintDistanceM,
-	'Speed Zone 1 Distance (m)': METRIC_DEFINITION_IDS.speedZone1DistanceM,
-	'Speed Zone 3 Distance (m)': METRIC_DEFINITION_IDS.speedZone3DistanceM,
-	'Speed Zone 4 Distance (m)': METRIC_DEFINITION_IDS.speedZone4DistanceM,
-	'Speed Zone 5 Distance (m)': METRIC_DEFINITION_IDS.speedZone5DistanceM,
-	'Speed Zone 6 Distance (m)': METRIC_DEFINITION_IDS.speedZone6DistanceM,
-	'Speed Zone 7 Distance (m)': METRIC_DEFINITION_IDS.speedZone7DistanceM,
-	'Speed Zone 8 Distance (m)': METRIC_DEFINITION_IDS.speedZone8DistanceM,
-	'Speed Zone 9 Distance (m)': METRIC_DEFINITION_IDS.speedZone9DistanceM,
-	'Acceleration Zone 4 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone4EntryCount,
-	'Acceleration Zone 5 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
-	'Acceleration Zone 6 Entry Count (times)': METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
-	'Deceleration Zone 4 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone4EntryCount,
-	'Deceleration Zone 5 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone5EntryCount,
-	'Deceleration Zone 6 Entry Count (times)': METRIC_DEFINITION_IDS.decelerationZone6EntryCount,
-	'No. of Exp. Acc. (times)': METRIC_DEFINITION_IDS.noOfExpAcc,
-	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.noOfExpDec,
-};
+	HEADER_COLS,
+	INTERMEDIATE_SCHEMA_COLS,
+} from '../../../../_/orgs/[oid]/gps-conditioning/upload/utils/headers.util';
+import { buildCsvParseResult, parseForm, resolveVendorFormat } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -46,82 +18,64 @@ export const POST: RequestHandler = async (event) => {
 		throw error(400, 'orgId is required');
 	}
 
-	const listUsersStore = new ListPersonsStore();
-	const result = await listUsersStore.fetch({
-		event,
-		variables: {
-			orgId,
-		},
-	});
-
-	if (result.errors) {
-		console.log(result.errors);
-		return new Response(JSON.stringify({ errors: result.errors }), {
-			headers: { 'content-type': 'application/json' },
-			status: 500,
-		});
-	}
-
-	const records = result.data?.listPersons?.records ?? [];
-
-	const baselineDocument = await gameScoreService.getByOrgId(orgId);
-	if (!baselineDocument) {
-		throw error(404, `ゲームスコア基準値が未設定です (orgId=${orgId})`);
-	}
-
-	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
-
-	const useMetricIds = /^(1|true|on)$/i.test(url.searchParams.get('metricDefinitionId') ?? '');
-
 	const form = await request.formData();
-	const file = form.get('file');
-	if (!(file instanceof File)) return new Response('No file field named "file".', { status: 400 });
+	const { file, vendorFormat } = parseForm(form);
+	if (!file) return new Response('No file field named "file".', { status: 400 });
 
-	const text = await file.text();
+	const effectiveVendorFormat = await resolveVendorFormat(orgId, vendorFormat);
 
-	const rawRecords = parse(text, {
-		columns: true,
-		skip_empty_lines: true,
-		bom: true,
-		relax_column_count: true,
-	}) as Array<Record<string, string>>;
-
-	const originalHeaders =
-		rawRecords.length > 0
-			? Object.keys(rawRecords[0])
-			: (text
-					.split(/\r?\n/)[0]
-					?.split(',')
-					.map((h) => h.trim()) ?? []);
-
-	const processor = new FitogetherCsvProcessor({
-		rawRecords,
-		originalHeaders,
-		persons: records,
-		fieldToMetricId: FITOGETHER_FIELD_TO_METRIC_ID,
-		useMetricIds,
-	});
-
-	const { parsers, unmatched, headers, headerMap } = processor.process({
-		trainingBaseline,
+	const {
+		parsers: parsedRows,
+		unmatched,
+		headers,
+		headerMap,
+		vendorFormat: resolvedVendorFormat,
+	} = await buildCsvParseResult({
+		event,
+		orgId,
+		file,
 		fallbackBirthday: '0000-00-00',
+		vendorFormat: effectiveVendorFormat,
 	});
 
 	if (unmatched.length > 0) {
-		const response = buildUnmatchedPersonsResponse(unmatched);
+		const response =
+			resolvedVendorFormat === 'KNOWS_V1'
+				? buildKnowsUnmatchedPersonsResponse(
+						unmatched.map((item) => ({ row: item.row, playerName: item.playerName })),
+						headers,
+					)
+				: buildUnmatchedPersonsResponse(
+						unmatched.map((item) => ({
+							row: item.row,
+							playerName: item.playerName,
+							jerseyNo: 'jerseyNo' in item ? String(item.jerseyNo ?? '') : '',
+						})),
+					);
 		if (response) return response;
 	}
+
+	const previewRecords = parsedRows.map((parser, index) => buildMetricRecord(parser, index));
+	const metricMeta = buildMetricMeta();
+	const inferredSessionDate = inferSessionDate(resolvedVendorFormat, parsedRows);
 
 	return new Response(
 		JSON.stringify(
 			{
-				rows: parsers.length,
+				rows: parsedRows.length,
 				headers,
 				headerMap,
-				records: parsers.map((r, index) => ({
-					__rowIndex: index,
-					...r.toJson(),
-				})),
+				columns: buildPreviewColumns(previewRecords).map((key) => {
+					const meta = metricMeta.get(key);
+					return {
+						key,
+						label: meta?.label ?? key,
+						unit: meta?.unit,
+						roundingPrecision: meta?.roundingPrecision,
+					};
+				}),
+				records: previewRecords,
+				inferredSessionDate,
 			},
 			null,
 			2,
@@ -130,25 +84,36 @@ export const POST: RequestHandler = async (event) => {
 	);
 };
 
-function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
-	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
-
-	const requiredValues = Object.entries(TRAINING_BASELINE_METRICS).map(([key, metricId]) => {
-		const raw = map.get(metricId);
-		const value = typeof raw === 'number' ? raw : Number(raw);
-		if (!Number.isFinite(value) || value <= 0) {
-			throw error(
-				400,
-				`ゲームスコア基準値 ${metricId} (${key}) が無効です。orgId=${orgId}, value=${raw}`,
-			);
-		}
-		return [key, value] as const;
+function buildPreviewColumns(records: Array<Record<string, unknown>>) {
+	if (!records.length) return [];
+	const available = new Set(Object.keys(records[0]).filter((key) => key !== '__rowIndex'));
+	const coreColumns = [...HEADER_COLS, ...INTERMEDIATE_SCHEMA_COLS];
+	return coreColumns.filter((key) => {
+		if (!available.has(key)) return false;
+		if (HEADER_COLS.includes(key)) return true;
+		return records.some((record) => hasMeaningfulValue(record[key]));
 	});
+}
 
-	return Object.fromEntries(requiredValues) as {
-		totalDistanceM: number;
-		highIntensityM: number;
-		accelerationCountTotal: number;
-		decelerationCountTotal: number;
+function hasMeaningfulValue(value: unknown): boolean {
+	if (value === null || value === undefined || value === '') return false;
+	if (typeof value === 'number') return Number.isFinite(value) && value !== 0;
+	return true;
+}
+
+function buildMetricRecord(parser: PlayerGpsSession, index: number) {
+	return {
+		__rowIndex: index,
+		fullName: parser.fullName,
+		...buildMetricValues(parser),
 	};
+}
+
+function inferSessionDate(vendorFormat: string | null | undefined, records: PlayerGpsSession[]) {
+	if (vendorFormat !== 'FITOGETHER_V1') return null;
+	const raw = records[0]?.date;
+	if (!raw) return null;
+	const parsed = DateTime.fromISO(raw);
+	if (!parsed.isValid) return null;
+	return parsed.toFormat('yyyy-MM-dd');
 }

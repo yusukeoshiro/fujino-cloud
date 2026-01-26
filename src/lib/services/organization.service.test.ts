@@ -66,6 +66,7 @@ describe('OrganizationService', () => {
 			id: 'custom-id',
 			name: 'New Org',
 			createdAt: expect.any(String),
+			defaultCsvVendorFormat: null,
 		});
 
 		expect(mockCollection.doc).toHaveBeenCalledWith('custom-id');
@@ -73,6 +74,7 @@ describe('OrganizationService', () => {
 			id: 'custom-id',
 			name: 'New Org',
 			createdAt: expect.any(String),
+			defaultCsvVendorFormat: null,
 		});
 	});
 
@@ -97,6 +99,20 @@ describe('OrganizationService', () => {
 
 		expect(mockDoc.update).toHaveBeenCalledWith({ name: 'Updated Org' });
 		expect(result.name).toBe('Updated Org');
+	});
+
+	it('should update default CSV vendor format', async () => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		(mockDoc.get as any).mockResolvedValue({
+			exists: true,
+			id: '1',
+			data: () => ({ name: 'Org 1', defaultCsvVendorFormat: 'KNOWS_V1' }),
+		});
+
+		const result = await organizationService.updateDefaultCsvVendorFormat('1', 'KNOWS_V1');
+
+		expect(mockDoc.update).toHaveBeenCalledWith({ defaultCsvVendorFormat: 'KNOWS_V1' });
+		expect(result.defaultCsvVendorFormat).toBe('KNOWS_V1');
 	});
 
 	it('should delete an organization', async () => {
