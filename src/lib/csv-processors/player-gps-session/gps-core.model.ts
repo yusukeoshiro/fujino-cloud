@@ -10,27 +10,28 @@ export interface SessionMeta {
 }
 
 export interface GpsCore {
-	durationMin: number;
+	// Optional (nullable) metrics in the intermediate schema.
+	durationMin: number | null;
 	totalDistanceM: number;
-	totalDistanceMPerMin: number;
-	maxSpeedKMH: number;
+	totalDistanceMPerMin: number | null;
+	maxSpeedKMH: number | null;
 
-	noOfHSR: number;
-	hsrDistanceM: number;
+	noOfHSR: number | null;
+	hsrDistanceM: number | null;
 
-	sprintCount: number;
-	sprintDistanceM: number;
+	sprintCount: number | null;
+	sprintDistanceM: number | null;
 	highIntensityDistanceM: number;
-	lowIntensityDistanceM: number;
+	lowIntensityDistanceM: number | null;
 
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 
-	expAccCount: number;
-	expDecCount: number;
+	expAccCount: number | null;
+	expDecCount: number | null;
 }
 
 export interface DerivedMetrics {
-	highIntensityRate: number;
-	lowIntensityRate: number;
+	highIntensityRate: number | null;
+	lowIntensityRate: number | null;
 }

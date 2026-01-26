@@ -53,9 +53,9 @@ const normalizeName = (value: string | null | undefined) =>
 
 const parseDurationToMinutes = (raw: string | number): number => {
 	const text = String(raw ?? '').trim();
-	if (!text) return 0;
+	if (!text) return NaN;
 	const parts = text.split(':').map((part) => Number(part));
-	if (parts.some((part) => !Number.isFinite(part))) return 0;
+	if (parts.some((part) => !Number.isFinite(part))) return NaN;
 	let seconds = 0;
 	if (parts.length === 3) {
 		seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
@@ -64,9 +64,37 @@ const parseDurationToMinutes = (raw: string | number): number => {
 	} else if (parts.length === 1) {
 		seconds = parts[0] * 60;
 	} else {
-		return 0;
+		return NaN;
 	}
 	return Math.floor(seconds / 60);
+};
+
+const hasField = (entry: KnowsCsvProcessedEntry, field: string) =>
+	Object.prototype.hasOwnProperty.call(entry.values, field);
+
+const readNumber = (entry: KnowsCsvProcessedEntry, field: string): number | null => {
+	if (!hasField(entry, field)) return null;
+	const raw = entry.values[field];
+	if (raw === '' || raw === null || raw === undefined) return null;
+	const value = Number(raw);
+	return Number.isFinite(value) ? value : null;
+};
+
+const readDuration = (entry: KnowsCsvProcessedEntry, field: string): number | null => {
+	if (!hasField(entry, field)) return null;
+	const raw = entry.values[field];
+	if (raw === '' || raw === null || raw === undefined) return null;
+	const value = parseDurationToMinutes(raw);
+	return Number.isFinite(value) ? value : null;
+};
+
+const sumIfAllPresent = (values: Array<number | null>): number | null => {
+	if (values.some((value) => value === null || !Number.isFinite(value))) return null;
+	let total = 0;
+	for (const value of values) {
+		total += value as number;
+	}
+	return total;
 };
 
 export class KnowsCsvProcessor {
@@ -91,24 +119,37 @@ export class KnowsCsvProcessor {
 		const sessionDate = this.options.sessionDate ?? '';
 
 		const parsers = entries.map((entry) => {
-			const valueFor = (field: string) => entry.values[field] ?? '';
 			const resolvedBirthday =
 				entry.resolvedBirthday && entry.resolvedBirthday !== '0000-00-00'
 					? entry.resolvedBirthday
 					: fallbackBirthday;
 
-			const durationMin = parseDurationToMinutes(valueFor('Duration_TF'));
-			const totalDistanceM = Number(valueFor('Distance'));
-			const totalDistanceMPerMin = durationMin > 0 ? totalDistanceM / durationMin : 0;
-			const maxSpeedKMH = Number(valueFor('SPD MX'));
-			const sprintCount = Number(valueFor('Sprint'));
-			const lowIntensityDistanceM = Number(valueFor('SPD_D_Z1'));
-			const highIntensityDistanceM = Number(valueFor('SPD_D_Z5')) + Number(valueFor('SPD_D_Z6'));
+			const durationMin = readDuration(entry, 'Duration_TF');
+			const totalDistanceM = readNumber(entry, 'Distance') ?? NaN;
+			const totalDistanceMPerMin =
+				durationMin !== null && Number.isFinite(totalDistanceM)
+					? durationMin > 0
+						? totalDistanceM / durationMin
+						: 0
+					: null;
+			const maxSpeedKMH = readNumber(entry, 'SPD MX');
+			const sprintCount = readNumber(entry, 'Sprint');
+			const lowIntensityDistanceM = readNumber(entry, 'SPD_D_Z1');
+			const highIntensityDistanceM =
+				sumIfAllPresent([readNumber(entry, 'SPD_D_Z5'), readNumber(entry, 'SPD_D_Z6')]) ?? NaN;
 
 			const accelerationCountTotal =
-				Number(valueFor('Accel_Z1')) + Number(valueFor('Accel_Z2')) + Number(valueFor('Accel_Z3'));
+				sumIfAllPresent([
+					readNumber(entry, 'Accel_Z1'),
+					readNumber(entry, 'Accel_Z2'),
+					readNumber(entry, 'Accel_Z3'),
+				]) ?? NaN;
 			const decelerationCountTotal =
-				Number(valueFor('Decel_Z1')) + Number(valueFor('Decel_Z2')) + Number(valueFor('Decel_Z3'));
+				sumIfAllPresent([
+					readNumber(entry, 'Decel_Z1'),
+					readNumber(entry, 'Decel_Z2'),
+					readNumber(entry, 'Decel_Z3'),
+				]) ?? NaN;
 
 			return new PlayerGpsSession(
 				{
@@ -122,18 +163,18 @@ export class KnowsCsvProcessor {
 					totalDistanceMPerMin,
 					maxSpeedKMH,
 
-					noOfHSR: 0,
-					hsrDistanceM: 0,
+					noOfHSR: null,
+					hsrDistanceM: null,
 
 					sprintCount,
-					sprintDistanceM: 0,
+					sprintDistanceM: null,
 					highIntensityDistanceM,
 					lowIntensityDistanceM,
 					accelerationCountTotal,
 					decelerationCountTotal,
 
-					expAccCount: 0,
-					expDecCount: 0,
+					expAccCount: null,
+					expDecCount: null,
 				},
 				options.trainingBaseline,
 			);

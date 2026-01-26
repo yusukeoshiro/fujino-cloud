@@ -97,7 +97,7 @@ function buildPreviewColumns(records: Array<Record<string, unknown>>) {
 
 function hasMeaningfulValue(value: unknown): boolean {
 	if (value === null || value === undefined || value === '') return false;
-	if (typeof value === 'number') return Number.isFinite(value) && value !== 0;
+	if (typeof value === 'number') return Number.isFinite(value);
 	return true;
 }
 

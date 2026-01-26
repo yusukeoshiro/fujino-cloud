@@ -11,24 +11,24 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	fullName: string;
 	birthday: string;
 
-	durationMin: number;
+	durationMin: number | null;
 	totalDistanceM: number;
-	totalDistanceMPerMin: number;
-	maxSpeedKMH: number;
+	totalDistanceMPerMin: number | null;
+	maxSpeedKMH: number | null;
 
-	noOfHSR: number;
-	hsrDistanceM: number;
+	noOfHSR: number | null;
+	hsrDistanceM: number | null;
 
-	sprintCount: number;
-	sprintDistanceM: number;
+	sprintCount: number | null;
+	sprintDistanceM: number | null;
 	highIntensityDistanceM: number;
-	lowIntensityDistanceM: number;
+	lowIntensityDistanceM: number | null;
 
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 
-	expAccCount: number;
-	expDecCount: number;
+	expAccCount: number | null;
+	expDecCount: number | null;
 
 	trainingBaseline?: TrainingBaseline;
 
@@ -69,10 +69,14 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	// computed, from raw:
 	get highIntensityRate() {
 		// Derived: high-intensity distance as a share of total distance.
+		if (!isFiniteNumber(this.totalDistanceM) || this.totalDistanceM <= 0) return null;
+		if (!isFiniteNumber(this.highIntensityDistanceM)) return null;
 		return this.highIntensityDistanceM / this.totalDistanceM;
 	}
 	get lowIntensityRate() {
 		// Derived: low-intensity (Z1) share of total distance.
+		if (!isFiniteNumber(this.totalDistanceM) || this.totalDistanceM <= 0) return null;
+		if (!isFiniteNumber(this.lowIntensityDistanceM)) return null;
 		return this.lowIntensityDistanceM / this.totalDistanceM;
 	}
 
@@ -89,13 +93,13 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		} = baseline;
 
 		if (
-			!isFinite(totalDistanceM) ||
+			!isFiniteNumber(totalDistanceM) ||
 			totalDistanceM <= 0 ||
-			!isFinite(highIntensityDistanceM) ||
+			!isFiniteNumber(highIntensityDistanceM) ||
 			highIntensityDistanceM <= 0 ||
-			!isFinite(accelerationCountTotal) ||
+			!isFiniteNumber(accelerationCountTotal) ||
 			accelerationCountTotal <= 0 ||
-			!isFinite(decelerationCountTotal) ||
+			!isFiniteNumber(decelerationCountTotal) ||
 			decelerationCountTotal <= 0
 		) {
 			return null;
@@ -177,3 +181,6 @@ type TrainingBaseline = {
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 };
+
+const isFiniteNumber = (value: unknown): value is number =>
+	typeof value === 'number' && Number.isFinite(value);
