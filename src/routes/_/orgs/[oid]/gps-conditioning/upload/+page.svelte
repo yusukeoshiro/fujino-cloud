@@ -1,12 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import {
-		COLUMN_LABELS,
-		FOOTER_COLS,
-		HEADER_COLS,
-		INTERMEDIATE_SCHEMA_COLS,
-	} from './utils/headers.util';
+	import { COLUMN_LABELS, FOOTER_COLS, HEADER_COLS } from './utils/headers.util';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
 
@@ -28,27 +23,8 @@
 		return String(v);
 	}
 
-	function hasMeaningfulValue(v: unknown): boolean {
-		if (v === null || v === undefined || v === '') return false;
-		if (typeof v === 'number') return Number.isFinite(v);
-		return true;
-	}
-
-	const ALWAYS_VISIBLE_COLS = new Set([...HEADER_COLS, ...FOOTER_COLS]);
-	const INTERMEDIATE_COLS = [...HEADER_COLS, ...INTERMEDIATE_SCHEMA_COLS, ...FOOTER_COLS];
-
 	function labelForCol(key: string): string {
 		return COLUMN_LABELS[key] ?? key;
-	}
-
-	function buildVisibleColumns(rows: UploadPreviewRow[]): string[] {
-		if (!rows.length) return [];
-		const available = new Set(Object.keys(rows[0].record).filter((key) => key !== '__rowIndex'));
-		return INTERMEDIATE_COLS.filter(
-			(key) =>
-				available.has(key) &&
-				(ALWAYS_VISIBLE_COLS.has(key) || rows.some((row) => hasMeaningfulValue(row.record[key]))),
-		);
 	}
 
 	type UploadPreviewRecord = Record<string, unknown> & { __rowIndex: number };
@@ -59,6 +35,7 @@
 	type UploadPreviewResponse = {
 		rows: number;
 		headers: string[];
+		columns: string[];
 		records: UploadPreviewRecord[];
 	};
 
@@ -310,7 +287,7 @@
 
 	const allRowsSelected = $derived(rows.length > 0 && rows.every((row) => row.selected));
 	const someRowsSelected = $derived(rows.some((row) => row.selected) && !allRowsSelected);
-	const columns = $derived(buildVisibleColumns(rows));
+	const columns = $derived(result?.columns ?? []);
 
 	$effect(() => {
 		if (bulkSelectCheckbox) {
