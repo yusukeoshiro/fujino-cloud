@@ -14,7 +14,7 @@ export const trainigMetricDefinitionIds = [
 	METRIC_DEFINITION_IDS.speedZone7DistanceM,
 	METRIC_DEFINITION_IDS.speedZone8DistanceM,
 	METRIC_DEFINITION_IDS.speedZone9DistanceM,
-	METRIC_DEFINITION_IDS.walkingRate,
+	METRIC_DEFINITION_IDS.lowIntensityRate,
 	METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
 	METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
 	METRIC_DEFINITION_IDS.accelerationCountTotal,
@@ -23,6 +23,8 @@ export const trainigMetricDefinitionIds = [
 	METRIC_DEFINITION_IDS.decelerationZone6EntryCount,
 	METRIC_DEFINITION_IDS.decelerationCountTotal,
 	METRIC_DEFINITION_IDS.noOfExpDec,
+	METRIC_DEFINITION_IDS.noOfHSR,
+	METRIC_DEFINITION_IDS.hsrDistanceM,
 	METRIC_DEFINITION_IDS.trainingScoreConsumption,
 ];
 
@@ -40,7 +42,7 @@ export const FIELD_ID_MAP: Record<string, string> = {
 	speedZone7DistanceM: METRIC_DEFINITION_IDS.speedZone7DistanceM,
 	speedZone8DistanceM: METRIC_DEFINITION_IDS.speedZone8DistanceM,
 	speedZone9DistanceM: METRIC_DEFINITION_IDS.speedZone9DistanceM,
-	walkingRate: METRIC_DEFINITION_IDS.walkingRate,
+	lowIntensityRate: METRIC_DEFINITION_IDS.lowIntensityRate,
 	accelerationZone5EntryCount: METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
 	accelerationZone6EntryCount: METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
 	accelerationCountTotal: METRIC_DEFINITION_IDS.accelerationCountTotal,
@@ -49,5 +51,7 @@ export const FIELD_ID_MAP: Record<string, string> = {
 	decelerationZone6EntryCount: METRIC_DEFINITION_IDS.decelerationZone6EntryCount,
 	decelerationCountTotal: METRIC_DEFINITION_IDS.decelerationCountTotal,
 	noOfExpDec: METRIC_DEFINITION_IDS.noOfExpDec,
+	noOfHSR: METRIC_DEFINITION_IDS.noOfHSR,
+	HSRDistanceM: METRIC_DEFINITION_IDS.hsrDistanceM,
 	trainingScoreConsumption: METRIC_DEFINITION_IDS.trainingScoreConsumption,
 };

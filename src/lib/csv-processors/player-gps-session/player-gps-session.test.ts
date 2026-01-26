@@ -62,10 +62,10 @@ describe('PlayerGpsSession', () => {
 		expect(parser.highIntensityRate).toBe(0.02);
 	});
 
-	it('should calculate walkingRate correctly', () => {
+	it('should calculate lowIntensityRate correctly', () => {
 		// Z1 / total = 4000 / 10000 = 0.4
 		const parser = new PlayerGpsSession(mockData);
-		expect(parser.walkingRate).toBe(0.4);
+		expect(parser.lowIntensityRate).toBe(0.4);
 	});
 
 	it('should calculate accelerationCountTotal correctly', () => {

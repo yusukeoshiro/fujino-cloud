@@ -3,6 +3,8 @@ export const METRIC_DEFINITION_IDS = {
 	totalDistanceM: 'P6Zu5epLjDOaDQq20Stx',
 	totalDistancePerMin: 'I7i8bessV96ciVnFw5IB',
 	maxSpeedKMH: 'Q4dPRJ2eqeNR0Bg4DI3E',
+	noOfHSR: 'yZ0yLsB60V8NTKrn3Hkw',
+	hsrDistanceM: 'Lnznq7uAwamZD683xQ5b',
 	highIntensityM: 'Kn39OEkrpQCMQAtMQb5J',
 	highIntensityRate: 'RObqK0yOMf4NXhiWig6p',
 	noOfSprint: 'ZfqkRYcNfvwYioquCx5h',
@@ -25,7 +27,7 @@ export const METRIC_DEFINITION_IDS = {
 	noOfExpDec: 'vMV5RRPagpuPxkoU8F2T',
 	accelerationCountTotal: 'XYpyu5CZTDZmMY9DbfNG',
 	decelerationCountTotal: 'D7aoPeenTMYu3CxfR6v7',
-	walkingRate: 'oOQMjHICxmf3nLwvDitk',
+	lowIntensityRate: 'oOQMjHICxmf3nLwvDitk',
 	trainingScoreConsumption: 'b3DroV7arY2KLRUJpdtq',
 } as const;
 

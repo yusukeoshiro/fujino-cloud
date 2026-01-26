@@ -44,7 +44,7 @@ export interface GpsCore {
 export interface DerivedMetrics {
 	highIntensityM: number;
 	highIntensityRate: number;
-	walkingRate: number;
+	lowIntensityRate: number;
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 }
@@ -55,7 +55,7 @@ export function computeDerived(core: GpsCore): DerivedMetrics {
 	return {
 		highIntensityM,
 		highIntensityRate: highIntensityM / core.totalDistanceM,
-		walkingRate: core.speedZone1DistanceM / core.totalDistanceM,
+		lowIntensityRate: core.speedZone1DistanceM / core.totalDistanceM,
 		accelerationCountTotal: core.accelerationZone5EntryCount + core.accelerationZone6EntryCount,
 		decelerationCountTotal: core.decelerationZone5EntryCount + core.decelerationZone6EntryCount,
 	};

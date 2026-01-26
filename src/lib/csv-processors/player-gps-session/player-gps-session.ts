@@ -97,7 +97,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		// Derived: high-intensity distance as a share of total distance.
 		return this.highIntensityM / this.totalDistanceM;
 	}
-	get walkingRate() {
+	get lowIntensityRate() {
 		// Derived: low-intensity (Z1) share of total distance.
 		return this.speedZone1DistanceM / this.totalDistanceM;
 	}
@@ -198,7 +198,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			// Derived
 			'高強度距離(m)': this.highIntensityM,
 			高強度割合: this.highIntensityRate,
-			ウォーキング割合: this.walkingRate,
+			ウォーキング割合: this.lowIntensityRate,
 			加速合計回数: this.accelerationCountTotal,
 			減速合計回数: this.decelerationCountTotal,
 

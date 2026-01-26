@@ -1540,6 +1540,96 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		id: 'yZ0yLsB60V8NTKrn3Hkw',
+		createdAt: now,
+		updatedAt: now,
+		orgId: '2a9dWrDixJ56ysNOgAtR',
+		isPublic: false,
+		name: 'HSR回数',
+		nameI18n: [
+			{
+				locale: 'ja',
+				value: 'HSR回数',
+			},
+			{
+				locale: 'en',
+				value: 'HSR Count',
+			},
+			{
+				locale: 'ko',
+				value: 'HSR 횟수',
+			},
+		],
+		description: 'Fitogether HSR回数',
+		descriptionI18n: [
+			{
+				locale: 'ja',
+				value: 'Fitogether HSR回数',
+			},
+			{
+				locale: 'en',
+				value: 'Fitogether HSR count.',
+			},
+			{
+				locale: 'ko',
+				value: 'Fitogether HSR 횟수.',
+			},
+		],
+		type: 'raw',
+		category: 'TRAINING',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'COUNT',
+		roundingPrecision: 0,
+		meta: {},
+	},
+	{
+		id: 'Lnznq7uAwamZD683xQ5b',
+		createdAt: now,
+		updatedAt: now,
+		orgId: '2a9dWrDixJ56ysNOgAtR',
+		isPublic: false,
+		name: 'HSR距離',
+		nameI18n: [
+			{
+				locale: 'ja',
+				value: 'HSR距離',
+			},
+			{
+				locale: 'en',
+				value: 'HSR Distance',
+			},
+			{
+				locale: 'ko',
+				value: 'HSR 거리',
+			},
+		],
+		description: 'Fitogether HSR距離',
+		descriptionI18n: [
+			{
+				locale: 'ja',
+				value: 'Fitogether HSR距離',
+			},
+			{
+				locale: 'en',
+				value: 'Fitogether HSR distance.',
+			},
+			{
+				locale: 'ko',
+				value: 'Fitogether HSR 거리.',
+			},
+		],
+		type: 'raw',
+		category: 'TRAINING',
+		betterDirection: 'HIGHER_IS_BETTER',
+		formula: null,
+		sourceMetricDefinitionIds: null,
+		unit: 'METER',
+		roundingPrecision: 0,
+		meta: {},
+	},
+	{
 		id: 'b3DroV7arY2KLRUJpdtq',
 		createdAt: now,
 		updatedAt: now,

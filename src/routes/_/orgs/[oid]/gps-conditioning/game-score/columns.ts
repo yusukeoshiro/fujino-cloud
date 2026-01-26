@@ -28,7 +28,7 @@ const METRIC_ID_BY_LABEL: Record<string, string> = {
 	'Z7距離(m)': METRIC_DEFINITION_IDS.speedZone7DistanceM,
 	'Z8距離(m)': METRIC_DEFINITION_IDS.speedZone8DistanceM,
 	'Z9距離(m)': METRIC_DEFINITION_IDS.speedZone9DistanceM,
-	ウォーキング割合: METRIC_DEFINITION_IDS.walkingRate,
+	ウォーキング割合: METRIC_DEFINITION_IDS.lowIntensityRate,
 	加速Z5回数: METRIC_DEFINITION_IDS.accelerationZone5EntryCount,
 	加速Z6回数: METRIC_DEFINITION_IDS.accelerationZone6EntryCount,
 	加速合計回数: METRIC_DEFINITION_IDS.accelerationCountTotal,
