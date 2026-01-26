@@ -5,7 +5,7 @@ import { parse } from 'csv-parse/sync';
 import { FitogetherCsvProcessor } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 import { TRAINING_BASELINE_METRICS } from '$lib/constants/metric-definition-ids';
 
-type GameScoreFixture = {
+type WorkloadBenchmarkFixture = {
 	values: Array<{ metricDefinitionId: string; value: number }>;
 	orgId: string;
 };
@@ -13,7 +13,7 @@ type GameScoreFixture = {
 const loadFixture = (relativePath: string) =>
 	readFileSync(resolve(process.cwd(), relativePath), 'utf-8');
 
-const buildTrainingBaseline = (fixture: GameScoreFixture) => {
+const buildTrainingBaseline = (fixture: WorkloadBenchmarkFixture) => {
 	const map = new Map(fixture.values.map((entry) => [entry.metricDefinitionId, entry.value]));
 
 	const baselineEntries = Object.entries(TRAINING_BASELINE_METRICS).map(([key, metricId]) => {
@@ -37,7 +37,7 @@ describe('workload consumption points fixtures', () => {
 	it('matches training-scenario-2 output expectations', () => {
 		const inputCsv = loadFixture('test-assets/training-scenario-2.input.csv');
 		const outputCsv = loadFixture('test-assets/training-scenario-2.output.csv');
-		const gameScoreJson = loadFixture('test-assets/training-scenario-2.gamescore.json');
+		const benchmarkJson = loadFixture('test-assets/training-scenario-2.workload-benchmark.json');
 
 		const rawRecords = parse(inputCsv, {
 			columns: true,
@@ -60,7 +60,9 @@ describe('workload consumption points fixtures', () => {
 			externalId: record['Jersey No.'],
 		}));
 
-		const trainingBaseline = buildTrainingBaseline(JSON.parse(gameScoreJson) as GameScoreFixture);
+		const trainingBaseline = buildTrainingBaseline(
+			JSON.parse(benchmarkJson) as WorkloadBenchmarkFixture,
+		);
 
 		const processor = new FitogetherCsvProcessor({
 			rawRecords,

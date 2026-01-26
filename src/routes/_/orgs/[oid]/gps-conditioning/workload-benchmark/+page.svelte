@@ -1,8 +1,8 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import {
-		type GameScoreColumn,
-		type GameScoreValues,
+		type WorkloadBenchmarkColumn,
+		type WorkloadBenchmarkValues,
 		entriesFromValuesMap,
 		valuesMapFromEntries,
 	} from './columns';
@@ -11,14 +11,16 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const columns: GameScoreColumn[] = data.columns;
+	const columns: WorkloadBenchmarkColumn[] = data.columns;
 	const orgId = data.orgId;
 	let editOriginal: Record<string, string> = {};
 	let committing = false;
 
-	const cloneValues = (incoming: GameScoreValues): GameScoreValues => ({ ...incoming });
+	const cloneValues = (incoming: WorkloadBenchmarkValues): WorkloadBenchmarkValues => ({
+		...incoming,
+	});
 
-	let values = $state<GameScoreValues>(cloneValues(data.values));
+	let values = $state<WorkloadBenchmarkValues>(cloneValues(data.values));
 	let saving = $state(false);
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	let lastSavedToken = $state<string | null>(null);
@@ -32,7 +34,11 @@
 	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	const updateCellValue = (column: GameScoreColumn, value: string, _target?: HTMLElement) => {
+	const updateCellValue = (
+		column: WorkloadBenchmarkColumn,
+		value: string,
+		_target?: HTMLElement,
+	) => {
 		const sanitized = sanitizeInput(value);
 
 		if (!isValidNumericInput(sanitized)) {
@@ -126,7 +132,7 @@
 
 		try {
 			const response = await fetch(
-				`/api/gps-conditioning/game-score/set?orgId=${encodeURIComponent(orgId)}`,
+				`/api/gps-conditioning/workload-benchmark/set?orgId=${encodeURIComponent(orgId)}`,
 				{
 					method: 'POST',
 					headers: {
@@ -150,13 +156,13 @@
 			lastSavedToken = savedAt;
 
 			notification = {
-				text: translate('gps.gameScore.saved'),
+				text: translate('gps.workloadBenchmark.saved'),
 				tone: 'success',
 			};
 		} catch (error) {
-			console.error('Failed to save game score', error);
+			console.error('Failed to save workload benchmark', error);
 			notification = {
-				text: translate('gps.gameScore.saveFailed'),
+				text: translate('gps.workloadBenchmark.saveFailed'),
 				tone: 'error',
 			};
 		} finally {
@@ -177,8 +183,8 @@
 	<!-- Header -->
 	<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 		<div>
-			<h1 class="text-xl font-semibold">{$t('gps.gameScore.title')}</h1>
-			<p class="text-slate-600">{$t('gps.gameScore.description')}</p>
+			<h1 class="text-xl font-semibold">{$t('gps.workloadBenchmark.title')}</h1>
+			<p class="text-slate-600">{$t('gps.workloadBenchmark.description')}</p>
 		</div>
 		<div class="flex items-center gap-2">
 			<button
@@ -187,7 +193,7 @@
 				disabled={saving}
 			>
 				<span class="whitespace-nowrap">
-					{saving ? $t('gps.gameScore.saving') : $t('gps.gameScore.save')}
+					{saving ? $t('gps.workloadBenchmark.saving') : $t('gps.workloadBenchmark.save')}
 				</span>
 			</button>
 		</div>
@@ -208,9 +214,9 @@
 
 	<!-- Hints -->
 	<ul class="flex flex-wrap gap-4 text-sm text-slate-600">
-		<li>{$t('gps.gameScore.tipMove')}</li>
-		<li>{$t('gps.gameScore.tipPaste')}</li>
-		<li>{$t('gps.gameScore.tipShared')}</li>
+		<li>{$t('gps.workloadBenchmark.tipMove')}</li>
+		<li>{$t('gps.workloadBenchmark.tipPaste')}</li>
+		<li>{$t('gps.workloadBenchmark.tipShared')}</li>
 	</ul>
 
 	<!-- Table -->

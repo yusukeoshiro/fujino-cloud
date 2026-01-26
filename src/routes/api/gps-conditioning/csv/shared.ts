@@ -5,7 +5,7 @@ import {
 	TRAINING_BASELINE_METRICS,
 } from '$lib/constants/metric-definition-ids';
 import { ListPersonsStore } from '$houdini';
-import { gameScoreService } from '$lib/services/game-score.service';
+import { workloadBenchmarkService } from '$lib/services/workload-benchmark.service';
 import {
 	FitogetherCsvProcessor,
 	type FitogetherPersonRecord,
@@ -14,7 +14,7 @@ import {
 	KnowsCsvProcessor,
 	type KnowsPersonRecord,
 } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
-import type { GameScoreValueEntry } from '$lib/services/game-score.service';
+import type { WorkloadBenchmarkValueEntry } from '$lib/services/workload-benchmark.service';
 import type { SessionType } from '$lib/csv-processors/player-gps-session/gps-core.model';
 import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
 import { organizationService } from '$lib/services/organization.service';
@@ -57,7 +57,7 @@ export function parseCsvText(text: string) {
 	return { rawRecords, originalHeaders };
 }
 
-export function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
+export function buildTrainingBaseline(orgId: string, entries: WorkloadBenchmarkValueEntry[]) {
 	const map = new Map(entries.map((entry) => [entry.metricDefinitionId, entry.value]));
 
 	const requiredValues = Object.entries(TRAINING_BASELINE_METRICS).map(([key, metricId]) => {
@@ -66,7 +66,7 @@ export function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntr
 		if (!Number.isFinite(value) || value <= 0) {
 			throw error(
 				400,
-				`ゲームスコア基準値 ${metricId} (${key}) が無効です。orgId=${orgId}, value=${raw}`,
+				`ワークロードベンチマーク基準値 ${metricId} (${key}) が無効です。orgId=${orgId}, value=${raw}`,
 			);
 		}
 		return [key, value] as const;
@@ -178,9 +178,9 @@ export async function buildCsvParseResult(params: {
 	});
 	const persons = personsResult.data?.listPersons?.records ?? [];
 
-	const baselineDocument = await gameScoreService.getByOrgId(orgId);
+	const baselineDocument = await workloadBenchmarkService.getByOrgId(orgId);
 	if (!baselineDocument) {
-		throw error(404, `ゲームスコア基準値が未設定です (orgId=${orgId})`);
+		throw error(404, `ワークロードベンチマーク基準値が未設定です (orgId=${orgId})`);
 	}
 	const trainingBaseline = buildTrainingBaseline(orgId, baselineDocument.values);
 

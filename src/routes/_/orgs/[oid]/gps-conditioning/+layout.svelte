@@ -10,7 +10,7 @@
 	const base = $derived(`/_/orgs/${page.params.oid}/gps-conditioning`);
 	const items: Item[] = $derived([
 		{ labelKey: 'gps.nav.dashboard', path: base, exact: true },
-		{ labelKey: 'gps.nav.gameScore', path: `${base}/game-score` },
+		{ labelKey: 'gps.nav.workloadBenchmark', path: `${base}/workload-benchmark` },
 		{ labelKey: 'gps.nav.budget', path: `${base}/budget` },
 		{ labelKey: 'gps.nav.upload', path: `${base}/upload` },
 		{ labelKey: 'gps.nav.history', path: `${base}/performance-assessments` },
