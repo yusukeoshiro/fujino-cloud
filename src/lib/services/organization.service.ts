@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { adminDb } from '../admin-firebase';
 import type { OrganizationDto, CreateOrganizationDto } from './organization.dto';
+import type { CsvVendorFormat } from '$lib/csv-processors/vendor-formats';
 
 const COLLECTION = 'organizations';
 
@@ -34,6 +35,7 @@ class OrganizationService {
 			id: data.id,
 			name: data.name,
 			createdAt: new Date().toISOString(),
+			defaultCsvVendorFormat: null,
 		};
 		await ref.set(org);
 		return org;
@@ -42,6 +44,15 @@ class OrganizationService {
 	async updateName(id: string, name: string): Promise<OrganizationDto> {
 		const ref = this.collection().doc(id);
 		await ref.update({ name });
+		return await this.getById(id);
+	}
+
+	async updateDefaultCsvVendorFormat(
+		id: string,
+		format: CsvVendorFormat | null,
+	): Promise<OrganizationDto> {
+		const ref = this.collection().doc(id);
+		await ref.update({ defaultCsvVendorFormat: format ?? null });
 		return await this.getById(id);
 	}
 

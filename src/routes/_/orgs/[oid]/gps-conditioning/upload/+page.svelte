@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import type { PageData } from './$types';
 	import { HEADER_COLS } from './utils/headers.util';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
@@ -9,6 +10,8 @@
 		DEFAULT_CSV_VENDOR_FORMAT,
 		type CsvVendorFormat,
 	} from '$lib/csv-processors/vendor-formats';
+
+	let { data }: { data: PageData } = $props();
 
 	const orgId = page.params.oid;
 	const stickyLeft =
@@ -50,7 +53,9 @@
 	];
 	let gpsCategory = $state<GpsCategory>('training');
 	let sessionDate = $state<string>('');
-	let vendorFormat = $state<CsvVendorFormat>(DEFAULT_CSV_VENDOR_FORMAT);
+	let vendorFormat = $state<CsvVendorFormat>(
+		data.defaultCsvVendorFormat ?? DEFAULT_CSV_VENDOR_FORMAT,
+	);
 	const vendorFormatOptions = CSV_VENDOR_FORMATS;
 	let rowSelections = $state<Record<number, boolean>>({});
 	let bulkSelectCheckbox: HTMLInputElement | null = $state(null);
