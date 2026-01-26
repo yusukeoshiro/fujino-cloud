@@ -10,9 +10,18 @@ import {
 	FitogetherCsvProcessor,
 	type FitogetherPersonRecord,
 } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import {
+	KnowsCsvProcessor,
+	type KnowsPersonRecord,
+} from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import type { GameScoreValueEntry } from '$lib/services/game-score.service';
 import type { SessionType } from '$lib/csv-processors/player-gps-session/gps-core.model';
 import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
+import {
+	DEFAULT_CSV_VENDOR_FORMAT,
+	CSV_VENDOR_FORMATS,
+	type CsvVendorFormat,
+} from '$lib/csv-processors/vendor-formats';
 
 export const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'Duration (min)': METRIC_DEFINITION_IDS.durationMin,
@@ -32,6 +41,7 @@ export function parseCsvText(text: string) {
 		columns: true,
 		skip_empty_lines: true,
 		bom: true,
+		delimiter: [',', '\t'],
 		relax_column_count: true,
 	}) as Array<Record<string, string>>;
 
@@ -83,25 +93,63 @@ export function createFitogetherProcessor(params: {
 	});
 }
 
+export function createKnowsProcessor(params: {
+	rawRecords: Array<Record<string, string>>;
+	originalHeaders: string[];
+	persons: KnowsPersonRecord[];
+	sessionDate?: string | null;
+}) {
+	const { rawRecords, originalHeaders, persons, sessionDate } = params;
+	return new KnowsCsvProcessor({
+		rawRecords,
+		originalHeaders,
+		persons,
+		sessionDate,
+	});
+}
+
 export function parseForm(form: FormData): {
 	file: File | null;
 	sessionType: SessionType;
 	selectedRowIndexSet: Set<number> | null;
+	vendorFormat: CsvVendorFormat | null;
+	sessionDate: string | null;
 } {
 	const file = form.get('file');
 	const raw = form.get('gpsCategory');
 	const sessionType = typeof raw === 'string' && raw.toLowerCase() === 'game' ? 'GAME' : 'TRAINING';
 	const selectedRowIndexSet = parseSelectedRowIndexSet(form);
-	return { file: file instanceof File ? file : null, sessionType, selectedRowIndexSet };
+	const rawVendorFormat = form.get('vendorFormat');
+	const vendorFormat =
+		typeof rawVendorFormat === 'string' &&
+		CSV_VENDOR_FORMATS.includes(rawVendorFormat as CsvVendorFormat)
+			? (rawVendorFormat as CsvVendorFormat)
+			: null;
+	const rawSessionDate = form.get('sessionDate');
+	const sessionDate =
+		typeof rawSessionDate === 'string' && rawSessionDate.trim().length > 0
+			? rawSessionDate.trim()
+			: null;
+
+	return {
+		file: file instanceof File ? file : null,
+		sessionType,
+		selectedRowIndexSet,
+		vendorFormat,
+		sessionDate,
+	};
 }
 
-export async function buildFitogetherParseResult(params: {
+export async function buildCsvParseResult(params: {
 	event: unknown;
 	orgId: string;
 	file: File;
 	fallbackBirthday: string;
+	vendorFormat?: CsvVendorFormat | null;
+	sessionDate?: string | null;
 }) {
-	const { event, orgId, file, fallbackBirthday } = params;
+	const { event, orgId, file, fallbackBirthday, sessionDate } = params;
+	const vendorFormat = params.vendorFormat ?? DEFAULT_CSV_VENDOR_FORMAT;
 
 	const listUsersStore = new ListPersonsStore();
 	const personsResult = await listUsersStore.fetch({
@@ -122,24 +170,56 @@ export async function buildFitogetherParseResult(params: {
 	const text = await file.text();
 	const { rawRecords, originalHeaders } = parseCsvText(text);
 
-	const processor = createFitogetherProcessor({
-		rawRecords,
-		originalHeaders,
-		persons,
-	});
+	let parsers: PlayerGpsSession[] = [];
+	let unmatched: Array<{ row: number; playerName: string; jerseyNo?: string }> = [];
+	let headers: string[] = [];
+	let headerMap: Array<{ field: string; metricDefinitionId: string }> = [];
 
-	const { parsers, unmatched, headers, headerMap } = processor.process({
-		trainingBaseline,
-		fallbackBirthday,
-	});
+	if (vendorFormat === 'KNOWS_V1') {
+		const processor = createKnowsProcessor({
+			rawRecords,
+			originalHeaders,
+			persons,
+			sessionDate,
+		});
+		const result = processor.process({
+			trainingBaseline,
+			fallbackBirthday,
+		});
+		parsers = result.parsers;
+		unmatched = result.unmatched;
+		headers = result.headers;
+		headerMap = result.headerMap;
+	} else {
+		const processor = createFitogetherProcessor({
+			rawRecords,
+			originalHeaders,
+			persons,
+		});
+		const result = processor.process({
+			trainingBaseline,
+			fallbackBirthday,
+		});
+		parsers = result.parsers as PlayerGpsSession[];
+		unmatched = result.unmatched;
+		headers = result.headers;
+		headerMap = result.headerMap;
+	}
+
+	if (sessionDate) {
+		for (const parser of parsers) {
+			parser.date = sessionDate;
+		}
+	}
 
 	return {
 		persons,
 		trainingBaseline,
-		parsers: parsers as PlayerGpsSession[],
+		parsers,
 		unmatched,
 		headers,
 		headerMap,
+		vendorFormat,
 	};
 }
 

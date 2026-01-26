@@ -4,6 +4,11 @@
 	import { HEADER_COLS } from './utils/headers.util';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import {
+		CSV_VENDOR_FORMATS,
+		DEFAULT_CSV_VENDOR_FORMAT,
+		type CsvVendorFormat,
+	} from '$lib/csv-processors/vendor-formats';
 
 	const orgId = page.params.oid;
 	const stickyLeft =
@@ -44,6 +49,9 @@
 		{ value: 'game', labelKey: 'gps.upload.type.game' },
 	];
 	let gpsCategory = $state<GpsCategory>('training');
+	let sessionDate = $state<string>('');
+	let vendorFormat = $state<CsvVendorFormat>(DEFAULT_CSV_VENDOR_FORMAT);
+	const vendorFormatOptions = CSV_VENDOR_FORMATS;
 	let rowSelections = $state<Record<number, boolean>>({});
 	let bulkSelectCheckbox: HTMLInputElement | null = $state(null);
 
@@ -107,6 +115,10 @@
 			const fd = new FormData();
 			fd.append('file', file);
 			fd.append('gpsCategory', gpsCategory);
+			fd.append('vendorFormat', vendorFormat);
+			if (sessionDate) {
+				fd.append('sessionDate', sessionDate);
+			}
 
 			const res = await fetch(
 				`/api/gps-conditioning/csv/preview?orgId=${encodeURIComponent(orgId)}`,
@@ -225,12 +237,18 @@
 			setError(translate('gps.upload.orgMissing'));
 			return;
 		}
+		if (!sessionDate) {
+			setError(translate('gps.upload.dateRequired'));
+			return;
+		}
 		committing = true; // ✅ start spinner
 		setError(null);
 		try {
 			const fd = new FormData();
 			fd.append('file', lastFile);
 			fd.append('gpsCategory', gpsCategory);
+			fd.append('vendorFormat', vendorFormat);
+			fd.append('sessionDate', sessionDate);
 			const selectedRowIndices = Object.entries(rowSelections)
 				.filter(([, selected]) => selected)
 				.map(([index]) => Number(index))
@@ -342,6 +360,27 @@
 				</button>
 			{/each}
 		</div>
+		<div class="mt-3 grid gap-3 sm:grid-cols-2">
+			<label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+				<span>{$t('gps.upload.sessionDate')}</span>
+				<input
+					type="date"
+					class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+					bind:value={sessionDate}
+				/>
+			</label>
+			<label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
+				<span>{$t('gps.upload.vendorFormat')}</span>
+				<select
+					class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none"
+					bind:value={vendorFormat}
+				>
+					{#each vendorFormatOptions as option (option)}
+						<option value={option}>{option}</option>
+					{/each}
+				</select>
+			</label>
+		</div>
 	</div>
 
 	{#if !result}
@@ -372,7 +411,9 @@
 	{#if result}
 		<div class="mt-6 space-y-1">
 			<h2 class="text-lg font-semibold">{$t('gps.upload.analysisTitle')}</h2>
-			<p class="text-sm text-slate-600">{$t('gps.upload.analysisDetected')}</p>
+			<p class="text-sm text-slate-600">
+				{$t('gps.upload.analysisDetected', { format: vendorFormat })}
+			</p>
 		</div>
 	{/if}
 

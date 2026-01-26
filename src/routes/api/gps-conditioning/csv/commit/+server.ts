@@ -8,8 +8,11 @@ import {
 } from '$houdini';
 import { trainigMetricDefinitionIds } from '$lib/training-cols';
 import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
-import { buildFitogetherParseResult, parseForm } from '../shared';
+import { adminStorage } from '$lib/admin-firebase';
+import { DEFAULT_CSV_VENDOR_FORMAT } from '$lib/csv-processors/vendor-formats';
+import { buildCsvParseResult, parseForm } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -19,22 +22,39 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const form = await request.formData();
-	const { file, sessionType, selectedRowIndexSet } = parseForm(form);
+	const { file, sessionType, selectedRowIndexSet, sessionDate, vendorFormat } = parseForm(form);
 	if (!file) return new Response('No file field named "file".', { status: 400 });
+	if (!sessionDate) return new Response('sessionDate is required.', { status: 400 });
+	if (!vendorFormat) return new Response('vendorFormat is required.', { status: 400 });
 
-	const { parsers: parsedRows, unmatched } = await buildFitogetherParseResult({
+	const {
+		parsers: parsedRows,
+		unmatched,
+		vendorFormat: resolvedVendorFormat,
+	} = await buildCsvParseResult({
 		event,
 		orgId,
 		file,
 		fallbackBirthday: '2000-01-01',
+		vendorFormat,
+		sessionDate,
 	});
 
 	if (unmatched.length > 0) {
-		const response = buildUnmatchedPersonsResponse(unmatched);
+		const response =
+			resolvedVendorFormat === 'KNOWS_V1'
+				? buildKnowsUnmatchedPersonsResponse(
+						unmatched.map((item) => ({ row: item.row, playerName: item.playerName })),
+					)
+				: buildUnmatchedPersonsResponse(
+						unmatched.map((item) => ({
+							row: item.row,
+							playerName: item.playerName,
+							jerseyNo: 'jerseyNo' in item ? String(item.jerseyNo ?? '') : '',
+						})),
+					);
 		if (response) return response;
 	}
-
-	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 
 	if (parsedRows.length === 0) return new Response('File is empty.', { status: 400 });
 
@@ -42,8 +62,14 @@ export const POST: RequestHandler = async (event) => {
 		selectedRowIndexSet === null ? true : selectedRowIndexSet.has(index),
 	);
 
-	const dt = DateTime.fromFormat(parsedRows[0].date, 'yyyy-MM-dd');
+	const dt = DateTime.fromISO(sessionDate);
+	if (!dt.isValid) {
+		return new Response('sessionDate must be a valid yyyy-MM-dd date.', { status: 400 });
+	}
 	const sessionLabel = sessionType === 'GAME' ? 'ゲーム' : 'トレーニング';
+	const effectiveVendorFormat = resolvedVendorFormat ?? DEFAULT_CSV_VENDOR_FORMAT;
+
+	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 
 	const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
 		{
@@ -56,6 +82,10 @@ export const POST: RequestHandler = async (event) => {
 						{
 							key: 'x-fujino-cloud-gps-type',
 							value: sessionType,
+						},
+						{
+							key: 'x-fujino-cloud-gps-format',
+							value: effectiveVendorFormat,
 						},
 					],
 				},
@@ -93,6 +123,16 @@ export const POST: RequestHandler = async (event) => {
 			{ headers: { 'content-type': 'application/json' }, status: 500 },
 		);
 	}
+
+	await uploadRawCsvToStorage({
+		orgId,
+		performanceAssessmentId,
+		vendorFormat: effectiveVendorFormat,
+		sessionDate: dt.toFormat('yyyy-MM-dd'),
+		sessionType,
+		file,
+		rowCount: parsedRows.length,
+	});
 
 	const createParticipant = new CreatePerformanceAssessmentParticipantStore();
 
@@ -197,3 +237,36 @@ export const POST: RequestHandler = async (event) => {
 
 	return new Response(JSON.stringify({}));
 };
+
+async function uploadRawCsvToStorage(params: {
+	orgId: string;
+	performanceAssessmentId: string;
+	vendorFormat: string;
+	sessionDate: string;
+	sessionType: string;
+	file: File;
+	rowCount: number;
+}) {
+	const { orgId, performanceAssessmentId, vendorFormat, sessionDate, sessionType, file, rowCount } =
+		params;
+
+	const buffer = Buffer.from(await file.arrayBuffer());
+	const objectPath = `gps-conditioning/${orgId}/${performanceAssessmentId}/${performanceAssessmentId}.csv`;
+	const metadata = {
+		metadata: {
+			orgId,
+			performanceAssessmentId,
+			vendorFormat,
+			sessionDate,
+			sessionType,
+			originalFilename: file.name,
+			rowCount: String(rowCount),
+		},
+		contentType: file.type || 'text/csv',
+	};
+
+	await adminStorage.file(objectPath).save(buffer, {
+		resumable: false,
+		...metadata,
+	});
+}

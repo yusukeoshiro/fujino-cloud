@@ -1,5 +1,6 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
 import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
 import { buildMetricLabels } from '$lib/contents-provider/metric-labels';
@@ -7,7 +8,7 @@ import {
 	HEADER_COLS,
 	INTERMEDIATE_SCHEMA_COLS,
 } from '../../../../_/orgs/[oid]/gps-conditioning/upload/utils/headers.util';
-import { buildFitogetherParseResult, parseForm } from '../shared';
+import { buildCsvParseResult, parseForm } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -17,7 +18,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const form = await request.formData();
-	const { file } = parseForm(form);
+	const { file, vendorFormat } = parseForm(form);
 	if (!file) return new Response('No file field named "file".', { status: 400 });
 
 	const {
@@ -25,15 +26,28 @@ export const POST: RequestHandler = async (event) => {
 		unmatched,
 		headers,
 		headerMap,
-	} = await buildFitogetherParseResult({
+		vendorFormat: resolvedVendorFormat,
+	} = await buildCsvParseResult({
 		event,
 		orgId,
 		file,
 		fallbackBirthday: '0000-00-00',
+		vendorFormat,
 	});
 
 	if (unmatched.length > 0) {
-		const response = buildUnmatchedPersonsResponse(unmatched);
+		const response =
+			resolvedVendorFormat === 'KNOWS_V1'
+				? buildKnowsUnmatchedPersonsResponse(
+						unmatched.map((item) => ({ row: item.row, playerName: item.playerName })),
+					)
+				: buildUnmatchedPersonsResponse(
+						unmatched.map((item) => ({
+							row: item.row,
+							playerName: item.playerName,
+							jerseyNo: 'jerseyNo' in item ? String(item.jerseyNo ?? '') : '',
+						})),
+					);
 		if (response) return response;
 	}
 
