@@ -14,6 +14,7 @@ type MetricDefinition = {
 	updatedAt: string;
 	orgId: string | null;
 	isPublic: boolean;
+	deprecated?: boolean;
 	name: string;
 	nameI18n?: LocalizedString[] | null;
 	description: string;
@@ -865,11 +866,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: '0xbH1n71xspfVRddG92Q',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 1 距離',
 		nameI18n: [
 			{
@@ -910,11 +913,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: '4Pf9FuE2agjFASX1acXF',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Accel Zone 4 回数',
 		nameI18n: [
 			{
@@ -1000,11 +1005,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'FSmTTs8BG3fq608Zcy4F',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Decel Zone 4 回数',
 		nameI18n: [
 			{
@@ -1450,11 +1457,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'YR3ZEOZLTLwJk23XKVpj',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Accel Zone 6 回数',
 		nameI18n: [
 			{
@@ -1675,11 +1684,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'g60b48TuNLrtstb0dy65',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Decel Zone 5 回数',
 		nameI18n: [
 			{
@@ -1720,11 +1731,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'j6u2oo2CjbSngFLioS2Q',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 3 距離',
 		nameI18n: [
 			{
@@ -1765,11 +1778,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'kCZxKxfA9MfWVgBmdTbo',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Accel Zone 5 回数',
 		nameI18n: [
 			{
@@ -1810,11 +1825,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'mPoLSRIgbc1IwC3fPsP9',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Decel Zone 6 回数',
 		nameI18n: [
 			{
@@ -1900,11 +1917,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'nulFBwmrHVrA20HPtNrp',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 5 距離',
 		nameI18n: [
 			{
@@ -1945,11 +1964,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'Q6vL9xT2mP3aH7sK1dZ4',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 6 距離',
 		nameI18n: [
 			{
@@ -1990,11 +2011,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'n4Gm1Yc7pR2t8Vb5Jk9X',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 7 距離',
 		nameI18n: [
 			{
@@ -2035,11 +2058,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'a7S2dF9hK3lQ5wE8rT6u',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 8 距離',
 		nameI18n: [
 			{
@@ -2080,11 +2105,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'p8N1cD4fG6hJ2kL5mQ7Z',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 9 距離',
 		nameI18n: [
 			{
@@ -2125,11 +2152,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'oKXeSMbv7zfV7WjTV4Wp',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 4 距離',
 		nameI18n: [
 			{
@@ -2260,11 +2289,13 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
+		// TODO DELETE ME
 		id: 'zNB0AN1gxSC4IvhgqmlF',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
+		deprecated: true,
 		name: 'Zone 2 距離',
 		nameI18n: [
 			{

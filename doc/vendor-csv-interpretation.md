@@ -95,21 +95,21 @@ Fitogether:
 | `HSR Distance (m)`                        | High-speed run distance         | hsrDistanceM                          | yes  |                                                |
 | `No. of Sprint (times)`                   | Sprint count                    | sprintCount                           | yes  | `sprintCount`                                  |
 | `Sprint Distance (m)`                     | Sprint distance                 | sprintDistanceM                       | yes  |                                                |
-| `Speed Zone 1 Distance (m)`               | Zone distance (ambiguous)       | lowIntensityDistanceM (if configured) |      | Used for `lowIntensityDistanceM` if configured |
-| `Speed Zone 2 Distance (m)`               | Zone distance (ambiguous)       |                                       |      |                                                |
-| `Speed Zone 3 Distance (m)`               | Zone distance (ambiguous)       |                                       |      |                                                |
-| `Speed Zone 4 Distance (m)`               | Zone distance (ambiguous)       |                                       |      |                                                |
-| `Speed Zone 5 Distance (m)`               | Zone distance (ambiguous)       |                                       |      |                                                |
-| `Speed Zone 6 Distance (m)`               | Zone distance (ambiguous)       |                                       |      |                                                |
-| `Speed Zone 7 Distance (m)`               | Zone distance (ambiguous)       |                                       |      |                                                |
-| `Speed Zone 8 Distance (m)`               | Zone distance (ambiguous)       | highIntensityDistanceM (default)      |      | Default mapping for `highIntensityDistanceM`   |
-| `Speed Zone 9 Distance (m)`               | Zone distance (ambiguous)       | highIntensityDistanceM (default)      |      | Default mapping for `highIntensityDistanceM`   |
-| `Acceleration Zone 4 Entry Count (times)` | Acceleration count (ambiguous)  |                                       |      |                                                |
-| `Acceleration Zone 5 Entry Count (times)` | Acceleration count (ambiguous)  | accelerationCountTotal (default)      |      | Default mapping for `accelerationCountTotal`   |
-| `Acceleration Zone 6 Entry Count (times)` | Acceleration count (ambiguous)  | accelerationCountTotal (default)      |      | Default mapping for `accelerationCountTotal`   |
-| `Deceleration Zone 4 Entry Count (times)` | Deceleration count (ambiguous)  |                                       |      |                                                |
-| `Deceleration Zone 5 Entry Count (times)` | Deceleration count (ambiguous)  | decelerationCountTotal (default)      |      | Default mapping for `decelerationCountTotal`   |
-| `Deceleration Zone 6 Entry Count (times)` | Deceleration count (ambiguous)  | decelerationCountTotal (default)      |      | Default mapping for `decelerationCountTotal`   |
+| `Speed Zone 1 Distance (m)`               | Zone distance (ambiguous)       | lowIntensityDistanceM (if configured) | no   | Used for `lowIntensityDistanceM` if configured |
+| `Speed Zone 2 Distance (m)`               | Zone distance (ambiguous)       |                                       | no   |                                                |
+| `Speed Zone 3 Distance (m)`               | Zone distance (ambiguous)       |                                       | no   |                                                |
+| `Speed Zone 4 Distance (m)`               | Zone distance (ambiguous)       |                                       | no   |                                                |
+| `Speed Zone 5 Distance (m)`               | Zone distance (ambiguous)       |                                       | no   |                                                |
+| `Speed Zone 6 Distance (m)`               | Zone distance (ambiguous)       |                                       | no   |                                                |
+| `Speed Zone 7 Distance (m)`               | Zone distance (ambiguous)       |                                       | no   |                                                |
+| `Speed Zone 8 Distance (m)`               | Zone distance (ambiguous)       | highIntensityDistanceM (default)      | no   | Default mapping for `highIntensityDistanceM`   |
+| `Speed Zone 9 Distance (m)`               | Zone distance (ambiguous)       | highIntensityDistanceM (default)      | no   | Default mapping for `highIntensityDistanceM`   |
+| `Acceleration Zone 4 Entry Count (times)` | Acceleration count (ambiguous)  |                                       | no   |                                                |
+| `Acceleration Zone 5 Entry Count (times)` | Acceleration count (ambiguous)  | accelerationCountTotal (default)      | no   | Default mapping for `accelerationCountTotal`   |
+| `Acceleration Zone 6 Entry Count (times)` | Acceleration count (ambiguous)  | accelerationCountTotal (default)      | no   | Default mapping for `accelerationCountTotal`   |
+| `Deceleration Zone 4 Entry Count (times)` | Deceleration count (ambiguous)  |                                       | no   |                                                |
+| `Deceleration Zone 5 Entry Count (times)` | Deceleration count (ambiguous)  | decelerationCountTotal (default)      | no   | Default mapping for `decelerationCountTotal`   |
+| `Deceleration Zone 6 Entry Count (times)` | Deceleration count (ambiguous)  | decelerationCountTotal (default)      | no   | Default mapping for `decelerationCountTotal`   |
 | `No. of Exp. Acc. (times)`                | Explosive acceleration count    | expAccCount                           | yes  |                                                |
 | `No. of Exp. Dec. (times)`                | Explosive deceleration count    | expDecCount                           | yes  |                                                |
 
@@ -121,17 +121,17 @@ Knows:
 | `Duration_TF` | Session duration (H:MM:SS)     | durationMin                      | yes  | Floored to minutes                             |
 | `Distance`    | Total distance                 | totalDistanceM                   | yes  | `totalDistanceM`                               |
 | `SPD MX`      | Max speed                      | maxSpeedKMH                      | yes  |                                                |
-| `SPD_D_Z1`    | Zone distance (ambiguous)      | lowIntensityDistanceM            |      | Used for `lowIntensityDistanceM` if configured |
-| `SPD_D_Z4`    | Zone distance (ambiguous)      |                                  |      | Used only if configured                        |
-| `SPD_D_Z5`    | Zone distance (ambiguous)      | highIntensityDistanceM (default) |      | Default mapping for `highIntensityDistanceM`   |
-| `SPD_D_Z6`    | Zone distance (ambiguous)      | highIntensityDistanceM (default) |      | Default mapping for `highIntensityDistanceM`   |
+| `SPD_D_Z1`    | Zone distance (ambiguous)      | lowIntensityDistanceM            | no   | Used for `lowIntensityDistanceM` if configured |
+| `SPD_D_Z4`    | Zone distance (ambiguous)      |                                  | no   | Used only if configured                        |
+| `SPD_D_Z5`    | Zone distance (ambiguous)      | highIntensityDistanceM (default) | no   | Default mapping for `highIntensityDistanceM`   |
+| `SPD_D_Z6`    | Zone distance (ambiguous)      | highIntensityDistanceM (default) | no   | Default mapping for `highIntensityDistanceM`   |
 | `Sprint`      | Sprint count                   | sprintCount                      | yes  | `sprintCount`                                  |
-| `Accel_Z1`    | Acceleration count (ambiguous) | accelerationCountTotal (default) |      | Default mapping for `accelerationCountTotal`   |
-| `Accel_Z2`    | Acceleration count (ambiguous) | accelerationCountTotal (default) |      | Default mapping for `accelerationCountTotal`   |
-| `Accel_Z3`    | Acceleration count (ambiguous) | accelerationCountTotal (default) |      | Default mapping for `accelerationCountTotal`   |
-| `Decel_Z1`    | Deceleration count (ambiguous) | decelerationCountTotal (default) |      | Default mapping for `decelerationCountTotal`   |
-| `Decel_Z2`    | Deceleration count (ambiguous) | decelerationCountTotal (default) |      | Default mapping for `decelerationCountTotal`   |
-| `Decel_Z3`    | Deceleration count (ambiguous) | decelerationCountTotal (default) |      | Default mapping for `decelerationCountTotal`   |
+| `Accel_Z1`    | Acceleration count (ambiguous) | accelerationCountTotal (default) | no   | Default mapping for `accelerationCountTotal`   |
+| `Accel_Z2`    | Acceleration count (ambiguous) | accelerationCountTotal (default) | no   | Default mapping for `accelerationCountTotal`   |
+| `Accel_Z3`    | Acceleration count (ambiguous) | accelerationCountTotal (default) | no   | Default mapping for `accelerationCountTotal`   |
+| `Decel_Z1`    | Deceleration count (ambiguous) | decelerationCountTotal (default) | no   | Default mapping for `decelerationCountTotal`   |
+| `Decel_Z2`    | Deceleration count (ambiguous) | decelerationCountTotal (default) | no   | Default mapping for `decelerationCountTotal`   |
+| `Decel_Z3`    | Deceleration count (ambiguous) | decelerationCountTotal (default) | no   | Default mapping for `decelerationCountTotal`   |
 
 ### Intermediate schema fields
 
