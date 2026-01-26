@@ -15,14 +15,14 @@ import {
 const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> = {
 	'Duration (min)': METRIC_DEFINITION_IDS.durationMin,
 	'Total Distance (m)': METRIC_DEFINITION_IDS.totalDistanceM,
-	'Total Distance/min (m/min)': METRIC_DEFINITION_IDS.totalDistancePerMin,
+	'Total Distance/min (m/min)': METRIC_DEFINITION_IDS.totalDistanceMPerMin,
 	'Max Speed (km/h)': METRIC_DEFINITION_IDS.maxSpeedKMH,
 	'No. of HSR (times)': METRIC_DEFINITION_IDS.noOfHSR,
 	'HSR Distance (m)': METRIC_DEFINITION_IDS.hsrDistanceM,
-	'No. of Sprint (times)': METRIC_DEFINITION_IDS.noOfSprint,
+	'No. of Sprint (times)': METRIC_DEFINITION_IDS.sprintCount,
 	'Sprint Distance (m)': METRIC_DEFINITION_IDS.sprintDistanceM,
-	'No. of Exp. Acc. (times)': METRIC_DEFINITION_IDS.noOfExpAcc,
-	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.noOfExpDec,
+	'No. of Exp. Acc. (times)': METRIC_DEFINITION_IDS.expAccCount,
+	'No. of Exp. Dec. (times)': METRIC_DEFINITION_IDS.expDecCount,
 };
 
 export const POST: RequestHandler = async (event) => {
@@ -133,7 +133,7 @@ function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
 
 	return Object.fromEntries(requiredValues) as {
 		totalDistanceM: number;
-		highIntensityM: number;
+		highIntensityDistanceM: number;
 		accelerationCountTotal: number;
 		decelerationCountTotal: number;
 	};

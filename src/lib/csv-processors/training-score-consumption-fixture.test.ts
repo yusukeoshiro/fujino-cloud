@@ -27,7 +27,7 @@ const buildTrainingBaseline = (fixture: GameScoreFixture) => {
 
 	return Object.fromEntries(baselineEntries) as {
 		totalDistanceM: number;
-		highIntensityM: number;
+		highIntensityDistanceM: number;
 		accelerationCountTotal: number;
 		decelerationCountTotal: number;
 	};

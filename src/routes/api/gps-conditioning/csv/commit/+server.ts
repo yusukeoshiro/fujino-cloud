@@ -273,7 +273,7 @@ function buildTrainingBaseline(orgId: string, entries: GameScoreValueEntry[]) {
 
 	return Object.fromEntries(requiredValues) as {
 		totalDistanceM: number;
-		highIntensityM: number;
+		highIntensityDistanceM: number;
 		accelerationCountTotal: number;
 		decelerationCountTotal: number;
 	};

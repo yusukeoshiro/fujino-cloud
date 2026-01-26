@@ -17,9 +17,9 @@ describe('PlayerGpsSession', () => {
 		maxSpeedKMH: 30.5,
 
 		noOfHSR: 10,
-		HSRDistanceM: 500,
+		hsrDistanceM: 500,
 
-		noOfSprint: 5,
+		sprintCount: 5,
 		sprintDistanceM: 200,
 		speedZone1DistanceM: 4000,
 		speedZone3DistanceM: 1000,
@@ -38,8 +38,8 @@ describe('PlayerGpsSession', () => {
 		decelerationZone5EntryCount: 4,
 		decelerationZone6EntryCount: 2,
 
-		noOfExpAcc: 2,
-		noOfExpDec: 3,
+		expAccCount: 2,
+		expDecCount: 3,
 	};
 
 	it('should initialize correctly', () => {
@@ -50,10 +50,10 @@ describe('PlayerGpsSession', () => {
 		expect(parser.type).toBe('TRAINING');
 	});
 
-	it('should calculate highIntensityM correctly', () => {
+	it('should calculate highIntensityDistanceM correctly', () => {
 		// Z8 + Z9 = 150 + 50 = 200
 		const parser = new PlayerGpsSession(mockData);
-		expect(parser.highIntensityM).toBe(200);
+		expect(parser.highIntensityDistanceM).toBe(200);
 	});
 
 	it('should calculate highIntensityRate correctly', () => {
@@ -89,7 +89,7 @@ describe('PlayerGpsSession', () => {
 		it('should calculate score correctly with valid baseline', () => {
 			const baseline = {
 				totalDistanceM: 10000, // 100%
-				highIntensityM: 200, // 100%
+				highIntensityDistanceM: 200, // 100%
 				accelerationCountTotal: 4, // 100%
 				decelerationCountTotal: 6, // 100%
 			};
@@ -102,7 +102,7 @@ describe('PlayerGpsSession', () => {
 		it('should calculate score correctly with mixed baseline', () => {
 			const baseline = {
 				totalDistanceM: 20000, // parser is 50%
-				highIntensityM: 400, // parser is 50%
+				highIntensityDistanceM: 400, // parser is 50%
 				accelerationCountTotal: 8, // parser is 50%
 				decelerationCountTotal: 12, // parser is 50%
 			};
@@ -115,7 +115,7 @@ describe('PlayerGpsSession', () => {
 		it('should handle zero in baseline (return null to avoid division by zero)', () => {
 			const baseline = {
 				totalDistanceM: 0,
-				highIntensityM: 200,
+				highIntensityDistanceM: 200,
 				accelerationCountTotal: 4,
 				decelerationCountTotal: 6,
 			};

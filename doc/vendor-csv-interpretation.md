@@ -41,7 +41,7 @@ Nullable fields (show-only or optional inputs):
 - `sprintCount` (if provided by the vendor)
 - `highIntensityRate`
 - `lowIntensityRate`
-- `totalDistancePerMin`
+- `totalDistanceMPerMin`
 - `noOfHSR`
 - `hsrDistanceM`
 - `sprintDistanceM`
@@ -89,7 +89,7 @@ Fitogether:
 | `Position`                                | Player position                 |                                       |      | Not persisted                                  |
 | `Duration (min)`                          | Session duration (minutes)      | durationMin                           | yes  |                                                |
 | `Total Distance (m)`                      | Total distance                  | totalDistanceM                        | yes  | `totalDistanceM`                               |
-| `Total Distance/min (m/min)`              | Distance per minute             | totalDistancePerMin                   | yes  |                                                |
+| `Total Distance/min (m/min)`              | Distance per minute             | totalDistanceMPerMin                  | yes  |                                                |
 | `Max Speed (km/h)`                        | Max speed                       | maxSpeedKMH                           | yes  |                                                |
 | `No. of HSR (times)`                      | High-speed run count            | noOfHSR                               | yes  |                                                |
 | `HSR Distance (m)`                        | High-speed run distance         | hsrDistanceM                          | yes  |                                                |
@@ -147,7 +147,7 @@ Knows:
 | `sprintCount`              | Sprint count                                 | Fitogether, Knows | raw     | non-core | `ZfqkRYcNfvwYioquCx5h` |
 | `highIntensityRate`        | High-intensity distance share of total       | Fitogether, Knows | derived | non-core | `RObqK0yOMf4NXhiWig6p` |
 | `lowIntensityRate`         | Low-intensity distance share of total        | Fitogether, Knows | derived | non-core | `oOQMjHICxmf3nLwvDitk` |
-| `totalDistancePerMin`      | Distance per minute                          | Fitogether        | raw     | non-core | `I7i8bessV96ciVnFw5IB` |
+| `totalDistanceMPerMin`     | Distance per minute                          | Fitogether        | raw     | non-core | `I7i8bessV96ciVnFw5IB` |
 | `noOfHSR`                  | High-speed run count                         | Fitogether        | raw     | non-core | `yZ0yLsB60V8NTKrn3Hkw` |
 | `hsrDistanceM`             | High-speed run distance in meters            | Fitogether        | raw     | non-core | `Lnznq7uAwamZD683xQ5b` |
 | `sprintDistanceM`          | Sprint distance in meters                    | Fitogether        | raw     | non-core | `mVykVPzBokSZ0l4C7YhJ` |

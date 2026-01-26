@@ -17,17 +17,17 @@ export type GameScoreValues = Record<string, string>;
 const METRIC_ID_BY_LABEL: Record<string, string> = {
 	'継続時間(分)': METRIC_DEFINITION_IDS.durationMin,
 	'総走行距離(m)': METRIC_DEFINITION_IDS.totalDistanceM,
-	'1分当たり距離(m/min)': METRIC_DEFINITION_IDS.totalDistancePerMin,
+	'1分当たり距離(m/min)': METRIC_DEFINITION_IDS.totalDistanceMPerMin,
 	'最高速度(km/h)': METRIC_DEFINITION_IDS.maxSpeedKMH,
-	'高強度距離(m)': METRIC_DEFINITION_IDS.highIntensityM,
+	'高強度距離(m)': METRIC_DEFINITION_IDS.highIntensityDistanceM,
 	高強度割合: METRIC_DEFINITION_IDS.highIntensityRate,
-	スプリント回数: METRIC_DEFINITION_IDS.noOfSprint,
+	スプリント回数: METRIC_DEFINITION_IDS.sprintCount,
 	'スプリント距離(m)': METRIC_DEFINITION_IDS.sprintDistanceM,
 	ウォーキング割合: METRIC_DEFINITION_IDS.lowIntensityRate,
 	加速合計回数: METRIC_DEFINITION_IDS.accelerationCountTotal,
-	爆発的加速回数: METRIC_DEFINITION_IDS.noOfExpAcc,
+	爆発的加速回数: METRIC_DEFINITION_IDS.expAccCount,
 	減速合計回数: METRIC_DEFINITION_IDS.decelerationCountTotal,
-	爆発的減速回数: METRIC_DEFINITION_IDS.noOfExpDec,
+	爆発的減速回数: METRIC_DEFINITION_IDS.expDecCount,
 	// 'トレーニングスコア消費': METRIC_DEFINITION_IDS.trainingScoreConsumption
 };
 

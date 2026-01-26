@@ -118,9 +118,9 @@ export class FitogetherCsvProcessor {
 					maxSpeedKMH: Number(entry.values['Max Speed (km/h)']),
 
 					noOfHSR: Number(entry.values['No. of HSR (times)']),
-					HSRDistanceM: Number(entry.values['HSR Distance (m)']),
+					hsrDistanceM: Number(entry.values['HSR Distance (m)']),
 
-					noOfSprint: Number(entry.values['No. of Sprint (times)']),
+					sprintCount: Number(entry.values['No. of Sprint (times)']),
 					sprintDistanceM: Number(entry.values['Sprint Distance (m)']),
 					speedZone1DistanceM: Number(entry.values['Speed Zone 1 Distance (m)']),
 					speedZone3DistanceM: Number(entry.values['Speed Zone 3 Distance (m)']),
@@ -151,8 +151,8 @@ export class FitogetherCsvProcessor {
 						entry.values['Deceleration Zone 6 Entry Count (times)'],
 					),
 
-					noOfExpAcc: Number(entry.values['No. of Exp. Acc. (times)']),
-					noOfExpDec: Number(entry.values['No. of Exp. Dec. (times)']),
+					expAccCount: Number(entry.values['No. of Exp. Acc. (times)']),
+					expDecCount: Number(entry.values['No. of Exp. Dec. (times)']),
 				},
 				options.trainingBaseline,
 			);
