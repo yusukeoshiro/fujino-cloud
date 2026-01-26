@@ -13,6 +13,7 @@ export const INTERMEDIATE_SCHEMA_COLS: string[] = [
 	METRIC_DEFINITION_IDS.sprintDistanceM,
 	METRIC_DEFINITION_IDS.highIntensityDistanceM,
 	METRIC_DEFINITION_IDS.highIntensityRate,
+	METRIC_DEFINITION_IDS.lowIntensityDistanceM,
 	METRIC_DEFINITION_IDS.lowIntensityRate,
 	METRIC_DEFINITION_IDS.accelerationCountTotal,
 	METRIC_DEFINITION_IDS.expAccCount,

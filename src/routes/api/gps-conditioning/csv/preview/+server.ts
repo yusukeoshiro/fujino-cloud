@@ -3,12 +3,12 @@ import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processor
 import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
 import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
-import { buildMetricLabels } from '$lib/contents-provider/metric-labels';
+import { buildMetricMeta } from '$lib/contents-provider/metric-labels';
 import {
 	HEADER_COLS,
 	INTERMEDIATE_SCHEMA_COLS,
 } from '../../../../_/orgs/[oid]/gps-conditioning/upload/utils/headers.util';
-import { buildCsvParseResult, parseForm } from '../shared';
+import { buildCsvParseResult, parseForm, resolveVendorFormat } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -21,6 +21,8 @@ export const POST: RequestHandler = async (event) => {
 	const { file, vendorFormat } = parseForm(form);
 	if (!file) return new Response('No file field named "file".', { status: 400 });
 
+	const effectiveVendorFormat = await resolveVendorFormat(orgId, vendorFormat);
+
 	const {
 		parsers: parsedRows,
 		unmatched,
@@ -32,7 +34,7 @@ export const POST: RequestHandler = async (event) => {
 		orgId,
 		file,
 		fallbackBirthday: '0000-00-00',
-		vendorFormat,
+		vendorFormat: effectiveVendorFormat,
 	});
 
 	if (unmatched.length > 0) {
@@ -40,6 +42,7 @@ export const POST: RequestHandler = async (event) => {
 			resolvedVendorFormat === 'KNOWS_V1'
 				? buildKnowsUnmatchedPersonsResponse(
 						unmatched.map((item) => ({ row: item.row, playerName: item.playerName })),
+						headers,
 					)
 				: buildUnmatchedPersonsResponse(
 						unmatched.map((item) => ({
@@ -52,7 +55,7 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const previewRecords = parsedRows.map((parser, index) => buildMetricRecord(parser, index));
-	const columnLabels = buildMetricLabels();
+	const metricMeta = buildMetricMeta();
 
 	return new Response(
 		JSON.stringify(
@@ -60,10 +63,15 @@ export const POST: RequestHandler = async (event) => {
 				rows: parsedRows.length,
 				headers,
 				headerMap,
-				columns: buildPreviewColumns(previewRecords).map((key) => ({
-					key,
-					label: columnLabels.get(key) ?? key,
-				})),
+				columns: buildPreviewColumns(previewRecords).map((key) => {
+					const meta = metricMeta.get(key);
+					return {
+						key,
+						label: meta?.label ?? key,
+						unit: meta?.unit,
+						roundingPrecision: meta?.roundingPrecision,
+					};
+				}),
 				records: previewRecords,
 			},
 			null,
@@ -86,7 +94,7 @@ function buildPreviewColumns(records: Array<Record<string, unknown>>) {
 
 function hasMeaningfulValue(value: unknown): boolean {
 	if (value === null || value === undefined || value === '') return false;
-	if (typeof value === 'number') return Number.isFinite(value);
+	if (typeof value === 'number') return Number.isFinite(value) && value !== 0;
 	return true;
 }
 

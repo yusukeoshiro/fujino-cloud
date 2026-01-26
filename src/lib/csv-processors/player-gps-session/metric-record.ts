@@ -15,6 +15,7 @@ export function buildMetricValues(parser: PlayerGpsSession): MetricValueRecord {
 		[METRIC_DEFINITION_IDS.sprintDistanceM]: parser.sprintDistanceM,
 		[METRIC_DEFINITION_IDS.highIntensityDistanceM]: parser.highIntensityDistanceM,
 		[METRIC_DEFINITION_IDS.highIntensityRate]: parser.highIntensityRate,
+		[METRIC_DEFINITION_IDS.lowIntensityDistanceM]: parser.lowIntensityDistanceM,
 		[METRIC_DEFINITION_IDS.lowIntensityRate]: parser.lowIntensityRate,
 		[METRIC_DEFINITION_IDS.accelerationCountTotal]: parser.accelerationCountTotal,
 		[METRIC_DEFINITION_IDS.expAccCount]: parser.expAccCount,

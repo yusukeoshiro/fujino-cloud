@@ -22,14 +22,67 @@
 		return '';
 	}
 
-	function fmt(v: unknown): string {
+	function formatNumber(value: number, precision: number | undefined) {
+		const digits = typeof precision === 'number' ? precision : 0;
+		const factor = 10 ** digits;
+		const rounded = Math.round(value * factor) / factor;
+		return rounded.toLocaleString($locale, {
+			minimumFractionDigits: digits,
+			maximumFractionDigits: digits,
+		});
+	}
+
+	function unitLabel(unit?: string): string {
+		switch (unit) {
+			case 'CENTIMETER':
+				return 'cm';
+			case 'KILOGRAM':
+				return 'kg';
+			case 'COUNT':
+				return '回';
+			case 'PERCENT':
+				return '%';
+			case 'METER':
+				return 'm';
+			case 'SECOND':
+				return 's';
+			case 'MINUTE':
+				return 'min';
+			case 'HOUR':
+				return 'h';
+			case 'KMPH':
+				return 'km/h';
+			default:
+				return '';
+		}
+	}
+
+	function labelWithUnit(col: UploadPreviewColumn): string {
+		const unit = unitLabel(col.unit);
+		if (!unit) return col.label;
+		if (col.label.includes(`(${unit})`)) return col.label;
+		return `${col.label} (${unit})`;
+	}
+
+	function fmt(v: unknown, col?: UploadPreviewColumn): string {
 		if (v === null || v === undefined || v === '') return '—';
-		if (typeof v === 'number' && Number.isFinite(v)) return v.toLocaleString($locale);
+		if (typeof v === 'number' && Number.isFinite(v)) {
+			const unit = col?.unit;
+			const precision = col?.roundingPrecision;
+			const raw = unit === 'PERCENT' ? v * 100 : v;
+			const formatted = formatNumber(raw, precision);
+			return unit === 'PERCENT' ? `${formatted}%` : formatted;
+		}
 		return String(v);
 	}
 
 	type UploadPreviewRecord = Record<string, unknown> & { __rowIndex: number };
-	type UploadPreviewColumn = { key: string; label: string };
+	type UploadPreviewColumn = {
+		key: string;
+		label: string;
+		unit?: string;
+		roundingPrecision?: number;
+	};
 	type UploadPreviewRow = {
 		record: UploadPreviewRecord;
 		selected: boolean;
@@ -498,7 +551,7 @@
 											colStickyClass(col.key)}
 									>
 										<nobr>
-											{col.label}
+											{labelWithUnit(col)}
 										</nobr>
 									</th>
 								{/each}
@@ -520,7 +573,7 @@
 									{#each columns as col (col.key)}
 										<td class={'bg-inherit px-3 py-2 tabular-nums ' + colStickyClass(col.key)}>
 											<nobr>
-												{fmt(row.record[col.key])}
+												{fmt(row.record[col.key], col)}
 											</nobr>
 										</td>
 									{/each}

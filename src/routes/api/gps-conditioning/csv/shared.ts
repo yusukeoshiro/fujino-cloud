@@ -17,6 +17,7 @@ import {
 import type { GameScoreValueEntry } from '$lib/services/game-score.service';
 import type { SessionType } from '$lib/csv-processors/player-gps-session/gps-core.model';
 import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
+import { organizationService } from '$lib/services/organization.service';
 import {
 	DEFAULT_CSV_VENDOR_FORMAT,
 	CSV_VENDOR_FORMATS,
@@ -38,7 +39,7 @@ export const FITOGETHER_FIELD_TO_METRIC_ID: Record<string, string | undefined> =
 
 export function parseCsvText(text: string) {
 	const rawRecords = parse(text, {
-		columns: true,
+		columns: (headers: string[]) => headers.map((header) => header.trim()),
 		skip_empty_lines: true,
 		bom: true,
 		delimiter: [',', '\t'],
@@ -138,6 +139,22 @@ export function parseForm(form: FormData): {
 		vendorFormat,
 		sessionDate,
 	};
+}
+
+export async function resolveVendorFormat(
+	orgId: string,
+	vendorFormat: CsvVendorFormat | null,
+): Promise<CsvVendorFormat> {
+	if (vendorFormat) return vendorFormat;
+
+	const organization = await organizationService.getById(orgId);
+	const fromOrg = organization.defaultCsvVendorFormat;
+
+	if (fromOrg && CSV_VENDOR_FORMATS.includes(fromOrg)) {
+		return fromOrg;
+	}
+
+	return DEFAULT_CSV_VENDOR_FORMAT;
 }
 
 export async function buildCsvParseResult(params: {

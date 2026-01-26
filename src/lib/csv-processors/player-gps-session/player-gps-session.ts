@@ -21,22 +21,11 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 
 	sprintCount: number;
 	sprintDistanceM: number;
-	speedZone1DistanceM: number;
-	speedZone3DistanceM: number;
-	speedZone4DistanceM: number;
-	speedZone5DistanceM: number;
-	speedZone6DistanceM: number;
-	speedZone7DistanceM: number;
-	speedZone8DistanceM: number;
-	speedZone9DistanceM: number;
+	highIntensityDistanceM: number;
+	lowIntensityDistanceM: number;
 
-	accelerationZone4EntryCount: number;
-	accelerationZone5EntryCount: number;
-	accelerationZone6EntryCount: number;
-
-	decelerationZone4EntryCount: number;
-	decelerationZone5EntryCount: number;
-	decelerationZone6EntryCount: number;
+	accelerationCountTotal: number;
+	decelerationCountTotal: number;
 
 	expAccCount: number;
 	expDecCount: number;
@@ -67,47 +56,24 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 
 		this.sprintCount = params.sprintCount;
 		this.sprintDistanceM = params.sprintDistanceM;
-		this.speedZone1DistanceM = params.speedZone1DistanceM;
-		this.speedZone3DistanceM = params.speedZone3DistanceM;
-		this.speedZone4DistanceM = params.speedZone4DistanceM;
-		this.speedZone5DistanceM = params.speedZone5DistanceM;
-		this.speedZone6DistanceM = params.speedZone6DistanceM;
-		this.speedZone7DistanceM = params.speedZone7DistanceM;
-		this.speedZone8DistanceM = params.speedZone8DistanceM;
-		this.speedZone9DistanceM = params.speedZone9DistanceM;
+		this.highIntensityDistanceM = params.highIntensityDistanceM;
+		this.lowIntensityDistanceM = params.lowIntensityDistanceM;
 
-		this.accelerationZone4EntryCount = params.accelerationZone4EntryCount;
-		this.accelerationZone5EntryCount = params.accelerationZone5EntryCount;
-		this.accelerationZone6EntryCount = params.accelerationZone6EntryCount;
-
-		this.decelerationZone4EntryCount = params.decelerationZone4EntryCount;
-		this.decelerationZone5EntryCount = params.decelerationZone5EntryCount;
-		this.decelerationZone6EntryCount = params.decelerationZone6EntryCount;
+		this.accelerationCountTotal = params.accelerationCountTotal;
+		this.decelerationCountTotal = params.decelerationCountTotal;
 
 		this.expAccCount = params.expAccCount;
 		this.expDecCount = params.expDecCount;
 	}
 
 	// computed, from raw:
-	get highIntensityDistanceM() {
-		// Derived: distance covered in speed zones Z8–Z9.
-		return this.speedZone8DistanceM + this.speedZone9DistanceM;
-	}
 	get highIntensityRate() {
 		// Derived: high-intensity distance as a share of total distance.
 		return this.highIntensityDistanceM / this.totalDistanceM;
 	}
 	get lowIntensityRate() {
 		// Derived: low-intensity (Z1) share of total distance.
-		return this.speedZone1DistanceM / this.totalDistanceM;
-	}
-	get accelerationCountTotal() {
-		// Derived: higher acceleration zone counts used in scoring.
-		return this.accelerationZone5EntryCount + this.accelerationZone6EntryCount;
-	}
-	get decelerationCountTotal() {
-		// Derived: higher deceleration zone counts used in scoring.
-		return this.decelerationZone5EntryCount + this.decelerationZone6EntryCount;
+		return this.lowIntensityDistanceM / this.totalDistanceM;
 	}
 
 	get trainingScoreConsumption(): number | null {
@@ -179,32 +145,14 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			スプリント回数: this.sprintCount,
 			'スプリント距離(m)': this.sprintDistanceM,
 
-			'Z1距離(m)': this.speedZone1DistanceM,
-			'Z3距離(m)': this.speedZone3DistanceM,
-			'Z4距離(m)': this.speedZone4DistanceM,
-			'Z5距離(m)': this.speedZone5DistanceM,
-			'Z6距離(m)': this.speedZone6DistanceM,
-			'Z7距離(m)': this.speedZone7DistanceM,
-			'Z8距離(m)': this.speedZone8DistanceM,
-			'Z9距離(m)': this.speedZone9DistanceM,
-
-			加速Z4回数: this.accelerationZone4EntryCount,
-			加速Z5回数: this.accelerationZone5EntryCount,
-			加速Z6回数: this.accelerationZone6EntryCount,
-
-			減速Z4回数: this.decelerationZone4EntryCount,
-			減速Z5回数: this.decelerationZone5EntryCount,
-			減速Z6回数: this.decelerationZone6EntryCount,
-
-			爆発的加速回数: this.expAccCount,
-			爆発的減速回数: this.expDecCount,
-
-			// Derived
 			'高強度距離(m)': this.highIntensityDistanceM,
+			'低強度距離(m)': this.lowIntensityDistanceM,
 			高強度割合: this.highIntensityRate,
 			ウォーキング割合: this.lowIntensityRate,
 			加速合計回数: this.accelerationCountTotal,
 			減速合計回数: this.decelerationCountTotal,
+			爆発的加速回数: this.expAccCount,
+			爆発的減速回数: this.expDecCount,
 
 			トレーニングスコア消費: this.trainingScoreConsumption,
 		} as const;

@@ -96,6 +96,21 @@ export class FitogetherCsvProcessor {
 				entry.resolvedBirthday && entry.resolvedBirthday !== '0000-00-00'
 					? entry.resolvedBirthday
 					: fallbackBirthday;
+			const speedZone1DistanceM = Number(valueFor('Speed Zone 1 Distance (m)'));
+			const speedZone8DistanceM = Number(valueFor('Speed Zone 8 Distance (m)'));
+			const speedZone9DistanceM = Number(valueFor('Speed Zone 9 Distance (m)'));
+			const accelerationZone5EntryCount = Number(
+				valueFor('Acceleration Zone 5 Entry Count (times)'),
+			);
+			const accelerationZone6EntryCount = Number(
+				valueFor('Acceleration Zone 6 Entry Count (times)'),
+			);
+			const decelerationZone5EntryCount = Number(
+				valueFor('Deceleration Zone 5 Entry Count (times)'),
+			);
+			const decelerationZone6EntryCount = Number(
+				valueFor('Deceleration Zone 6 Entry Count (times)'),
+			);
 			return new PlayerGpsSession(
 				{
 					type: 'TRAINING',
@@ -120,22 +135,10 @@ export class FitogetherCsvProcessor {
 
 					sprintCount: Number(valueFor('No. of Sprint (times)')),
 					sprintDistanceM: Number(valueFor('Sprint Distance (m)')),
-					speedZone1DistanceM: Number(valueFor('Speed Zone 1 Distance (m)')),
-					speedZone3DistanceM: Number(valueFor('Speed Zone 3 Distance (m)')),
-					speedZone4DistanceM: Number(valueFor('Speed Zone 4 Distance (m)')),
-					speedZone5DistanceM: Number(valueFor('Speed Zone 5 Distance (m)')),
-					speedZone6DistanceM: Number(valueFor('Speed Zone 6 Distance (m)')),
-					speedZone7DistanceM: Number(valueFor('Speed Zone 7 Distance (m)')),
-					speedZone8DistanceM: Number(valueFor('Speed Zone 8 Distance (m)')),
-					speedZone9DistanceM: Number(valueFor('Speed Zone 9 Distance (m)')),
-
-					accelerationZone4EntryCount: Number(valueFor('Acceleration Zone 4 Entry Count (times)')),
-					accelerationZone5EntryCount: Number(valueFor('Acceleration Zone 5 Entry Count (times)')),
-					accelerationZone6EntryCount: Number(valueFor('Acceleration Zone 6 Entry Count (times)')),
-
-					decelerationZone4EntryCount: Number(valueFor('Deceleration Zone 4 Entry Count (times)')),
-					decelerationZone5EntryCount: Number(valueFor('Deceleration Zone 5 Entry Count (times)')),
-					decelerationZone6EntryCount: Number(valueFor('Deceleration Zone 6 Entry Count (times)')),
+					highIntensityDistanceM: speedZone8DistanceM + speedZone9DistanceM,
+					lowIntensityDistanceM: speedZone1DistanceM,
+					accelerationCountTotal: accelerationZone5EntryCount + accelerationZone6EntryCount,
+					decelerationCountTotal: decelerationZone5EntryCount + decelerationZone6EntryCount,
 
 					expAccCount: Number(valueFor('No. of Exp. Acc. (times)')),
 					expDecCount: Number(valueFor('No. of Exp. Dec. (times)')),

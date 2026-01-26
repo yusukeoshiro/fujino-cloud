@@ -866,41 +866,39 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
-		// TODO DELETE ME
 		id: '0xbH1n71xspfVRddG92Q',
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
 		isPublic: false,
-		deprecated: true,
-		name: 'Zone 1 距離',
+		name: '低強度距離',
 		nameI18n: [
 			{
 				locale: 'ja',
-				value: 'Zone 1 距離',
+				value: '低強度距離',
 			},
 			{
 				locale: 'en',
-				value: 'Zone 1 Distance',
+				value: 'Low-intensity Distance',
 			},
 			{
 				locale: 'ko',
-				value: 'Zone 1 거리',
+				value: '저강도 거리',
 			},
 		],
-		description: 'Fitogether Zone 1 距離',
+		description: '低強度ゾーンの距離（通常はZ1相当）',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 1 距離',
+				value: '低強度ゾーンの距離（通常はZ1相当）。',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 1 distance.',
+				value: 'Distance in the low-intensity zone (typically Z1).',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 1 거리.',
+				value: '저강도 존 거리(보통 Z1).',
 			},
 		],
 		type: 'raw',

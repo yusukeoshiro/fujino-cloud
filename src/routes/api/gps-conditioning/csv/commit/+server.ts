@@ -11,8 +11,7 @@ import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processor
 import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
 import { adminStorage } from '$lib/admin-firebase';
-import { DEFAULT_CSV_VENDOR_FORMAT } from '$lib/csv-processors/vendor-formats';
-import { buildCsvParseResult, parseForm } from '../shared';
+import { buildCsvParseResult, parseForm, resolveVendorFormat } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
 	const { request, url } = event;
@@ -25,18 +24,20 @@ export const POST: RequestHandler = async (event) => {
 	const { file, sessionType, selectedRowIndexSet, sessionDate, vendorFormat } = parseForm(form);
 	if (!file) return new Response('No file field named "file".', { status: 400 });
 	if (!sessionDate) return new Response('sessionDate is required.', { status: 400 });
-	if (!vendorFormat) return new Response('vendorFormat is required.', { status: 400 });
+
+	const requestedVendorFormat = await resolveVendorFormat(orgId, vendorFormat);
 
 	const {
 		parsers: parsedRows,
 		unmatched,
 		vendorFormat: resolvedVendorFormat,
+		headers,
 	} = await buildCsvParseResult({
 		event,
 		orgId,
 		file,
 		fallbackBirthday: '2000-01-01',
-		vendorFormat,
+		vendorFormat: requestedVendorFormat,
 		sessionDate,
 	});
 
@@ -45,6 +46,7 @@ export const POST: RequestHandler = async (event) => {
 			resolvedVendorFormat === 'KNOWS_V1'
 				? buildKnowsUnmatchedPersonsResponse(
 						unmatched.map((item) => ({ row: item.row, playerName: item.playerName })),
+						headers,
 					)
 				: buildUnmatchedPersonsResponse(
 						unmatched.map((item) => ({
@@ -67,7 +69,7 @@ export const POST: RequestHandler = async (event) => {
 		return new Response('sessionDate must be a valid yyyy-MM-dd date.', { status: 400 });
 	}
 	const sessionLabel = sessionType === 'GAME' ? 'ゲーム' : 'トレーニング';
-	const effectiveVendorFormat = resolvedVendorFormat ?? DEFAULT_CSV_VENDOR_FORMAT;
+	const effectiveVendorFormat = resolvedVendorFormat;
 
 	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 

@@ -1,6 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
-import { coerce } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
+import {
+	coerce,
+	normalizeIdentifier,
+} from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 
 export const KNOWS_NAME_FIELD = 'Name';
 
@@ -8,6 +11,7 @@ export interface KnowsPersonRecord {
 	id?: string | null;
 	fullName?: string | null;
 	birthday?: string | null;
+	externalId?: string | number | null;
 }
 
 export interface KnowsCsvProcessorOptions {
@@ -66,11 +70,14 @@ const parseDurationToMinutes = (raw: string | number): number => {
 };
 
 export class KnowsCsvProcessor {
+	private personsByExternalId = new Map<string, KnowsPersonRecord>();
 	private personsByFullName = new Map<string, KnowsPersonRecord>();
 	private seenKeys = new Set<string>();
 
 	constructor(private readonly options: KnowsCsvProcessorOptions) {
 		for (const person of options.persons) {
+			const externalId = normalizeIdentifier(person.externalId as string | number | null);
+			if (externalId) this.personsByExternalId.set(externalId, person);
 			const nameKey = normalizeName(person.fullName ?? '');
 			if (nameKey && !this.personsByFullName.has(nameKey)) {
 				this.personsByFullName.set(nameKey, person);
@@ -95,13 +102,12 @@ export class KnowsCsvProcessor {
 			const totalDistanceMPerMin = durationMin > 0 ? totalDistanceM / durationMin : 0;
 			const maxSpeedKMH = Number(valueFor('SPD MX'));
 			const sprintCount = Number(valueFor('Sprint'));
-			const speedZone1DistanceM = Number(valueFor('SPD_D_Z1'));
-			const speedZone8DistanceM = Number(valueFor('SPD_D_Z5'));
-			const speedZone9DistanceM = Number(valueFor('SPD_D_Z6'));
+			const lowIntensityDistanceM = Number(valueFor('SPD_D_Z1'));
+			const highIntensityDistanceM = Number(valueFor('SPD_D_Z5')) + Number(valueFor('SPD_D_Z6'));
 
-			const accTotal =
+			const accelerationCountTotal =
 				Number(valueFor('Accel_Z1')) + Number(valueFor('Accel_Z2')) + Number(valueFor('Accel_Z3'));
-			const decTotal =
+			const decelerationCountTotal =
 				Number(valueFor('Decel_Z1')) + Number(valueFor('Decel_Z2')) + Number(valueFor('Decel_Z3'));
 
 			return new PlayerGpsSession(
@@ -121,22 +127,10 @@ export class KnowsCsvProcessor {
 
 					sprintCount,
 					sprintDistanceM: 0,
-					speedZone1DistanceM,
-					speedZone3DistanceM: 0,
-					speedZone4DistanceM: 0,
-					speedZone5DistanceM: 0,
-					speedZone6DistanceM: 0,
-					speedZone7DistanceM: 0,
-					speedZone8DistanceM,
-					speedZone9DistanceM,
-
-					accelerationZone4EntryCount: 0,
-					accelerationZone5EntryCount: accTotal,
-					accelerationZone6EntryCount: 0,
-
-					decelerationZone4EntryCount: 0,
-					decelerationZone5EntryCount: decTotal,
-					decelerationZone6EntryCount: 0,
+					highIntensityDistanceM,
+					lowIntensityDistanceM,
+					accelerationCountTotal,
+					decelerationCountTotal,
 
 					expAccCount: 0,
 					expDecCount: 0,
@@ -176,10 +170,19 @@ export class KnowsCsvProcessor {
 			}
 
 			const fullNameValue = values[KNOWS_NAME_FIELD];
-			const fullName = typeof fullNameValue === 'string' ? fullNameValue : '';
+			const fullName =
+				typeof fullNameValue === 'string'
+					? fullNameValue
+					: typeof fullNameValue === 'number'
+						? String(fullNameValue)
+						: '';
 
 			const nameKey = normalizeName(fullName);
-			const matchedPerson = nameKey ? this.personsByFullName.get(nameKey) : undefined;
+			const externalKey = normalizeIdentifier(fullName);
+			let matchedPerson = externalKey ? this.personsByExternalId.get(externalKey) : undefined;
+			if (!matchedPerson && nameKey) {
+				matchedPerson = this.personsByFullName.get(nameKey);
+			}
 
 			if (!matchedPerson) {
 				unmatched.push({
@@ -189,7 +192,10 @@ export class KnowsCsvProcessor {
 				return;
 			}
 
-			const dedupeKey = (matchedPerson.id && `person:${matchedPerson.id}`) || `name:${nameKey}`;
+			const dedupeKey =
+				(matchedPerson.id && `person:${matchedPerson.id}`) ||
+				(externalKey && `external:${externalKey}`) ||
+				`name:${nameKey}`;
 			if (dedupeKey) {
 				if (this.seenKeys.has(dedupeKey)) return;
 				this.seenKeys.add(dedupeKey);
@@ -222,14 +228,29 @@ export class KnowsCsvProcessor {
 	}
 }
 
-export function buildKnowsUnmatchedPersonsResponse(unmatched: KnowsUnmatchedPerson[]) {
+export function buildKnowsUnmatchedPersonsResponse(
+	unmatched: KnowsUnmatchedPerson[],
+	headers?: string[],
+) {
 	if (unmatched.length === 0) return null;
 
+	const missingCount = unmatched.filter((item) => item.playerName === '(missing)').length;
 	const messageLines = [
 		`以下の${unmatched.length}名を既存の選手情報と照合できませんでした。`,
 		'KNOWS_V1 は Name 列で照合します（空白を除去して完全一致）。',
-		'CSV の Name が空欄、または Persons データベースに一致する氏名がありません。',
+		'Name が数値の場合は externalId として照合します。',
+		'CSV の Name が空欄、または Persons データベースに一致する氏名/外部IDがありません。',
 	];
+
+	if (missingCount === unmatched.length) {
+		messageLines.push(
+			'全行で Name が取得できませんでした。CSV の区切り文字やヘッダ名（Name）を確認してください。',
+		);
+	}
+
+	if (headers?.length) {
+		messageLines.push(`検出したヘッダ: ${headers.join(', ')}`);
+	}
 	return json(
 		{
 			code: 'UNMATCHED_PERSONS',
@@ -240,7 +261,9 @@ export function buildKnowsUnmatchedPersonsResponse(unmatched: KnowsUnmatchedPers
 				description:
 					item.playerName === '(missing)'
 						? `Row ${item.row}: Name is missing`
-						: `Row ${item.row}: Name "${item.playerName}" not found in Persons`,
+						: /^[0-9]+$/.test(item.playerName)
+							? `Row ${item.row}: Name "${item.playerName}" not found in Persons (checked externalId/fullName)`
+							: `Row ${item.row}: Name "${item.playerName}" not found in Persons`,
 			})),
 		},
 		{ status: 422 },

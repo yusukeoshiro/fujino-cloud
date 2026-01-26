@@ -21,22 +21,10 @@ describe('PlayerGpsSession', () => {
 
 		sprintCount: 5,
 		sprintDistanceM: 200,
-		speedZone1DistanceM: 4000,
-		speedZone3DistanceM: 1000,
-		speedZone4DistanceM: 500,
-		speedZone5DistanceM: 200,
-		speedZone6DistanceM: 120,
-		speedZone7DistanceM: 80,
-		speedZone8DistanceM: 150,
-		speedZone9DistanceM: 50,
-
-		accelerationZone4EntryCount: 5,
-		accelerationZone5EntryCount: 3,
-		accelerationZone6EntryCount: 1,
-
-		decelerationZone4EntryCount: 6,
-		decelerationZone5EntryCount: 4,
-		decelerationZone6EntryCount: 2,
+		highIntensityDistanceM: 200,
+		lowIntensityDistanceM: 4000,
+		accelerationCountTotal: 4,
+		decelerationCountTotal: 6,
 
 		expAccCount: 2,
 		expDecCount: 3,
@@ -51,7 +39,6 @@ describe('PlayerGpsSession', () => {
 	});
 
 	it('should calculate highIntensityDistanceM correctly', () => {
-		// Z8 + Z9 = 150 + 50 = 200
 		const parser = new PlayerGpsSession(mockData);
 		expect(parser.highIntensityDistanceM).toBe(200);
 	});
@@ -63,19 +50,16 @@ describe('PlayerGpsSession', () => {
 	});
 
 	it('should calculate lowIntensityRate correctly', () => {
-		// Z1 / total = 4000 / 10000 = 0.4
 		const parser = new PlayerGpsSession(mockData);
 		expect(parser.lowIntensityRate).toBe(0.4);
 	});
 
 	it('should calculate accelerationCountTotal correctly', () => {
-		// Acc Z5 + Z6 = 3 + 1 = 4
 		const parser = new PlayerGpsSession(mockData);
 		expect(parser.accelerationCountTotal).toBe(4);
 	});
 
 	it('should calculate decelerationCountTotal correctly', () => {
-		// Dec Z5 + Z6 = 4 + 2 = 6
 		const parser = new PlayerGpsSession(mockData);
 		expect(parser.decelerationCountTotal).toBe(6);
 	});
