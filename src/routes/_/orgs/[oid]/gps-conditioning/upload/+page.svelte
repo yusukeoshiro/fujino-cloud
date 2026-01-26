@@ -92,6 +92,7 @@
 		headers: string[];
 		columns: UploadPreviewColumn[];
 		records: UploadPreviewRecord[];
+		inferredSessionDate?: string | null;
 	};
 
 	let isOver = $state(false);
@@ -198,6 +199,9 @@
 			}
 			const payload = (await res.json()) as UploadPreviewResponse;
 			result = payload;
+			if (!sessionDate && payload.inferredSessionDate) {
+				sessionDate = payload.inferredSessionDate;
+			}
 			rowSelections = buildInitialSelections(payload.records);
 		} catch (e: unknown) {
 			const details: string[] = [];

@@ -10,7 +10,7 @@ import { trainigMetricDefinitionIds } from '$lib/training-cols';
 import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import { buildMetricValues } from '$lib/csv-processors/player-gps-session/metric-record';
-import { adminStorage } from '$lib/admin-firebase';
+import { getAdminStorage } from '$lib/admin-firebase';
 import { buildCsvParseResult, parseForm, resolveVendorFormat } from '../shared';
 
 export const POST: RequestHandler = async (event) => {
@@ -267,7 +267,8 @@ async function uploadRawCsvToStorage(params: {
 		contentType: file.type || 'text/csv',
 	};
 
-	await adminStorage.file(objectPath).save(buffer, {
+	const bucket = getAdminStorage();
+	await bucket.file(objectPath).save(buffer, {
 		resumable: false,
 		...metadata,
 	});

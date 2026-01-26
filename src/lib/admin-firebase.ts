@@ -24,7 +24,14 @@ const databaseId = env.FIRESTORE_DATABASE_ID || 'default';
 // TODO I dont know why I need to speficy default here. its really annoying
 export const adminDb = getFirestore(databaseId);
 
-if (!env.FIREBASE_STORAGE_BUCKET) {
+const isBuild = process.env.npm_lifecycle_event === 'build';
+if (!isBuild && !env.FIREBASE_STORAGE_BUCKET) {
 	throw new Error('FIREBASE_STORAGE_BUCKET is required.');
 }
-export const adminStorage = getStorage().bucket(env.FIREBASE_STORAGE_BUCKET);
+
+export function getAdminStorage() {
+	if (!env.FIREBASE_STORAGE_BUCKET) {
+		throw new Error('FIREBASE_STORAGE_BUCKET is required.');
+	}
+	return getStorage().bucket(env.FIREBASE_STORAGE_BUCKET);
+}

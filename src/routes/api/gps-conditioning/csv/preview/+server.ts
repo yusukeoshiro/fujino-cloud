@@ -1,4 +1,5 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
+import { DateTime } from 'luxon';
 import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
 import type { PlayerGpsSession } from '$lib/csv-processors/player-gps-session/player-gps-session';
@@ -56,6 +57,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const previewRecords = parsedRows.map((parser, index) => buildMetricRecord(parser, index));
 	const metricMeta = buildMetricMeta();
+	const inferredSessionDate = inferSessionDate(resolvedVendorFormat, parsedRows);
 
 	return new Response(
 		JSON.stringify(
@@ -73,6 +75,7 @@ export const POST: RequestHandler = async (event) => {
 					};
 				}),
 				records: previewRecords,
+				inferredSessionDate,
 			},
 			null,
 			2,
@@ -104,4 +107,13 @@ function buildMetricRecord(parser: PlayerGpsSession, index: number) {
 		fullName: parser.fullName,
 		...buildMetricValues(parser),
 	};
+}
+
+function inferSessionDate(vendorFormat: string | null | undefined, records: PlayerGpsSession[]) {
+	if (vendorFormat !== 'FITOGETHER_V1') return null;
+	const raw = records[0]?.date;
+	if (!raw) return null;
+	const parsed = DateTime.fromISO(raw);
+	if (!parsed.isValid) return null;
+	return parsed.toFormat('yyyy-MM-dd');
 }
