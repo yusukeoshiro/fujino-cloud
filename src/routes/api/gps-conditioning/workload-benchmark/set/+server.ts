@@ -1,8 +1,11 @@
 import { error, json, type RequestHandler } from '@sveltejs/kit';
-import { gameScoreService, type GameScoreValueEntry } from '$lib/services/game-score.service';
+import {
+	workloadBenchmarkService,
+	type WorkloadBenchmarkValueEntry,
+} from '$lib/services/workload-benchmark.service';
 
-type GameScorePayload = {
-	values?: GameScoreValueEntry[];
+type WorkloadBenchmarkPayload = {
+	values?: WorkloadBenchmarkValueEntry[];
 };
 
 export const POST: RequestHandler = async (event) => {
@@ -11,9 +14,9 @@ export const POST: RequestHandler = async (event) => {
 		throw error(400, 'orgId is required');
 	}
 
-	let body: GameScorePayload | null = null;
+	let body: WorkloadBenchmarkPayload | null = null;
 	try {
-		body = (await event.request.json()) as GameScorePayload;
+		body = (await event.request.json()) as WorkloadBenchmarkPayload;
 	} catch {
 		// ignore parse errors
 	}
@@ -23,10 +26,10 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const sanitizedValues = sanitizeEntries(body.values);
-	const saved = await gameScoreService.upsert(orgId, sanitizedValues);
+	const saved = await workloadBenchmarkService.upsert(orgId, sanitizedValues);
 	const savedAt = new Date().toISOString();
 
-	console.log('Received /api/gps-conditioning/game-score/set payload:', {
+	console.log('Received /api/gps-conditioning/workload-benchmark/set payload:', {
 		orgId,
 		values: sanitizedValues,
 	});
@@ -36,13 +39,13 @@ export const POST: RequestHandler = async (event) => {
 			ok: true,
 			values: saved.values,
 			savedAt,
-			message: 'ゲームスコアを保存しました。',
+			message: 'ワークロードベンチマークを保存しました。',
 		},
 		{ status: 200 },
 	);
 };
 
-const sanitizeEntries = (entries: GameScoreValueEntry[]): GameScoreValueEntry[] =>
+const sanitizeEntries = (entries: WorkloadBenchmarkValueEntry[]): WorkloadBenchmarkValueEntry[] =>
 	entries
 		.filter((entry) => entry && entry.metricDefinitionId)
 		.map((entry) => {

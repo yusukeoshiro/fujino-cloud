@@ -63,6 +63,10 @@ export const POST: RequestHandler = async (event) => {
 	const selectionFlags = parsedRows.map((_, index) =>
 		selectedRowIndexSet === null ? true : selectedRowIndexSet.has(index),
 	);
+	const metricValuesByRow = parsedRows.map((record) => buildMetricValues(record));
+	const metricDefinitionIdsWithValues = trainigMetricDefinitionIds.filter((metricDefinitionId) =>
+		metricValuesByRow.some((values) => hasMeaningfulValue(values[metricDefinitionId])),
+	);
 
 	const dt = DateTime.fromISO(sessionDate);
 	if (!dt.isValid) {
@@ -92,12 +96,12 @@ export const POST: RequestHandler = async (event) => {
 					],
 				},
 				performanceAssessmentMetrics: [
-					...trainigMetricDefinitionIds.map((metricDefinitionId, i) => {
+					...metricDefinitionIdsWithValues.map((metricDefinitionId, i) => {
 						return {
 							metricDefinitionId: metricDefinitionId,
 							scored: false,
 							displayOrder: i + 1,
-							category: 'TRAINING',
+							category: 'WORKLOAD',
 						};
 					}),
 				],
@@ -185,38 +189,42 @@ export const POST: RequestHandler = async (event) => {
 
 	const autoRecord = new AutoRecordMetricMutateStore();
 
-	for (const record of parsedRows) {
-		const metricValues = buildMetricValues(record);
-		const promises = trainigMetricDefinitionIds.map((metricDefinitionId) =>
-			autoRecord
-				.mutate(
-					{
-						data: {
-							orgUniqueToken: record.orgUniqueToken!,
-							metricDefinitionId,
-							performanceAssessmentId,
-							value: metricValues[metricDefinitionId] ?? 0,
-							isOfficial: true,
+	for (const [rowIndex, record] of parsedRows.entries()) {
+		const metricValues = metricValuesByRow[rowIndex];
+		const promises = metricDefinitionIdsWithValues.flatMap((metricDefinitionId) => {
+			const value = metricValues[metricDefinitionId];
+			if (!hasMeaningfulValue(value)) return [];
+			return [
+				autoRecord
+					.mutate(
+						{
+							data: {
+								orgUniqueToken: record.orgUniqueToken!,
+								metricDefinitionId,
+								performanceAssessmentId,
+								value: value as number,
+								isOfficial: true,
+							},
 						},
-					},
-					{
-						event,
-					},
-				)
-				.then((r) => {
-					if (r.errors) {
-						console.error('Failed to auto record metric', {
-							fullName: record.fullName,
-							metricDefinitionId,
-							errors: r.errors,
-						});
-					} else {
-						console.log(
-							`${record.fullName} ${metricDefinitionId} is done with id ${r.data?.autoRecordMetric.id}`,
-						);
-					}
-				}),
-		);
+						{
+							event,
+						},
+					)
+					.then((r) => {
+						if (r.errors) {
+							console.error('Failed to auto record metric', {
+								fullName: record.fullName,
+								metricDefinitionId,
+								errors: r.errors,
+							});
+						} else {
+							console.log(
+								`${record.fullName} ${metricDefinitionId} is done with id ${r.data?.autoRecordMetric.id}`,
+							);
+						}
+					}),
+			];
+		});
 
 		await Promise.all(promises);
 	}
@@ -239,6 +247,12 @@ export const POST: RequestHandler = async (event) => {
 
 	return new Response(JSON.stringify({}));
 };
+
+function hasMeaningfulValue(value: unknown): boolean {
+	if (value === null || value === undefined || value === '') return false;
+	if (typeof value === 'number') return Number.isFinite(value);
+	return true;
+}
 
 async function uploadRawCsvToStorage(params: {
 	orgId: string;

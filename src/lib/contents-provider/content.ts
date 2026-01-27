@@ -13,7 +13,7 @@ type MetricDefinition = {
 	createdAt: string;
 	updatedAt: string;
 	orgId: string | null;
-	isPublic: boolean;
+	isArchived: boolean;
 	deprecated?: boolean;
 	name: string;
 	nameI18n?: LocalizedString[] | null;
@@ -103,7 +103,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '身長',
 		nameI18n: [
 			{
@@ -148,7 +148,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '両足５段跳び',
 		nameI18n: [
 			{
@@ -193,7 +193,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 左',
 		nameI18n: [
 			{
@@ -238,7 +238,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 右',
 		nameI18n: [
 			{
@@ -283,7 +283,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 左右差(%)',
 		nameI18n: [
 			{
@@ -329,7 +329,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 右',
 		nameI18n: [
 			{
@@ -374,7 +374,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '体重',
 		nameI18n: [
 			{
@@ -419,7 +419,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 左',
 		nameI18n: [
 			{
@@ -464,7 +464,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'BMI',
 		nameI18n: [
 			{
@@ -509,7 +509,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 左右差(%)',
 		nameI18n: [
 			{
@@ -555,7 +555,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '立ち幅跳び',
 		nameI18n: [
 			{
@@ -600,7 +600,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 平均',
 		nameI18n: [
 			{
@@ -645,7 +645,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '20M スプリント',
 		nameI18n: [
 			{
@@ -690,7 +690,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 平均',
 		nameI18n: [
 			{
@@ -735,7 +735,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '30M スプリント',
 		nameI18n: [
 			{
@@ -780,7 +780,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '10M スプリント',
 		nameI18n: [
 			{
@@ -825,7 +825,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'YoYo',
 		nameI18n: [
 			{
@@ -870,7 +870,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '低強度距離',
 		nameI18n: [
 			{
@@ -902,7 +902,7 @@ export const metricDefinitions: MetricDefinition[] = [
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -916,7 +916,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Accel Zone 4 回数',
 		nameI18n: [
@@ -933,23 +933,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Accel Zone 4 횟수',
 			},
 		],
-		description: 'Fitogether Accel Zone 4 回数',
+		description: 'Accel Zone 4 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Accel Zone 4 回数',
+				value: 'Accel Zone 4 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Accel Zone 4 count.',
+				value: 'Accel Zone 4 count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Accel Zone 4 횟수.',
+				value: 'Accel Zone 4 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -962,7 +962,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '減速合計回数',
 		nameI18n: [
 			{
@@ -978,23 +978,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '총 감속 횟수',
 			},
 		],
-		description: 'Fitogether 減速合計回数',
+		description: '減速合計回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether 減速合計回数',
+				value: '減速合計回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether total deceleration count.',
+				value: 'total deceleration count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 총 감속 횟수.',
+				value: '총 감속 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1008,7 +1008,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Decel Zone 4 回数',
 		nameI18n: [
@@ -1025,23 +1025,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Decel Zone 4 횟수',
 			},
 		],
-		description: 'Fitogether Decel Zone 4 回数',
+		description: 'Decel Zone 4 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Decel Zone 4 回数',
+				value: 'Decel Zone 4 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Decel Zone 4 count.',
+				value: 'Decel Zone 4 count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Decel Zone 4 횟수.',
+				value: 'Decel Zone 4 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1054,7 +1054,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'TRスコア消費',
 		nameI18n: [
 			{
@@ -1070,23 +1070,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'TR 스코어 소비',
 			},
 		],
-		description: 'Fitogether TRスコア消費',
+		description: 'TRスコア消費',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether TRスコア消費',
+				value: 'TRスコア消費',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether TR score expenditure.',
+				value: 'TR score expenditure.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether TR 스코어 소비.',
+				value: 'TR 스코어 소비.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1099,7 +1099,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '走行距離/分',
 		nameI18n: [
 			{
@@ -1115,23 +1115,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '분당 이동거리',
 			},
 		],
-		description: 'Fitogether 走行距離/分',
+		description: '走行距離/分',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether 走行距離/分',
+				value: '走行距離/分',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether distance per minute.',
+				value: 'distance per minute.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 분당 이동거리.',
+				value: '분당 이동거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1144,7 +1144,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'トレーニング時間',
 		nameI18n: [
 			{
@@ -1160,23 +1160,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '트레이닝 시간',
 			},
 		],
-		description: 'Fitogether トレーニング時間です。',
+		description: 'トレーニング時間です。',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether トレーニング時間です。',
+				value: 'トレーニング時間です。',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether training duration.',
+				value: 'training duration.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 트레이닝 시간.',
+				value: '트레이닝 시간.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1189,7 +1189,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '高強度距離',
 		nameI18n: [
 			{
@@ -1205,23 +1205,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '고강도 거리',
 			},
 		],
-		description: 'Fitogether トレーニング高強度',
+		description: 'トレーニング高強度',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether トレーニング高強度',
+				value: 'トレーニング高強度',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether training high intensity.',
+				value: 'training high intensity.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 트레이닝 고강도.',
+				value: '트레이닝 고강도.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1234,7 +1234,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '走行距離',
 		nameI18n: [
 			{
@@ -1250,23 +1250,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '총 이동거리',
 			},
 		],
-		description: 'Fitogether トレーニング走行距離',
+		description: 'トレーニング走行距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether トレーニング走行距離',
+				value: 'トレーニング走行距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether training distance.',
+				value: 'training distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 트레이닝 이동거리.',
+				value: '트레이닝 이동거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1279,7 +1279,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '最大速度',
 		nameI18n: [
 			{
@@ -1295,23 +1295,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '최대 속도',
 			},
 		],
-		description: 'Fitogether 最大速度',
+		description: '最大速度',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether 最大速度',
+				value: '最大速度',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether max speed.',
+				value: 'max speed.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 최대 속도.',
+				value: '최대 속도.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1324,7 +1324,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '高強度割合',
 		nameI18n: [
 			{
@@ -1340,23 +1340,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '고강도 비율',
 			},
 		],
-		description: 'Fitogether トレーニング高強度割合',
+		description: 'トレーニング高強度割合',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether トレーニング高強度割合',
+				value: 'トレーニング高強度割合',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether training high-intensity ratio.',
+				value: 'training high-intensity ratio.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 트레이닝 고강도 비율.',
+				value: '트레이닝 고강도 비율.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1369,7 +1369,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'Exp Accel回数',
 		nameI18n: [
 			{
@@ -1385,23 +1385,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Exp Accel 횟수',
 			},
 		],
-		description: 'Fitogether Exp Accel回数',
+		description: 'Exp Accel回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Exp Accel回数',
+				value: 'Exp Accel回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Exp Accel count.',
+				value: 'Exp Accel count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Exp Accel 횟수.',
+				value: 'Exp Accel 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1414,7 +1414,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '加速合計回数',
 		nameI18n: [
 			{
@@ -1430,23 +1430,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '총 가속 횟수',
 			},
 		],
-		description: 'Fitogether 加速合計回数',
+		description: '加速合計回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether 加速合計回数',
+				value: '加速合計回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether total acceleration count.',
+				value: 'total acceleration count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 총 가속 횟수.',
+				value: '총 가속 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1460,7 +1460,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Accel Zone 6 回数',
 		nameI18n: [
@@ -1477,23 +1477,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Accel Zone 6 횟수',
 			},
 		],
-		description: 'Fitogether Accel Zone 6 回数',
+		description: 'Accel Zone 6 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Accel Zone 6 回数',
+				value: 'Accel Zone 6 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Accel Zone 6 count.',
+				value: 'Accel Zone 6 count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Accel Zone 6 횟수.',
+				value: 'Accel Zone 6 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1506,7 +1506,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'スプリント回数',
 		nameI18n: [
 			{
@@ -1522,23 +1522,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '스프린트 횟수',
 			},
 		],
-		description: 'Fitogether スプリント回数',
+		description: 'スプリント回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether スプリント回数',
+				value: 'スプリント回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether sprint count.',
+				value: 'sprint count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 스프린트 횟수.',
+				value: '스프린트 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1551,7 +1551,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'HSR回数',
 		nameI18n: [
 			{
@@ -1567,23 +1567,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'HSR 횟수',
 			},
 		],
-		description: 'Fitogether HSR回数',
+		description: 'HSR回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether HSR回数',
+				value: 'HSR回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether HSR count.',
+				value: 'HSR count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether HSR 횟수.',
+				value: 'HSR 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1596,7 +1596,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'HSR距離',
 		nameI18n: [
 			{
@@ -1612,23 +1612,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'HSR 거리',
 			},
 		],
-		description: 'Fitogether HSR距離',
+		description: 'HSR距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether HSR距離',
+				value: 'HSR距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether HSR distance.',
+				value: 'HSR distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether HSR 거리.',
+				value: 'HSR 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1641,39 +1641,39 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
-		name: 'トレーニングスコア消費',
+		isArchived: true,
+		name: 'ワークロード消費ポイント',
 		nameI18n: [
 			{
 				locale: 'ja',
-				value: 'トレーニングスコア消費',
+				value: 'ワークロード消費ポイント',
 			},
 			{
 				locale: 'en',
-				value: 'Training Score Expenditure',
+				value: 'Workload consumption points',
 			},
 			{
 				locale: 'ko',
-				value: '트레이닝 스코어 소비',
+				value: '워크로드 소비 포인트',
 			},
 		],
-		description: 'Fitogether トレーニングスコア消費',
+		description: 'ワークロード消費ポイント',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether トレーニングスコア消費',
+				value: 'ワークロード消費ポイント',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether training score expenditure.',
+				value: 'workload consumption points.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 트레이닝 스코어 소비.',
+				value: '워크로드 소비 포인트.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1687,7 +1687,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Decel Zone 5 回数',
 		nameI18n: [
@@ -1704,23 +1704,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Decel Zone 5 횟수',
 			},
 		],
-		description: 'Fitogether Decel Zone 5 回数',
+		description: 'Decel Zone 5 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Decel Zone 5 回数',
+				value: 'Decel Zone 5 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Decel Zone 5 count.',
+				value: 'Decel Zone 5 count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Decel Zone 5 횟수.',
+				value: 'Decel Zone 5 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1734,7 +1734,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 3 距離',
 		nameI18n: [
@@ -1751,23 +1751,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 3 거리',
 			},
 		],
-		description: 'Fitogether Zone 3 距離',
+		description: 'Zone 3 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 3 距離',
+				value: 'Zone 3 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 3 distance.',
+				value: 'Zone 3 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 3 거리.',
+				value: 'Zone 3 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1781,7 +1781,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Accel Zone 5 回数',
 		nameI18n: [
@@ -1798,23 +1798,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Accel Zone 5 횟수',
 			},
 		],
-		description: 'Fitogether Accel Zone 5 回数',
+		description: 'Accel Zone 5 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Accel Zone 5 回数',
+				value: 'Accel Zone 5 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Accel Zone 5 count.',
+				value: 'Accel Zone 5 count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Accel Zone 5 횟수.',
+				value: 'Accel Zone 5 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1828,7 +1828,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Decel Zone 6 回数',
 		nameI18n: [
@@ -1845,23 +1845,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Decel Zone 6 횟수',
 			},
 		],
-		description: 'Fitogether Decel Zone 6 回数',
+		description: 'Decel Zone 6 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Decel Zone 6 回数',
+				value: 'Decel Zone 6 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Decel Zone 6 count.',
+				value: 'Decel Zone 6 count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Decel Zone 6 횟수.',
+				value: 'Decel Zone 6 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1874,7 +1874,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'スプリント距離',
 		nameI18n: [
 			{
@@ -1890,23 +1890,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '스프린트 거리',
 			},
 		],
-		description: 'Fitogether スプリント距離',
+		description: 'スプリント距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether スプリント距離',
+				value: 'スプリント距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether sprint distance.',
+				value: 'sprint distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 스프린트 거리.',
+				value: '스프린트 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1920,7 +1920,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 5 距離',
 		nameI18n: [
@@ -1937,23 +1937,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 5 거리',
 			},
 		],
-		description: 'Fitogether Zone 5 距離',
+		description: 'Zone 5 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 5 距離',
+				value: 'Zone 5 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 5 distance.',
+				value: 'Zone 5 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 5 거리.',
+				value: 'Zone 5 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -1967,7 +1967,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 6 距離',
 		nameI18n: [
@@ -1984,23 +1984,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 6 거리',
 			},
 		],
-		description: 'Fitogether Zone 6 距離',
+		description: 'Zone 6 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 6 距離',
+				value: 'Zone 6 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 6 distance.',
+				value: 'Zone 6 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 6 거리.',
+				value: 'Zone 6 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2014,7 +2014,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 7 距離',
 		nameI18n: [
@@ -2031,23 +2031,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 7 거리',
 			},
 		],
-		description: 'Fitogether Zone 7 距離',
+		description: 'Zone 7 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 7 距離',
+				value: 'Zone 7 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 7 distance.',
+				value: 'Zone 7 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 7 거리.',
+				value: 'Zone 7 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2061,7 +2061,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 8 距離',
 		nameI18n: [
@@ -2078,23 +2078,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 8 거리',
 			},
 		],
-		description: 'Fitogether Zone 8 距離',
+		description: 'Zone 8 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 8 距離',
+				value: 'Zone 8 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 8 distance.',
+				value: 'Zone 8 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 8 거리.',
+				value: 'Zone 8 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2108,7 +2108,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 9 距離',
 		nameI18n: [
@@ -2125,23 +2125,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 9 거리',
 			},
 		],
-		description: 'Fitogether Zone 9 距離',
+		description: 'Zone 9 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 9 距離',
+				value: 'Zone 9 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 9 distance.',
+				value: 'Zone 9 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 9 거리.',
+				value: 'Zone 9 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2155,7 +2155,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 4 距離',
 		nameI18n: [
@@ -2172,23 +2172,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 4 거리',
 			},
 		],
-		description: 'Fitogether Zone 4 距離',
+		description: 'Zone 4 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 4 距離',
+				value: 'Zone 4 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 4 distance.',
+				value: 'Zone 4 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 4 거리.',
+				value: 'Zone 4 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2201,7 +2201,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'ウォーキング割合',
 		nameI18n: [
 			{
@@ -2217,23 +2217,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: '걷기 비율',
 			},
 		],
-		description: 'Fitogether ウォーキング割合',
+		description: 'ウォーキング割合',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether ウォーキング割合',
+				value: 'ウォーキング割合',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether walking ratio.',
+				value: 'walking ratio.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether 걷기 비율.',
+				value: '걷기 비율.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2246,7 +2246,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'Exp Decell 回数',
 		nameI18n: [
 			{
@@ -2262,23 +2262,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Exp Decel 횟수',
 			},
 		],
-		description: 'Fitogether Exp Decell 回数',
+		description: 'Exp Decell 回数',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Exp Decell 回数',
+				value: 'Exp Decell 回数',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Exp Decel count.',
+				value: 'Exp Decel count.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Exp Decel 횟수.',
+				value: 'Exp Decel 횟수.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,
@@ -2292,7 +2292,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 2 距離',
 		nameI18n: [
@@ -2309,23 +2309,23 @@ export const metricDefinitions: MetricDefinition[] = [
 				value: 'Zone 2 거리',
 			},
 		],
-		description: 'Fitogether Zone 2 距離',
+		description: 'Zone 2 距離',
 		descriptionI18n: [
 			{
 				locale: 'ja',
-				value: 'Fitogether Zone 2 距離',
+				value: 'Zone 2 距離',
 			},
 			{
 				locale: 'en',
-				value: 'Fitogether Zone 2 distance.',
+				value: 'Zone 2 distance.',
 			},
 			{
 				locale: 'ko',
-				value: 'Fitogether Zone 2 거리.',
+				value: 'Zone 2 거리.',
 			},
 		],
 		type: 'raw',
-		category: 'TRAINING',
+		category: 'WORKLOAD',
 		betterDirection: 'HIGHER_IS_BETTER',
 		formula: null,
 		sourceMetricDefinitionIds: null,

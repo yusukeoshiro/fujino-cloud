@@ -15,7 +15,7 @@ export const METRIC_DEFINITION_IDS = {
 	accelerationCountTotal: 'XYpyu5CZTDZmMY9DbfNG',
 	decelerationCountTotal: 'D7aoPeenTMYu3CxfR6v7',
 	lowIntensityRate: 'oOQMjHICxmf3nLwvDitk',
-	trainingScoreConsumption: 'b3DroV7arY2KLRUJpdtq',
+	workloadConsumptionPoints: 'b3DroV7arY2KLRUJpdtq',
 } as const;
 
 export type MetricDefinitionId = (typeof METRIC_DEFINITION_IDS)[keyof typeof METRIC_DEFINITION_IDS];

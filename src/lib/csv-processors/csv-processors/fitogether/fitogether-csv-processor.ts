@@ -92,25 +92,36 @@ export class FitogetherCsvProcessor {
 
 		const parsers = entries.map((entry) => {
 			const valueFor = (field: string) => this.getValue(entry, field);
+			const optionalNumber = (field: string) => {
+				const raw = valueFor(field);
+				if (raw === '' || raw === null || raw === undefined) return null;
+				const value = Number(raw);
+				return Number.isFinite(value) ? value : null;
+			};
 			const resolvedBirthday =
 				entry.resolvedBirthday && entry.resolvedBirthday !== '0000-00-00'
 					? entry.resolvedBirthday
 					: fallbackBirthday;
-			const speedZone1DistanceM = Number(valueFor('Speed Zone 1 Distance (m)'));
-			const speedZone8DistanceM = Number(valueFor('Speed Zone 8 Distance (m)'));
-			const speedZone9DistanceM = Number(valueFor('Speed Zone 9 Distance (m)'));
-			const accelerationZone5EntryCount = Number(
-				valueFor('Acceleration Zone 5 Entry Count (times)'),
-			);
-			const accelerationZone6EntryCount = Number(
-				valueFor('Acceleration Zone 6 Entry Count (times)'),
-			);
-			const decelerationZone5EntryCount = Number(
-				valueFor('Deceleration Zone 5 Entry Count (times)'),
-			);
-			const decelerationZone6EntryCount = Number(
-				valueFor('Deceleration Zone 6 Entry Count (times)'),
-			);
+			const speedZone1DistanceM = optionalNumber('Speed Zone 1 Distance (m)');
+			const speedZone8DistanceM = optionalNumber('Speed Zone 8 Distance (m)');
+			const speedZone9DistanceM = optionalNumber('Speed Zone 9 Distance (m)');
+			const accelerationZone5EntryCount = optionalNumber('Acceleration Zone 5 Entry Count (times)');
+			const accelerationZone6EntryCount = optionalNumber('Acceleration Zone 6 Entry Count (times)');
+			const decelerationZone5EntryCount = optionalNumber('Deceleration Zone 5 Entry Count (times)');
+			const decelerationZone6EntryCount = optionalNumber('Deceleration Zone 6 Entry Count (times)');
+			const highIntensityDistanceM =
+				speedZone8DistanceM !== null && speedZone9DistanceM !== null
+					? speedZone8DistanceM + speedZone9DistanceM
+					: NaN;
+			const lowIntensityDistanceM = speedZone1DistanceM;
+			const accelerationCountTotal =
+				accelerationZone5EntryCount !== null && accelerationZone6EntryCount !== null
+					? accelerationZone5EntryCount + accelerationZone6EntryCount
+					: NaN;
+			const decelerationCountTotal =
+				decelerationZone5EntryCount !== null && decelerationZone6EntryCount !== null
+					? decelerationZone5EntryCount + decelerationZone6EntryCount
+					: NaN;
 			return new PlayerGpsSession(
 				{
 					type: 'TRAINING',
@@ -125,23 +136,23 @@ export class FitogetherCsvProcessor {
 					fullName: entry.resolvedFullName,
 					birthday: resolvedBirthday,
 
-					durationMin: Number(valueFor('Duration (min)')),
-					totalDistanceM: Number(valueFor('Total Distance (m)')),
-					totalDistanceMPerMin: Number(valueFor('Total Distance/min (m/min)')),
-					maxSpeedKMH: Number(valueFor('Max Speed (km/h)')),
+					durationMin: optionalNumber('Duration (min)'),
+					totalDistanceM: optionalNumber('Total Distance (m)') ?? NaN,
+					totalDistanceMPerMin: optionalNumber('Total Distance/min (m/min)'),
+					maxSpeedKMH: optionalNumber('Max Speed (km/h)'),
 
-					noOfHSR: Number(valueFor('No. of HSR (times)')),
-					hsrDistanceM: Number(valueFor('HSR Distance (m)')),
+					noOfHSR: optionalNumber('No. of HSR (times)'),
+					hsrDistanceM: optionalNumber('HSR Distance (m)'),
 
-					sprintCount: Number(valueFor('No. of Sprint (times)')),
-					sprintDistanceM: Number(valueFor('Sprint Distance (m)')),
-					highIntensityDistanceM: speedZone8DistanceM + speedZone9DistanceM,
-					lowIntensityDistanceM: speedZone1DistanceM,
-					accelerationCountTotal: accelerationZone5EntryCount + accelerationZone6EntryCount,
-					decelerationCountTotal: decelerationZone5EntryCount + decelerationZone6EntryCount,
+					sprintCount: optionalNumber('No. of Sprint (times)'),
+					sprintDistanceM: optionalNumber('Sprint Distance (m)'),
+					highIntensityDistanceM,
+					lowIntensityDistanceM,
+					accelerationCountTotal,
+					decelerationCountTotal,
 
-					expAccCount: Number(valueFor('No. of Exp. Acc. (times)')),
-					expDecCount: Number(valueFor('No. of Exp. Dec. (times)')),
+					expAccCount: optionalNumber('No. of Exp. Acc. (times)'),
+					expDecCount: optionalNumber('No. of Exp. Dec. (times)'),
 				},
 				options.trainingBaseline,
 			);

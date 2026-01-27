@@ -11,24 +11,24 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	fullName: string;
 	birthday: string;
 
-	durationMin: number;
+	durationMin: number | null;
 	totalDistanceM: number;
-	totalDistanceMPerMin: number;
-	maxSpeedKMH: number;
+	totalDistanceMPerMin: number | null;
+	maxSpeedKMH: number | null;
 
-	noOfHSR: number;
-	hsrDistanceM: number;
+	noOfHSR: number | null;
+	hsrDistanceM: number | null;
 
-	sprintCount: number;
-	sprintDistanceM: number;
+	sprintCount: number | null;
+	sprintDistanceM: number | null;
 	highIntensityDistanceM: number;
-	lowIntensityDistanceM: number;
+	lowIntensityDistanceM: number | null;
 
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 
-	expAccCount: number;
-	expDecCount: number;
+	expAccCount: number | null;
+	expDecCount: number | null;
 
 	trainingBaseline?: TrainingBaseline;
 
@@ -69,14 +69,18 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	// computed, from raw:
 	get highIntensityRate() {
 		// Derived: high-intensity distance as a share of total distance.
+		if (!isFiniteNumber(this.totalDistanceM) || this.totalDistanceM <= 0) return null;
+		if (!isFiniteNumber(this.highIntensityDistanceM)) return null;
 		return this.highIntensityDistanceM / this.totalDistanceM;
 	}
 	get lowIntensityRate() {
 		// Derived: low-intensity (Z1) share of total distance.
+		if (!isFiniteNumber(this.totalDistanceM) || this.totalDistanceM <= 0) return null;
+		if (!isFiniteNumber(this.lowIntensityDistanceM)) return null;
 		return this.lowIntensityDistanceM / this.totalDistanceM;
 	}
 
-	get trainingScoreConsumption(): number | null {
+	get workloadConsumptionPoints(): number | null {
 		// Derived: average of four ratios vs baseline (total distance, high intensity, accel, decel) * 100, rounded.
 		// Returns null if baseline is missing/invalid to avoid divide-by-zero or NaN.
 		const baseline = this.trainingBaseline;
@@ -89,19 +93,19 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		} = baseline;
 
 		if (
-			!isFinite(totalDistanceM) ||
+			!isFiniteNumber(totalDistanceM) ||
 			totalDistanceM <= 0 ||
-			!isFinite(highIntensityDistanceM) ||
+			!isFiniteNumber(highIntensityDistanceM) ||
 			highIntensityDistanceM <= 0 ||
-			!isFinite(accelerationCountTotal) ||
+			!isFiniteNumber(accelerationCountTotal) ||
 			accelerationCountTotal <= 0 ||
-			!isFinite(decelerationCountTotal) ||
+			!isFiniteNumber(decelerationCountTotal) ||
 			decelerationCountTotal <= 0
 		) {
 			return null;
 		}
 
-		const trainingConsumptionScore = Math.round(
+		const workloadConsumptionPoints = Math.round(
 			((this.totalDistanceM / totalDistanceM +
 				this.highIntensityDistanceM / highIntensityDistanceM +
 				this.accelerationCountTotal / accelerationCountTotal +
@@ -116,9 +120,9 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 		// console.log(`${this.highIntensityDistanceM} / ${highIntensityDistanceM}`);
 		// console.log(`${this.accelerationCountTotal} / ${accelerationCountTotal}`);
 		// console.log(`${this.decelerationCountTotal} / ${decelerationCountTotal}`);
-		// console.log({ trainingConsumptionScore });
+		// console.log({ workloadConsumptionPoints });
 
-		return trainingConsumptionScore;
+		return workloadConsumptionPoints;
 	}
 
 	toJson() {
@@ -154,7 +158,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 			爆発的加速回数: this.expAccCount,
 			爆発的減速回数: this.expDecCount,
 
-			トレーニングスコア消費: this.trainingScoreConsumption,
+			ワークロード消費ポイント: this.workloadConsumptionPoints,
 		} as const;
 
 		return base;
@@ -177,3 +181,6 @@ type TrainingBaseline = {
 	accelerationCountTotal: number;
 	decelerationCountTotal: number;
 };
+
+const isFiniteNumber = (value: unknown): value is number =>
+	typeof value === 'number' && Number.isFinite(value);

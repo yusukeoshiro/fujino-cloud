@@ -21,6 +21,6 @@ export function buildMetricValues(parser: PlayerGpsSession): MetricValueRecord {
 		[METRIC_DEFINITION_IDS.expAccCount]: parser.expAccCount,
 		[METRIC_DEFINITION_IDS.decelerationCountTotal]: parser.decelerationCountTotal,
 		[METRIC_DEFINITION_IDS.expDecCount]: parser.expDecCount,
-		[METRIC_DEFINITION_IDS.trainingScoreConsumption]: parser.trainingScoreConsumption,
+		[METRIC_DEFINITION_IDS.workloadConsumptionPoints]: parser.workloadConsumptionPoints,
 	};
 }

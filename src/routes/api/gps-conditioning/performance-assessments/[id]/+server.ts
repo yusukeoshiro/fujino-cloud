@@ -45,11 +45,11 @@ export const GET: RequestHandler = async (event) => {
 	}
 
 	const participants = (record.participants ?? []).map((participant) => {
-		const trainingScoreMetric = (participant.metrics ?? []).find(
-			(metric) => metric.metricDefinitionId === METRIC_DEFINITION_IDS.trainingScoreConsumption,
+		const workloadConsumptionMetric = (participant.metrics ?? []).find(
+			(metric) => metric.metricDefinitionId === METRIC_DEFINITION_IDS.workloadConsumptionPoints,
 		);
-		const rawScore = trainingScoreMetric?.value ?? trainingScoreMetric?.score ?? null;
-		const trainingConsumptionScore =
+		const rawScore = workloadConsumptionMetric?.value ?? workloadConsumptionMetric?.score ?? null;
+		const workloadConsumptionPoints =
 			typeof rawScore === 'number' && Number.isFinite(rawScore) ? rawScore : null;
 		const metadata = participant.metadata ?? [];
 		const hasSkipMetadata = metadata.some(
@@ -59,7 +59,7 @@ export const GET: RequestHandler = async (event) => {
 			id: participant.id,
 			fullName: participant.fullName,
 			skipped: participant.attr1 === 'skipped' || hasSkipMetadata,
-			trainingConsumptionScore,
+			workloadConsumptionPoints,
 		};
 	});
 
