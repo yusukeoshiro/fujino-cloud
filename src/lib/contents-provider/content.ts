@@ -13,7 +13,7 @@ type MetricDefinition = {
 	createdAt: string;
 	updatedAt: string;
 	orgId: string | null;
-	isPublic: boolean;
+	isArchived: boolean;
 	deprecated?: boolean;
 	name: string;
 	nameI18n?: LocalizedString[] | null;
@@ -103,7 +103,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '身長',
 		nameI18n: [
 			{
@@ -148,7 +148,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '両足５段跳び',
 		nameI18n: [
 			{
@@ -193,7 +193,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 左',
 		nameI18n: [
 			{
@@ -238,7 +238,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 右',
 		nameI18n: [
 			{
@@ -283,7 +283,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 左右差(%)',
 		nameI18n: [
 			{
@@ -329,7 +329,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 右',
 		nameI18n: [
 			{
@@ -374,7 +374,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '体重',
 		nameI18n: [
 			{
@@ -419,7 +419,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 左',
 		nameI18n: [
 			{
@@ -464,7 +464,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'BMI',
 		nameI18n: [
 			{
@@ -509,7 +509,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 左右差(%)',
 		nameI18n: [
 			{
@@ -555,7 +555,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '立ち幅跳び',
 		nameI18n: [
 			{
@@ -600,7 +600,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '3 HOP 平均',
 		nameI18n: [
 			{
@@ -645,7 +645,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '20M スプリント',
 		nameI18n: [
 			{
@@ -690,7 +690,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'Pro Agility 平均',
 		nameI18n: [
 			{
@@ -735,7 +735,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '30M スプリント',
 		nameI18n: [
 			{
@@ -780,7 +780,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: '10M スプリント',
 		nameI18n: [
 			{
@@ -825,7 +825,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: null,
-		isPublic: true,
+		isArchived: false,
 		name: 'YoYo',
 		nameI18n: [
 			{
@@ -870,7 +870,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '低強度距離',
 		nameI18n: [
 			{
@@ -916,7 +916,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Accel Zone 4 回数',
 		nameI18n: [
@@ -962,7 +962,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '減速合計回数',
 		nameI18n: [
 			{
@@ -1008,7 +1008,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Decel Zone 4 回数',
 		nameI18n: [
@@ -1054,7 +1054,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'TRスコア消費',
 		nameI18n: [
 			{
@@ -1099,7 +1099,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '走行距離/分',
 		nameI18n: [
 			{
@@ -1144,7 +1144,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'トレーニング時間',
 		nameI18n: [
 			{
@@ -1189,7 +1189,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '高強度距離',
 		nameI18n: [
 			{
@@ -1234,7 +1234,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '走行距離',
 		nameI18n: [
 			{
@@ -1279,7 +1279,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '最大速度',
 		nameI18n: [
 			{
@@ -1324,7 +1324,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '高強度割合',
 		nameI18n: [
 			{
@@ -1369,7 +1369,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'Exp Accel回数',
 		nameI18n: [
 			{
@@ -1414,7 +1414,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: '加速合計回数',
 		nameI18n: [
 			{
@@ -1460,7 +1460,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Accel Zone 6 回数',
 		nameI18n: [
@@ -1506,7 +1506,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'スプリント回数',
 		nameI18n: [
 			{
@@ -1551,7 +1551,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'HSR回数',
 		nameI18n: [
 			{
@@ -1596,7 +1596,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'HSR距離',
 		nameI18n: [
 			{
@@ -1641,7 +1641,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'ワークロード消費ポイント',
 		nameI18n: [
 			{
@@ -1687,7 +1687,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Decel Zone 5 回数',
 		nameI18n: [
@@ -1734,7 +1734,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 3 距離',
 		nameI18n: [
@@ -1781,7 +1781,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Accel Zone 5 回数',
 		nameI18n: [
@@ -1828,7 +1828,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Decel Zone 6 回数',
 		nameI18n: [
@@ -1874,7 +1874,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'スプリント距離',
 		nameI18n: [
 			{
@@ -1920,7 +1920,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 5 距離',
 		nameI18n: [
@@ -1967,7 +1967,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 6 距離',
 		nameI18n: [
@@ -2014,7 +2014,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 7 距離',
 		nameI18n: [
@@ -2061,7 +2061,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 8 距離',
 		nameI18n: [
@@ -2108,7 +2108,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 9 距離',
 		nameI18n: [
@@ -2155,7 +2155,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 4 距離',
 		nameI18n: [
@@ -2201,7 +2201,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'ウォーキング割合',
 		nameI18n: [
 			{
@@ -2246,7 +2246,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		name: 'Exp Decell 回数',
 		nameI18n: [
 			{
@@ -2292,7 +2292,7 @@ export const metricDefinitions: MetricDefinition[] = [
 		createdAt: now,
 		updatedAt: now,
 		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isPublic: false,
+		isArchived: true,
 		deprecated: true,
 		name: 'Zone 2 距離',
 		nameI18n: [
