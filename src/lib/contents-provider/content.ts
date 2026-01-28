@@ -1050,51 +1050,6 @@ export const metricDefinitions: MetricDefinition[] = [
 		meta: {},
 	},
 	{
-		id: 'FSw4meWwvmxkcr4G0KvX',
-		createdAt: now,
-		updatedAt: now,
-		orgId: '2a9dWrDixJ56ysNOgAtR',
-		isArchived: true,
-		name: 'TRスコア消費',
-		nameI18n: [
-			{
-				locale: 'ja',
-				value: 'TRスコア消費',
-			},
-			{
-				locale: 'en',
-				value: 'TR Score Expenditure',
-			},
-			{
-				locale: 'ko',
-				value: 'TR 스코어 소비',
-			},
-		],
-		description: 'TRスコア消費',
-		descriptionI18n: [
-			{
-				locale: 'ja',
-				value: 'TRスコア消費',
-			},
-			{
-				locale: 'en',
-				value: 'TR score expenditure.',
-			},
-			{
-				locale: 'ko',
-				value: 'TR 스코어 소비.',
-			},
-		],
-		type: 'raw',
-		category: 'WORKLOAD',
-		betterDirection: 'HIGHER_IS_BETTER',
-		formula: null,
-		sourceMetricDefinitionIds: null,
-		unit: 'UNITLESS',
-		roundingPrecision: 0,
-		meta: {},
-	},
-	{
 		id: 'I7i8bessV96ciVnFw5IB',
 		createdAt: now,
 		updatedAt: now,
