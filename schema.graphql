@@ -513,13 +513,19 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+enum Locale {
+  en
+  ja
+  ko
+}
+
 type LocalizedString {
-  locale: String!
+  locale: Locale!
   value: String!
 }
 
 input LocalizedStringInput {
-  locale: String!
+  locale: Locale!
   value: String!
 }
 
@@ -589,7 +595,12 @@ type MetricDefinition {
   descriptionI18n: [LocalizedString!]
   formula: String
   id: ID!
-  isPublic: Boolean! @deprecated(reason: "there is no more public metric definition anymore")
+
+  """
+  When true, the metric definition is hidden from list views but remains available for lookups.
+  """
+  isArchived: Boolean
+  isPublic: Boolean @deprecated(reason: "there is no more public metric definition anymore")
   name: String!
   nameI18n: [LocalizedString!]
   operation: DerivedOperation @deprecated(reason: "use formula instead. operation will be removed in a future release")
@@ -608,7 +619,12 @@ input MetricDefinitionCreate {
   description: String! = ""
   descriptionI18n: [LocalizedStringInput!]
   formula: String
-  isPublic: Boolean!
+
+  """
+  When true, the metric definition is hidden from list views but remains available for lookups.
+  """
+  isArchived: Boolean!
+  isPublic: Boolean
   name: String!
   nameI18n: [LocalizedStringInput!]
   operation: DerivedOperation
@@ -636,6 +652,8 @@ input MetricDefinitionList {
 }
 
 input MetricDefinitionListConditions {
+  """Filter by archived state. When omitted, no archived filter is applied."""
+  isArchived: Boolean
   orgId: ID
 }
 
@@ -660,6 +678,11 @@ input MetricDefinitionUpdate {
   descriptionI18n: LocalizedStringModifier
   formula: String
   id: ID!
+
+  """
+  When true, the metric definition is hidden from list views but remains available for lookups.
+  """
+  isArchived: Boolean
   isPublic: Boolean
   name: String
   nameI18n: LocalizedStringModifier
@@ -1915,12 +1938,12 @@ input UserInput {
 
 type UserPreferences {
   messageNotificationFrequency: MessageNotificationFrequency
-  preferredLocale: String
+  preferredLocale: Locale
 }
 
 input UserPreferencesUpdateInput {
   messageNotificationFrequency: MessageNotificationFrequency
-  preferredLocale: String
+  preferredLocale: Locale
 }
 
 enum UserRole {
