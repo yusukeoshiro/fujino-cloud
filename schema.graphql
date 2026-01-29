@@ -562,6 +562,7 @@ type Metric {
   date: String!
   derivedMetricDefinitionIds: [String!]!
   globalUniqueToken: String!
+  hasValue: Boolean!
   id: ID!
   isOfficial: Boolean
   metadata: [MetadataEntry!]
@@ -1318,6 +1319,7 @@ type Person {
   isActive: Boolean!
   isAnonymous: Boolean!
   kana: String
+  latestMetrics: [PersonLatestMetric!]
   metadata: [MetadataEntry!]
   orgId: String!
   orgUniqueToken: String!
@@ -1339,6 +1341,11 @@ input PersonCreate {
   orgId: String!
   sex: PersonSex
   teamRank: String
+}
+
+type PersonLatestMetric {
+  latestMetric: Metric
+  metricDefinition: MetricDefinition!
 }
 
 input PersonList {

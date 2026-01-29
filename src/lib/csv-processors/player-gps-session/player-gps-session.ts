@@ -1,3 +1,8 @@
+import {
+	resolveWorkloadConsumptionWeights,
+	WORKLOAD_CONSUMPTION_FIELDS,
+	type WorkloadConsumptionField,
+} from '$lib/config/workload-benchmark-config';
 import type { GpsCore, SessionMeta, SessionType } from './gps-core.model';
 
 // PlayerGpsSession models a single player's GPS session row and exposes derived metrics and score calculations.
@@ -33,6 +38,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	trainingBaseline?: TrainingBaseline;
 
 	orgUniqueToken?: string;
+	orgId?: string;
 
 	constructor(params: GpsCore & SessionMeta, trainingBaseline?: TrainingBaseline) {
 		this.trainingBaseline = trainingBaseline;
@@ -64,6 +70,8 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 
 		this.expAccCount = params.expAccCount;
 		this.expDecCount = params.expDecCount;
+
+		this.orgId = params.orgId;
 	}
 
 	// computed, from raw:
@@ -81,38 +89,38 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 	}
 
 	get workloadConsumptionPoints(): number | null {
-		// Derived: average of four ratios vs baseline (total distance, high intensity, accel, decel) * 100, rounded.
-		// Returns null if baseline is missing/invalid to avoid divide-by-zero or NaN.
+		// Derived: weighted average of ratios vs baseline (total distance, high intensity, accel, decel) * 100.
+		// Returns null if baseline is missing/invalid or no weighted fields are enabled.
 		const baseline = this.trainingBaseline;
 		if (!baseline) return null;
-		const {
-			totalDistanceM,
-			highIntensityDistanceM,
-			accelerationCountTotal,
-			decelerationCountTotal,
-		} = baseline;
 
-		if (
-			!isFiniteNumber(totalDistanceM) ||
-			totalDistanceM <= 0 ||
-			!isFiniteNumber(highIntensityDistanceM) ||
-			highIntensityDistanceM <= 0 ||
-			!isFiniteNumber(accelerationCountTotal) ||
-			accelerationCountTotal <= 0 ||
-			!isFiniteNumber(decelerationCountTotal) ||
-			decelerationCountTotal <= 0
-		) {
-			return null;
+		const weights = resolveWorkloadConsumptionWeights(this.orgId);
+		const sessionValues: Record<WorkloadConsumptionField, number> = {
+			totalDistanceM: this.totalDistanceM,
+			highIntensityDistanceM: this.highIntensityDistanceM,
+			accelerationCountTotal: this.accelerationCountTotal,
+			decelerationCountTotal: this.decelerationCountTotal,
+		};
+		let weightedSum = 0;
+		let totalWeight = 0;
+
+		for (const field of WORKLOAD_CONSUMPTION_FIELDS) {
+			const weight = weights[field];
+			if (!isFiniteNumber(weight) || weight <= 0) continue;
+
+			const sessionValue = sessionValues[field];
+			const baselineValue = baseline[field];
+
+			if (!isFiniteNumber(sessionValue)) return null;
+			if (!isFiniteNumber(baselineValue) || baselineValue <= 0) return null;
+
+			weightedSum += (sessionValue / baselineValue) * weight;
+			totalWeight += weight;
 		}
 
-		const workloadConsumptionPoints = Math.round(
-			((this.totalDistanceM / totalDistanceM +
-				this.highIntensityDistanceM / highIntensityDistanceM +
-				this.accelerationCountTotal / accelerationCountTotal +
-				this.decelerationCountTotal / decelerationCountTotal) /
-				4) *
-				100,
-		);
+		if (totalWeight <= 0) return null;
+
+		const workloadConsumptionPoints = Math.round((weightedSum / totalWeight) * 100);
 
 		// console.log('----------------');
 		// console.log(`${this.fullName}`);
@@ -176,10 +184,7 @@ export class PlayerGpsSession implements GpsCore, SessionMeta {
 }
 
 type TrainingBaseline = {
-	totalDistanceM: number;
-	highIntensityDistanceM: number;
-	accelerationCountTotal: number;
-	decelerationCountTotal: number;
+	[field in WorkloadConsumptionField]: number;
 };
 
 const isFiniteNumber = (value: unknown): value is number =>

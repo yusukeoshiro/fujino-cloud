@@ -7,6 +7,7 @@ export interface SessionMeta {
 	endTime?: Date;
 	fullName: string;
 	birthday: string;
+	orgId?: string;
 }
 
 export interface GpsCore {

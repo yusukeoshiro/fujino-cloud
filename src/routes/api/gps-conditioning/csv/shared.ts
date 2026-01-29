@@ -223,8 +223,9 @@ export async function buildCsvParseResult(params: {
 		headerMap = result.headerMap;
 	}
 
-	if (sessionDate) {
-		for (const parser of parsers) {
+	for (const parser of parsers) {
+		parser.orgId = orgId;
+		if (sessionDate) {
 			parser.date = sessionDate;
 		}
 	}
