@@ -2561,6 +2561,10 @@ export const performanceAssessmentTemplates: PerformanceAssessmentTemplate[] = [
 				metricDefinitionId: 'lMaeLRMQfMa1WKbOyly7',
 				scored: true,
 			},
+			{
+				metricDefinitionId: 'y7h8I9Mkl1ppg5ZmRpUb',
+				scored: true,
+			},
 		],
 	},
 	{
