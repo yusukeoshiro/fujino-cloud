@@ -188,7 +188,10 @@ export async function buildCsvParseResult(params: {
 	const { rawRecords, originalHeaders } = parseCsvText(text);
 
 	let parsers: PlayerGpsSession[] = [];
-	let unmatched: Array<{ row: number; playerName: string; jerseyNo?: string }> = [];
+	let unmatched: Array<
+		| { row: number; playerName: string; jerseyNo?: string }
+		| { rows: number[]; playerName: string; userId?: string }
+	> = [];
 	let headers: string[] = [];
 	let headerMap: Array<{ field: string; metricDefinitionId: string }> = [];
 

@@ -587,6 +587,10 @@ type MetricAttempt {
   value: Float!
 }
 
+input MetricBulkUpdate {
+  updates: [MetricUpdate!]!
+}
+
 type MetricDefinition {
   betterDirection: BetterDirection!
   category: String!
@@ -719,6 +723,7 @@ type Mutation {
   autoRecordMetric(data: AutoRecordMetric!): Metric!
   bulkCreateThreadMessages(data: BulkThreadMessageCreate!): BulkMessageResult!
   bulkSendResultEmailsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
+  bulkUpdateMetrics(data: MetricBulkUpdate!): [Metric!]!
   consolidateMetricsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   createContentProvider(data: ContentProviderCreate!): ContentProvider!
   createContentSubscription(data: ContentSubscriptionCreate!): ContentSubscription!
@@ -1323,6 +1328,7 @@ type Person {
   metadata: [MetadataEntry!]
   orgId: String!
   orgUniqueToken: String!
+  orgUserEmails: [String!]
   orgUsers: [OrgUser!]
   photoUrl(size: PhotoSize): String
   sex: PersonSex
@@ -1339,8 +1345,14 @@ input PersonCreate {
   kana: String
   metadata: [MetadataEntryInput!]
   orgId: String!
+  orgUserEmails: [String!]
   sex: PersonSex
   teamRank: String
+}
+
+input PersonGetDto {
+  id: ID
+  orgUniqueToken: String
 }
 
 type PersonLatestMetric {
@@ -1535,6 +1547,7 @@ input PersonUpdate {
   isActive: Boolean
   kana: String
   metadata: [MetadataEntryInput!]
+  orgUserEmails: [String!]
   sex: PersonSex
   teamRank: String
 }
@@ -1603,6 +1616,7 @@ type Query {
   myGetContextualThread(data: ThreadContextGet!): Thread
   myGetOrgUser(data: OrgUserGet!): OrgUser!
   myGetPerformanceAssessmentParticipant(data: InputDetail!): PerformanceAssessmentParticipant!
+  myGetPerson(data: PersonGetDto!): Person!
   myGetThread(data: ThreadGet!): Thread!
   myGetUserPreferences: UserPreferences
   myListFcmTokens: [UserFcmToken!]!
