@@ -7,7 +7,6 @@ query ListPersons($orgId: ID!) {
 			birthday
 			isAnonymous
 			kana
-			teamRank
 			sex
 			externalId
 			orgUniqueToken
