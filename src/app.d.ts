@@ -23,10 +23,13 @@ declare global {
 	}
 }
 
-declare module '*.svelte' {
-	import type { ComponentType, SvelteComponent } from 'svelte';
-	const component: ComponentType<SvelteComponent>;
-	export default component;
+
+declare module 'jspreadsheet-ce' {
+	export interface SpreadsheetInstance {
+		el: HTMLElement;
+		destroy: () => void;
+		setValueFromCoords: (x: number, y: number, value: string | number, force?: boolean) => void;
+	}
 }
 
 export {};

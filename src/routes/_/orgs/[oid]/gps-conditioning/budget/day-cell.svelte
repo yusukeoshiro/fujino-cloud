@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { t } from '$lib/i18n';
+	import * as Popover from '$lib/components/ui/popover';
+	import { tick } from 'svelte';
 
 	interface Props {
 		day: {
@@ -10,36 +12,31 @@
 			events: { id: string; eventName: string; eventDate: string }[];
 			isAltMonth: boolean;
 		};
-		addEventFor: string | null;
-		onAddEventClick: (date: string) => void;
 		onRemoveEventClick: (id: string) => void;
 		onAddEventSubmit: (date: string, name: string) => void;
-		onAddEventCancel: () => void;
 	}
 
-	let {
-		day,
-		addEventFor,
-		onAddEventClick,
-		onRemoveEventClick,
-		onAddEventSubmit,
-		onAddEventCancel,
-	}: Props = $props();
+	let { day, onRemoveEventClick, onAddEventSubmit }: Props = $props();
 
 	let addEventDraft = $state('');
 	let addEventInputEl = $state<HTMLInputElement | null>(null);
+	let isOpen = $state(false);
 
-	$effect(() => {
-		if (addEventFor === day.iso) {
+	function onOpenChange(open: boolean) {
+		isOpen = open;
+		if (open) {
 			addEventDraft = '';
-			addEventInputEl?.focus();
+			tick().then(() => {
+				addEventInputEl?.focus();
+			});
 		}
-	});
+	}
 
 	function handleSubmit() {
 		if (!addEventDraft.trim()) return;
 		onAddEventSubmit(day.iso, addEventDraft);
 		addEventDraft = '';
+		isOpen = false;
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -49,7 +46,7 @@
 			handleSubmit();
 		} else if (event.key === 'Escape') {
 			event.preventDefault();
-			onAddEventCancel();
+			isOpen = false;
 		}
 	}
 </script>
@@ -70,50 +67,43 @@
 
 	<div class="relative z-10 flex items-center justify-between">
 		<span class="font-semibold">{day.label}</span>
-		<button
-			type="button"
-			class="cursor-pointer rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100"
-			onclick={(event) => {
-				event.stopPropagation();
-				onAddEventClick(day.iso);
-			}}
-		>
-			＋
-		</button>
-	</div>
 
-	{#if addEventFor === day.iso}
-		<div
-			class="absolute top-10 right-2 z-50 flex flex-col gap-2 rounded-md border border-slate-300 bg-white p-2 shadow-md"
-			onclick={(e) => e.stopPropagation()}
-			role="dialog"
-			aria-modal="true"
-			tabindex="-1"
-			onkeydown={(e) => {
-				if (e.key === 'Escape') onAddEventCancel();
-			}}
-		>
-			<input
-				type="text"
-				placeholder={$t('gps.budget.eventPlaceholder')}
-				bind:value={addEventDraft}
-				bind:this={addEventInputEl}
-				class="rounded border border-slate-300 px-2 py-1 text-slate-900"
-				onkeydown={handleKeydown}
-			/>
-			<div class="flex justify-end gap-1">
-				<button class="rounded bg-blue-600 px-2 py-1 text-white" onclick={handleSubmit}>
-					{$t('gps.budget.add')}
-				</button>
-				<button
-					class="rounded border border-slate-300 px-2 py-1 text-slate-700"
-					onclick={onAddEventCancel}
+		<Popover.Root bind:open={isOpen} {onOpenChange}>
+			<Popover.Trigger
+				class="cursor-pointer rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100 data-[state=open]:opacity-100"
+				onclick={(event) => event.stopPropagation()}
+			>
+				＋
+			</Popover.Trigger>
+			<Popover.Portal>
+				<Popover.Content
+					class="z-[9999] w-64 rounded-md border border-slate-300 bg-white p-2 shadow-md"
 				>
-					{$t('gps.budget.cancel')}
-				</button>
-			</div>
-		</div>
-	{/if}
+					<div class="flex flex-col gap-2">
+						<input
+							type="text"
+							placeholder={$t('gps.budget.eventPlaceholder')}
+							bind:value={addEventDraft}
+							bind:this={addEventInputEl}
+							class="rounded border border-slate-300 px-2 py-1 text-slate-900"
+							onkeydown={handleKeydown}
+						/>
+						<div class="flex justify-end gap-1">
+							<button class="rounded bg-blue-600 px-2 py-1 text-white" onclick={handleSubmit}>
+								{$t('gps.budget.add')}
+							</button>
+							<button
+								class="rounded border border-slate-300 px-2 py-1 text-slate-700"
+								onclick={() => (isOpen = false)}
+							>
+								{$t('gps.budget.cancel')}
+							</button>
+						</div>
+					</div>
+				</Popover.Content>
+			</Popover.Portal>
+		</Popover.Root>
+	</div>
 
 	<ul class="relative z-10 flex flex-1 flex-col gap-1 overflow-y-auto">
 		{#each day.events.slice(0, 3) as event (event.id)}

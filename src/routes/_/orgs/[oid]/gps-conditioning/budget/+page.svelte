@@ -18,7 +18,11 @@
 	const orgId = data.orgId;
 	const todayIso = data.today;
 
-	const config = $state<TrainingBudgetConfig>({ ...data.config });
+	const config = $state<TrainingBudgetConfig>({
+		...data.config,
+		startMonth: Number(data.config.startMonth),
+		weekStartsOn: Number(data.config.weekStartsOn),
+	});
 	let currentYear = $state<number>(data.year);
 	let budgetsMap = $state<Record<string, string>>(mapBudgets(data.budgets));
 	let events = $state<TrainingKeyEvent[]>([...data.events]);
@@ -67,8 +71,6 @@
 		),
 	);
 
-	let addEventFor = $state<string | null>(null);
-
 	let saveQueue: Promise<void> = Promise.resolve();
 	const numericPattern = /^-?\d*(?:\.\d*)?$/;
 
@@ -88,8 +90,10 @@
 
 	// Update spreadsheet when data changes
 	$effect(() => {
-		if (spreadsheetInstance && weeks.length > 0) {
-			updateSpreadsheetData();
+		if (weeks.length > 0) {
+			// Re-initialize spreadsheet when data/weeks change
+			// This handles both initial load and subsequent updates
+			initSpreadsheet();
 		}
 	});
 
@@ -106,130 +110,54 @@
 
 	function initSpreadsheet() {
 		if (!spreadsheetContainer) return;
+
+		// Cleanup previous
 		if (spreadsheetInstance) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			jspreadsheet.destroy(spreadsheetContainer as any, true);
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				jspreadsheet.destroy(spreadsheetContainer as any, true);
+			} catch (e) {
+				console.warn(e);
+			}
 			cleanupMountedComponents();
+			spreadsheetInstance = null;
 		}
+		spreadsheetContainer.innerHTML = '';
 
-		// Prepare columns
-		const columnsConfig = [
-			{
-				type: 'text' as const,
-				title: $t('gps.budget.weekNumber'),
-				width: 60,
-				readOnly: true,
-			},
-			...rotatedWeekdayLabels.map((label) => ({
-				type: 'text' as const,
-				title: label,
-				width: 120,
-				readOnly: true, // Interaction handled by component
-			})),
-			{
-				type: 'text' as const, // Using text for numeric input to allow empty string
-				title: $t('gps.budget.budget'),
-				width: 100,
-			},
-		];
-
+		// Prepare data
 		const dataArray = weeks.map((week) => {
-			const row = [
-				`W${week.index}`,
-				...Array(7).fill(''), // Placeholders for days
-				budgetsMap[week.startIso] ?? '',
-			];
+			const row = [`W${week.index}`, ...Array(7).fill(''), budgetsMap[week.startIso] ?? ''];
 			return row;
 		});
 
-		spreadsheetInstance = jspreadsheet(spreadsheetContainer, {
-			worksheets: [
-				{
-					data: dataArray,
-					columns: columnsConfig,
-					minDimensions: [columnsConfig.length, 1],
-					allowInsertRow: false,
-					allowManualInsertRow: false,
-					allowInsertColumn: false,
-					allowManualInsertColumn: false,
-					allowDeleteRow: false,
-					allowDeleteColumn: false,
-					minSpareRows: 0,
-				},
-			],
-			contextMenu: () => [],
-			onchange: async (instance, cell, x, y, value) => {
-				const colIndex = parseInt(String(x));
-				const rowIndex = parseInt(String(y));
-				const budgetColIndex = 8; // 0(Week) + 7(Days) = 8
-
-				if (colIndex === budgetColIndex) {
-					// Budget change
-					const week = weeks[rowIndex];
-					if (week) {
-						if (!isValidNumericInput(String(value))) {
-							// Revert if invalid
-							spreadsheetInstance?.setValueFromCoords(
-								colIndex,
-								rowIndex,
-								budgetsMap[week.startIso] ?? '',
-								false,
-							);
-							return;
-						}
-						// Update state
-						updateBudgetValue(week.startIso, String(value));
-						// Trigger save
-						void queuePersist();
-					}
-				}
-			},
-		});
-
-		// Custom renderers are not directly supported in config purely as functions in all versions,
-		// but we can post-process or use updateTable event.
-		// Actually jspreadsheet-ce v5 supports `render` method in column config?
-		// Checking types... generic Column type has `render`?
-		// The types show `render?: (cell: HTMLElement, value: any, x: number, y: number, instance: any, options: any) => void;`
-		// So we can attach it to the columns in `options` or modifying them after.
-		// However, initializing with `render` in columns is cleaner. Let's re-do init with render.
-		// But wait, I can't pass `render` in definition if I want to recreate it easily.
-		// Let's destroy and recreate for now, but to avoid flash, maybe update config?
-		// jspreadsheet v5 structure: options -> worksheets -> [ { columns: [...] } ]
-		// We can inject render function into the columnsConfig above.
-
-		// Let's modify columnsConfig to include render
-		// Re-defining columnsConfig with proper renderers
+		// Config with renderers
 		const cols = [
 			{
 				type: 'text' as const,
 				title: $t('gps.budget.weekNumber'),
-				width: 80,
+				width: 50,
 				readOnly: true,
 				align: 'center' as const,
 			},
 			...rotatedWeekdayLabels.map((label, dayIndex) => ({
 				type: 'text' as const,
 				title: label,
+				// width: '12%', // '12%' is parsed as 12px by jspreadsheet. Using fixed logical width.
 				width: 140,
 				readOnly: true,
 				render: (cell: HTMLElement, value: any, x: number, y: number) => {
 					cell.innerHTML = '';
 					const week = weeks[y];
 					if (!week) return;
-					const day = week.days[dayIndex]; // dayIndex 0-6 corresponds to columns 1-7
+					const day = week.days[dayIndex];
 					if (!day) return;
 
-					// Mount DayCell
 					const comp = mount(DayCell, {
 						target: cell,
 						props: {
 							day,
-							addEventFor,
-							onAddEventClick: (date) => openAddEvent(date),
 							onRemoveEventClick: (id) => removeEvent(id),
 							onAddEventSubmit: (date, name) => submitAddEvent(date, name),
-							onAddEventCancel: () => cancelAddEvent(),
 						},
 					});
 					mountedComponents.add(comp);
@@ -238,85 +166,64 @@
 			{
 				type: 'text' as const,
 				title: $t('gps.budget.budget'),
-				width: 120,
+				width: 100,
 			},
 		];
 
-		// Re-initialize with renderers
-		if (spreadsheetInstance) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			jspreadsheet.destroy(spreadsheetContainer as any, true);
-			cleanupMountedComponents();
-		}
-
-		spreadsheetInstance = jspreadsheet(spreadsheetContainer, {
-			worksheets: [
-				{
-					data: dataArray,
-					columns: cols,
-					minDimensions: [cols.length, 1],
-					allowInsertRow: false,
-					allowManualInsertRow: false,
-					allowInsertColumn: false,
-					allowManualInsertColumn: false,
-					allowDeleteRow: false,
-					allowDeleteColumn: false,
-					minSpareRows: 0,
-					// Freeze the first column (Week number)? Not supported in CE simply without pro ext usually, checking docs.. CE might not support `freezeColumns`.
-					// tableOverflow: true,
-					// tableWidth: '100%',
-					// tableHeight: '70vh',
-				},
-			],
-			contextMenu: () => [],
-			onchange: async (instance, cell, x, y, value) => {
-				const colIndex = parseInt(String(x));
-				const rowIndex = parseInt(String(y));
-				const budgetColIndex = 8;
-				if (colIndex === budgetColIndex) {
-					const week = weeks[rowIndex];
-					if (week) {
-						if (!isValidNumericInput(String(value))) {
-							// Revert if invalid
-							spreadsheetInstance?.[0].setValueFromCoords(
-								colIndex,
-								rowIndex,
-								budgetsMap[week.startIso] ?? '',
-								false,
-							);
-							return;
+		try {
+			spreadsheetInstance = jspreadsheet(spreadsheetContainer, {
+				worksheets: [
+					{
+						data: dataArray,
+						columns: cols,
+						minDimensions: [cols.length, 1], // Fixed from columnsConfig to cols
+						allowInsertRow: false,
+						allowManualInsertRow: false,
+						allowInsertColumn: false,
+						allowManualInsertColumn: false,
+						allowDeleteRow: false,
+						allowDeleteColumn: false,
+						minSpareRows: 0,
+						tableWidth: '100%',
+						tableOverflow: true,
+					},
+				],
+				contextMenu: () => [],
+				onchange: async (instance, cell, x, y, value) => {
+					const colIndex = parseInt(String(x));
+					const rowIndex = parseInt(String(y));
+					const budgetColIndex = 8;
+					if (colIndex === budgetColIndex) {
+						const week = weeks[rowIndex];
+						if (week) {
+							if (!isValidNumericInput(String(value))) {
+								spreadsheetInstance?.[0]?.setValueFromCoords(
+									colIndex,
+									rowIndex,
+									budgetsMap[week.startIso] ?? '',
+									false,
+								);
+								return;
+							}
+							updateBudgetValue(week.startIso, String(value));
+							void queuePersist();
 						}
-						updateBudgetValue(week.startIso, String(value));
-						void queuePersist();
 					}
-				}
-			},
-		});
+				},
+			});
+		} catch (e) {
+			console.error(e);
+		}
 	}
-
-	function updateSpreadsheetData() {
-		// Full refresh of spreadsheet to handle day component updates (events)
-		// This is expensive but reliable for Svelte integration.
-		// Optimally we would only update changed cells, but with `render` logic dependent on `weeks` state which changes on event add/remove,
-		// re-rendering the visible cells is needed.
-		// `jspreadsheet` doesn't strictly have a "redraw" for custom renderers unless data changes.
-		// If we destroy and init, we lose selection and scroll.
-		// Better: Update data where needed.
-		// For Day cells, since they are pure renderers based on `weeks`, if `weeks` changes, we need to trigger re-render.
-		// Calling `setValue(..., force)` might trigger render?
-		// Actually, simpler approach: Just re-init for now to ensure correctness, preserving year.
-		// Losing selection is acceptable for "Add Event" which closes modal anyway.
-		initSpreadsheet();
-	}
-
-	onMount(() => {
-		initSpreadsheet();
-	});
 
 	onDestroy(() => {
 		if (spreadsheetInstance) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			jspreadsheet.destroy(spreadsheetContainer as any, true);
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				jspreadsheet.destroy(spreadsheetContainer as any, true);
+			} catch (e) {
+				// ignore
+			}
 		}
 		cleanupMountedComponents();
 	});
@@ -401,23 +308,9 @@
 		};
 	}
 
-	function openAddEvent(date: string) {
-		addEventFor = date;
-		void tick().then(() => {
-			// Focus handled by DayCell effect or local logic
-			updateSpreadsheetData(); // Trigger re-render to show input
-		});
-	}
-
-	function cancelAddEvent() {
-		addEventFor = null;
-		updateSpreadsheetData();
-	}
-
 	function submitAddEvent(date: string, name: string) {
 		if (!name) return;
 		events = [...events, { id: `temp-${randomId()}`, orgId, eventDate: date, eventName: name }];
-		addEventFor = null;
 		queuePersist();
 	}
 
@@ -431,7 +324,7 @@
 			next.add(event.id);
 			deletedEventIds = next;
 		}
-		addEventFor = null;
+		// addEventFor = null; // Removed as it was causing error and might not be needed here
 		queuePersist();
 	}
 
@@ -533,7 +426,8 @@
 			events = payload.events;
 			deletedEventIds = new Set();
 
-			addEventFor = null;
+			deletedEventIds = new Set();
+
 			notification = null;
 			await tick();
 			// Spreadsheet update handled by effect on `weeks` or manual init?
