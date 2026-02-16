@@ -28,8 +28,8 @@
                                     variant="ghost" 
                                     size="icon" 
                                     class="h-9 w-9"
-                                    onclick={() => goto(`/_/orgs/${page.params.oid}/settings`)}
                                     {...props}
+                                    onclick={() => goto(`/_/orgs/${page.params.oid}/settings`)}
                                 >
                                     <Settings class="h-[1.2rem] w-[1.2rem]" />
                                     <span class="sr-only">{$t('layout.menu.orgSettings')}</span>
