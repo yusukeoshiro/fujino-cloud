@@ -214,9 +214,46 @@
 		} catch (e) {
 			console.error(e);
 		}
+
+		resizeTable();
 	}
 
+	let resizeObserver: ResizeObserver;
+
+	function resizeTable() {
+		if (!spreadsheetContainer || !spreadsheetInstance) return;
+		const containerWidth = spreadsheetContainer.clientWidth;
+		if (containerWidth === 0) return;
+
+		// Fixed widths: RowHeader (~50px) + WeekCol (50px) + BudgetCol (100px) + scrollbar buffer (~20px)
+		const fixedWidths = 50 + 50 + 100 + 20;
+		const availableWidth = containerWidth - fixedWidths;
+		const dayWidth = Math.max(100, Math.floor(availableWidth / 7));
+
+		// Update day columns (indices 1-7)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const instance = (spreadsheetInstance as any)[0];
+		if (instance && instance.setWidth) {
+			for (let i = 1; i <= 7; i++) {
+				instance.setWidth(i, dayWidth);
+			}
+		}
+	}
+
+	onMount(() => {
+		initSpreadsheet();
+		resizeObserver = new ResizeObserver(() => {
+			resizeTable();
+		});
+		if (spreadsheetContainer) {
+			resizeObserver.observe(spreadsheetContainer);
+		}
+	});
+
 	onDestroy(() => {
+		if (resizeObserver) {
+			resizeObserver.disconnect();
+		}
 		if (spreadsheetInstance) {
 			try {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -542,7 +579,7 @@
 	{/if}
 
 	<!-- Spreadsheet -->
-	<div class="overflow-hidden rounded-xl border border-slate-300">
+	<div class="overflow-hidden rounded-xl border border-slate-300 p-2">
 		<div bind:this={spreadsheetContainer} class="w-full"></div>
 	</div>
 </section>
