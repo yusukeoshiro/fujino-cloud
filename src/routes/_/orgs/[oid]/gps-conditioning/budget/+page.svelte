@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { tick } from 'svelte';
+	import { tick, onMount, onDestroy, mount, unmount } from 'svelte';
 	import type { PageData } from './$types';
 	import type {
 		TrainingBudgetConfig,
@@ -9,6 +9,9 @@
 	import { alignToWeekStart, getCalendarYearRange } from '$lib/utils/calendar.util';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import jspreadsheet from 'jspreadsheet-ce';
+	import 'jspreadsheet-ce/dist/jspreadsheet.css';
+	import DayCell from './day-cell.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -24,6 +27,12 @@
 	let autoSaving = $state(false);
 	let loadingYear = $state(false);
 	let notification = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
+
+	let spreadsheetContainer: HTMLDivElement;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let spreadsheetInstance: any = null;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let mountedComponents: Set<any> = new Set();
 
 	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
 
@@ -58,20 +67,9 @@
 		),
 	);
 
-	let selectedBudgetIndex = $state<number | null>(null);
-	let editingBudgetIndex = $state<number | null>(null);
-	let editingDraft = $state('');
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let editingOriginalValue = '';
-	let editingSelectMode: 'all' | 'end' = 'all';
-	let budgetEditorEl = $state<HTMLElement | null>(null);
-
 	let addEventFor = $state<string | null>(null);
-	let addEventDraft = $state('');
-	let addEventInputEl = $state<HTMLInputElement | null>(null);
 
 	let saveQueue: Promise<void> = Promise.resolve();
-
 	const numericPattern = /^-?\d*(?:\.\d*)?$/;
 
 	const monthOptions = $derived(
@@ -88,23 +86,239 @@
 		})),
 	);
 
+	// Update spreadsheet when data changes
 	$effect(() => {
-		if (!weeks.length) {
-			selectedBudgetIndex = null;
-			editingBudgetIndex = null;
-			editingDraft = '';
-			return;
+		if (spreadsheetInstance && weeks.length > 0) {
+			updateSpreadsheetData();
+		}
+	});
+
+	function cleanupMountedComponents() {
+		mountedComponents.forEach((comp) => {
+			try {
+				unmount(comp);
+			} catch (e) {
+				// Ignore unmount errors
+			}
+		});
+		mountedComponents.clear();
+	}
+
+	function initSpreadsheet() {
+		if (!spreadsheetContainer) return;
+		if (spreadsheetInstance) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			jspreadsheet.destroy(spreadsheetContainer as any, true);
+			cleanupMountedComponents();
 		}
 
-		if (selectedBudgetIndex !== null && selectedBudgetIndex >= weeks.length) {
-			selectedBudgetIndex = null;
+		// Prepare columns
+		const columnsConfig = [
+			{
+				type: 'text' as const,
+				title: $t('gps.budget.weekNumber'),
+				width: 60,
+				readOnly: true,
+			},
+			...rotatedWeekdayLabels.map((label) => ({
+				type: 'text' as const,
+				title: label,
+				width: 120,
+				readOnly: true, // Interaction handled by component
+			})),
+			{
+				type: 'text' as const, // Using text for numeric input to allow empty string
+				title: $t('gps.budget.budget'),
+				width: 100,
+			},
+		];
+
+		const dataArray = weeks.map((week) => {
+			const row = [
+				`W${week.index}`,
+				...Array(7).fill(''), // Placeholders for days
+				budgetsMap[week.startIso] ?? '',
+			];
+			return row;
+		});
+
+		spreadsheetInstance = jspreadsheet(spreadsheetContainer, {
+			worksheets: [
+				{
+					data: dataArray,
+					columns: columnsConfig,
+					minDimensions: [columnsConfig.length, 1],
+					allowInsertRow: false,
+					allowManualInsertRow: false,
+					allowInsertColumn: false,
+					allowManualInsertColumn: false,
+					allowDeleteRow: false,
+					allowDeleteColumn: false,
+					minSpareRows: 0,
+				},
+			],
+			contextMenu: () => [],
+			onchange: async (instance, cell, x, y, value) => {
+				const colIndex = parseInt(String(x));
+				const rowIndex = parseInt(String(y));
+				const budgetColIndex = 8; // 0(Week) + 7(Days) = 8
+
+				if (colIndex === budgetColIndex) {
+					// Budget change
+					const week = weeks[rowIndex];
+					if (week) {
+						if (!isValidNumericInput(String(value))) {
+							// Revert if invalid
+							spreadsheetInstance?.setValueFromCoords(
+								colIndex,
+								rowIndex,
+								budgetsMap[week.startIso] ?? '',
+								false,
+							);
+							return;
+						}
+						// Update state
+						updateBudgetValue(week.startIso, String(value));
+						// Trigger save
+						void queuePersist();
+					}
+				}
+			},
+		});
+
+		// Custom renderers are not directly supported in config purely as functions in all versions,
+		// but we can post-process or use updateTable event.
+		// Actually jspreadsheet-ce v5 supports `render` method in column config?
+		// Checking types... generic Column type has `render`?
+		// The types show `render?: (cell: HTMLElement, value: any, x: number, y: number, instance: any, options: any) => void;`
+		// So we can attach it to the columns in `options` or modifying them after.
+		// However, initializing with `render` in columns is cleaner. Let's re-do init with render.
+		// But wait, I can't pass `render` in definition if I want to recreate it easily.
+		// Let's destroy and recreate for now, but to avoid flash, maybe update config?
+		// jspreadsheet v5 structure: options -> worksheets -> [ { columns: [...] } ]
+		// We can inject render function into the columnsConfig above.
+
+		// Let's modify columnsConfig to include render
+		// Re-defining columnsConfig with proper renderers
+		const cols = [
+			{
+				type: 'text' as const,
+				title: $t('gps.budget.weekNumber'),
+				width: 80,
+				readOnly: true,
+				align: 'center' as const,
+			},
+			...rotatedWeekdayLabels.map((label, dayIndex) => ({
+				type: 'text' as const,
+				title: label,
+				width: 140,
+				readOnly: true,
+				render: (cell: HTMLElement, value: any, x: number, y: number) => {
+					cell.innerHTML = '';
+					const week = weeks[y];
+					if (!week) return;
+					const day = week.days[dayIndex]; // dayIndex 0-6 corresponds to columns 1-7
+					if (!day) return;
+
+					// Mount DayCell
+					const comp = mount(DayCell, {
+						target: cell,
+						props: {
+							day,
+							addEventFor,
+							onAddEventClick: (date) => openAddEvent(date),
+							onRemoveEventClick: (id) => removeEvent(id),
+							onAddEventSubmit: (date, name) => submitAddEvent(date, name),
+							onAddEventCancel: () => cancelAddEvent(),
+						},
+					});
+					mountedComponents.add(comp);
+				},
+			})),
+			{
+				type: 'text' as const,
+				title: $t('gps.budget.budget'),
+				width: 120,
+			},
+		];
+
+		// Re-initialize with renderers
+		if (spreadsheetInstance) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			jspreadsheet.destroy(spreadsheetContainer as any, true);
+			cleanupMountedComponents();
 		}
 
-		if (editingBudgetIndex !== null && !weeks[editingBudgetIndex]) {
-			editingBudgetIndex = null;
-			editingDraft = '';
-			editingOriginalValue = '';
+		spreadsheetInstance = jspreadsheet(spreadsheetContainer, {
+			worksheets: [
+				{
+					data: dataArray,
+					columns: cols,
+					minDimensions: [cols.length, 1],
+					allowInsertRow: false,
+					allowManualInsertRow: false,
+					allowInsertColumn: false,
+					allowManualInsertColumn: false,
+					allowDeleteRow: false,
+					allowDeleteColumn: false,
+					minSpareRows: 0,
+					// Freeze the first column (Week number)? Not supported in CE simply without pro ext usually, checking docs.. CE might not support `freezeColumns`.
+					// tableOverflow: true,
+					// tableWidth: '100%',
+					// tableHeight: '70vh',
+				},
+			],
+			contextMenu: () => [],
+			onchange: async (instance, cell, x, y, value) => {
+				const colIndex = parseInt(String(x));
+				const rowIndex = parseInt(String(y));
+				const budgetColIndex = 8;
+				if (colIndex === budgetColIndex) {
+					const week = weeks[rowIndex];
+					if (week) {
+						if (!isValidNumericInput(String(value))) {
+							// Revert if invalid
+							spreadsheetInstance?.[0].setValueFromCoords(
+								colIndex,
+								rowIndex,
+								budgetsMap[week.startIso] ?? '',
+								false,
+							);
+							return;
+						}
+						updateBudgetValue(week.startIso, String(value));
+						void queuePersist();
+					}
+				}
+			},
+		});
+	}
+
+	function updateSpreadsheetData() {
+		// Full refresh of spreadsheet to handle day component updates (events)
+		// This is expensive but reliable for Svelte integration.
+		// Optimally we would only update changed cells, but with `render` logic dependent on `weeks` state which changes on event add/remove,
+		// re-rendering the visible cells is needed.
+		// `jspreadsheet` doesn't strictly have a "redraw" for custom renderers unless data changes.
+		// If we destroy and init, we lose selection and scroll.
+		// Better: Update data where needed.
+		// For Day cells, since they are pure renderers based on `weeks`, if `weeks` changes, we need to trigger re-render.
+		// Calling `setValue(..., force)` might trigger render?
+		// Actually, simpler approach: Just re-init for now to ensure correctness, preserving year.
+		// Losing selection is acceptable for "Add Event" which closes modal anyway.
+		initSpreadsheet();
+	}
+
+	onMount(() => {
+		initSpreadsheet();
+	});
+
+	onDestroy(() => {
+		if (spreadsheetInstance) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			jspreadsheet.destroy(spreadsheetContainer as any, true);
 		}
+		cleanupMountedComponents();
 	});
 
 	function groupEvents(list: TrainingKeyEvent[]) {
@@ -168,11 +382,13 @@
 
 	const sanitizeInput = (value: string) =>
 		value
-			.replace(/\u00a0/g, ' ')
-			.replace(/\r/g, '')
-			.replace(/\n/g, '')
-			.replace(/\t/g, ' ')
+			.replace(/\\u00a0/g, ' ')
+			.replace(/\\r/g, '')
+			.replace(/\\n/g, '')
+			.replace(/\\t/g, ' ')
 			.trim();
+
+	const isValidNumericInput = (value: string) => value === '' || numericPattern.test(value);
 
 	function updateBudgetValue(weekStart: string, rawValue: string) {
 		const sanitized = sanitizeInput(rawValue);
@@ -185,254 +401,26 @@
 		};
 	}
 
-	function parseClipboard(text: string) {
-		const rows = text.replace(/\r/g, '').split('\n');
-		if (rows.length && rows[rows.length - 1].trim() === '') {
-			rows.pop();
-		}
-		return rows.flatMap((row) => row.split('\t')).map((value) => sanitizeInput(value));
-	}
-
-	function handleBudgetCellClick(index: number) {
-		if (editingBudgetIndex !== null) {
-			void commitEditing('stay');
-		}
-		selectBudgetCell(index);
-	}
-
-	function selectBudgetCell(index: number | null) {
-		if (index === null || !weeks[index]) {
-			selectedBudgetIndex = null;
-			return;
-		}
-		selectedBudgetIndex = index;
-		void focusBudgetButton(index);
-	}
-
-	async function startEditing(
-		index: number,
-		options: { initialValue?: string; selectMode?: 'all' | 'end' } = {},
-	) {
-		if (!weeks[index]) return;
-		const week = weeks[index];
-		selectedBudgetIndex = index;
-		editingSelectMode = options.selectMode ?? 'all';
-		const initial =
-			options.initialValue !== undefined
-				? sanitizeInput(options.initialValue)
-				: (budgetsMap[week.startIso] ?? '');
-		if (initial && !numericPattern.test(initial)) {
-			return;
-		}
-		editingBudgetIndex = index;
-		editingOriginalValue = budgetsMap[week.startIso] ?? '';
-		editingDraft = initial;
-		await tick();
-		if (budgetEditorEl) {
-			budgetEditorEl.textContent = editingDraft; // eslint-disable-line svelte/no-dom-manipulating
-			budgetEditorEl.focus();
-			if (editingSelectMode === 'all') {
-				selectAll(budgetEditorEl);
-			} else {
-				moveCaretToEnd(budgetEditorEl);
-			}
-		}
-	}
-
-	async function commitEditing(direction: 'stay' | 'down' | 'up' = 'stay') {
-		if (editingBudgetIndex === null) return;
-		const index = editingBudgetIndex;
-		const week = weeks[index];
-		const value = sanitizeInput(editingDraft);
-		if (value && !numericPattern.test(value)) {
-			return;
-		}
-		updateBudgetValue(week.startIso, value);
-		editingBudgetIndex = null;
-		editingDraft = '';
-		editingOriginalValue = '';
-		budgetEditorEl = null;
-		queuePersist();
-		let nextIndex = index;
-		if (direction === 'down') {
-			nextIndex = Math.min(index + 1, weeks.length - 1);
-		} else if (direction === 'up') {
-			nextIndex = Math.max(index - 1, 0);
-		}
-		selectedBudgetIndex = weeks.length ? nextIndex : null;
-		if (selectedBudgetIndex !== null) {
-			await focusBudgetButton(selectedBudgetIndex);
-		}
-	}
-
-	function cancelEditing() {
-		if (editingBudgetIndex === null) return;
-		const index = editingBudgetIndex;
-		editingBudgetIndex = null;
-		editingDraft = '';
-		editingOriginalValue = '';
-		budgetEditorEl = null;
-		selectedBudgetIndex = index;
-		void focusBudgetButton(index);
-	}
-
-	function handleSelectionKeydown(event: KeyboardEvent, index: number) {
-		const { key } = event;
-		const lastIndex = weeks.length - 1;
-		switch (key) {
-			case 'ArrowDown':
-				event.preventDefault();
-				selectBudgetCell(Math.min(index + 1, lastIndex));
-				break;
-			case 'ArrowUp':
-				event.preventDefault();
-				selectBudgetCell(Math.max(index - 1, 0));
-				break;
-			case 'Enter':
-				event.preventDefault();
-				void startEditing(index, { selectMode: 'all' });
-				break;
-			case 'F2':
-				event.preventDefault();
-				void startEditing(index, { selectMode: 'end' });
-				break;
-			case 'Delete':
-			case 'Backspace':
-				event.preventDefault();
-				updateBudgetValue(weeks[index].startIso, '');
-				queuePersist();
-				break;
-			case 'Tab':
-				event.preventDefault();
-				selectBudgetCell(Math.min(index + (event.shiftKey ? -1 : 1), lastIndex));
-				break;
-			default:
-				if (key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
-					const initial = sanitizeInput(key);
-					if (initial === '' && key.trim() !== '') return;
-					if (initial && !numericPattern.test(initial)) return;
-					event.preventDefault();
-					void startEditing(index, { initialValue: initial, selectMode: 'end' });
-				}
-		}
-	}
-
-	function handleSelectionPaste(event: ClipboardEvent, index: number) {
-		const text = event.clipboardData?.getData('text/plain');
-		if (!text) return;
-		const values = parseClipboard(text);
-		if (!values.length) return;
-		event.preventDefault();
-		values.forEach((value, offset) => {
-			const targetWeek = weeks[index + offset];
-			if (!targetWeek) return;
-			updateBudgetValue(targetWeek.startIso, value);
-		});
-		queuePersist();
-		selectBudgetCell(Math.min(index + values.length - 1, weeks.length - 1));
-	}
-
-	function handleEditorInput(event: Event) {
-		if (editingBudgetIndex === null) return;
-		const node = event.currentTarget as HTMLElement;
-		const text = node.textContent ?? '';
-		const sanitized = sanitizeInput(text);
-		if (sanitized && !numericPattern.test(sanitized)) {
-			node.textContent = editingDraft;
-			moveCaretToEnd(node);
-			return;
-		}
-		editingDraft = sanitized;
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	function handleEditorKeydown(event: KeyboardEvent, index: number) {
-		switch (event.key) {
-			case 'Enter':
-				event.preventDefault();
-				void commitEditing(event.shiftKey ? 'up' : 'down');
-				break;
-			case 'Escape':
-				event.preventDefault();
-				cancelEditing();
-				break;
-			case 'ArrowDown':
-				event.preventDefault();
-				void commitEditing('down');
-				break;
-			case 'ArrowUp':
-				event.preventDefault();
-				void commitEditing('up');
-				break;
-			case 'Tab':
-				event.preventDefault();
-				void commitEditing(event.shiftKey ? 'up' : 'down');
-				break;
-		}
-	}
-
-	function handleEditorPaste(event: ClipboardEvent, index: number) {
-		const text = event.clipboardData?.getData('text/plain');
-		if (!text) return;
-		const values = parseClipboard(text);
-		if (!values.length) return;
-		event.preventDefault();
-		values.forEach((value, offset) => {
-			const targetWeek = weeks[index + offset];
-			if (!targetWeek) return;
-			if (offset === 0) {
-				editingDraft = value;
-				if (budgetEditorEl) {
-					// eslint-disable-next-line svelte/no-dom-manipulating
-					budgetEditorEl.textContent = value;
-					moveCaretToEnd(budgetEditorEl);
-				}
-			} else {
-				updateBudgetValue(targetWeek.startIso, value);
-			}
-		});
-		queuePersist();
-		if (values.length > 1) {
-			void commitEditing('stay');
-			selectBudgetCell(Math.min(index + values.length - 1, weeks.length - 1));
-		}
-	}
-
 	function openAddEvent(date: string) {
 		addEventFor = date;
-		addEventDraft = '';
-		void tick().then(() => addEventInputEl?.focus());
+		void tick().then(() => {
+			// Focus handled by DayCell effect or local logic
+			updateSpreadsheetData(); // Trigger re-render to show input
+		});
 	}
 
 	function cancelAddEvent() {
 		addEventFor = null;
-		addEventDraft = '';
+		updateSpreadsheetData();
 	}
 
-	function submitAddEvent(date: string) {
-		const name = addEventDraft.trim();
+	function submitAddEvent(date: string, name: string) {
 		if (!name) return;
 		events = [...events, { id: `temp-${randomId()}`, orgId, eventDate: date, eventName: name }];
 		addEventFor = null;
-		addEventDraft = '';
 		queuePersist();
 	}
 
-	function handleAddEventKeydown(event: KeyboardEvent, date: string) {
-		// Do not treat Enter during IME composition as submission
-		if (event.isComposing) return;
-
-		switch (event.key) {
-			case 'Enter':
-				event.preventDefault();
-				submitAddEvent(date);
-				break;
-			case 'Escape':
-				event.preventDefault();
-				cancelAddEvent();
-				break;
-		}
-	}
 	function removeEvent(eventId: string) {
 		const event = events.find((item) => item.id === eventId);
 		if (!event) return;
@@ -544,48 +532,18 @@
 			budgetsMap = mapBudgets(payload.budgets);
 			events = payload.events;
 			deletedEventIds = new Set();
-			editingBudgetIndex = null;
-			editingDraft = '';
-			editingOriginalValue = '';
+
 			addEventFor = null;
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const { start } = getCalendarYearRange(year, config.startMonth, config.weekStartsOn);
 			notification = null;
 			await tick();
-			selectedBudgetIndex = null;
+			// Spreadsheet update handled by effect on `weeks` or manual init?
+			// `weeks` is derived from `currentYear`, so it will change.
 		} catch (error) {
 			console.error(error);
 			notification = { text: translate('gps.budget.fetchFailed'), tone: 'error' };
 		} finally {
 			loadingYear = false;
 		}
-	}
-
-	function focusBudgetButton(index: number | null) {
-		if (index === null) return Promise.resolve();
-		return tick().then(() => {
-			const button = document.querySelector<HTMLElement>(`[data-budget-index="${index}"]`);
-			button?.focus();
-		});
-	}
-
-	function selectAll(node: HTMLElement) {
-		const selection = window.getSelection();
-		if (!selection) return;
-		const range = document.createRange();
-		range.selectNodeContents(node);
-		selection.removeAllRanges();
-		selection.addRange(range);
-	}
-
-	function moveCaretToEnd(node: HTMLElement) {
-		const selection = window.getSelection();
-		if (!selection) return;
-		const range = document.createRange();
-		range.selectNodeContents(node);
-		range.collapse(false);
-		selection.removeAllRanges();
-		selection.addRange(range);
 	}
 
 	function randomId() {
@@ -689,171 +647,17 @@
 		</div>
 	{/if}
 
-	<!-- Calendar -->
+	<!-- Spreadsheet -->
 	<div class="overflow-hidden rounded-xl border border-slate-300">
-		<div class="max-h-[70vh] overflow-auto">
-			<table class="w-full min-w-[1100px] table-fixed border-collapse text-sm">
-				<colgroup>
-					<col class="w-16" />
-					<col span="7" class="w-[70px]" />
-					<col class="w-20" />
-				</colgroup>
-
-				<thead class="sticky top-0 z-20 bg-white shadow-sm">
-					<tr>
-						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
-							{$t('gps.budget.weekNumber')}
-						</th>
-						{#each rotatedWeekdayLabels as label (label)}
-							<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">{label}</th>
-						{/each}
-						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
-							<nobr>{$t('gps.budget.budget')} </nobr><br />
-							<small><nobr>{$t('gps.budget.budgetHint')}</nobr> </small>
-						</th>
-					</tr>
-				</thead>
-
-				<tbody>
-					{#each weeks as week, index (week.index)}
-						<tr class="border-b border-slate-200 last:border-0">
-							<th
-								class="sticky left-0 border-r border-slate-200 bg-slate-50 px-2 py-2 whitespace-nowrap text-slate-800"
-							>
-								W{week.index}
-							</th>
-
-							{#each week.days as day (day.iso)}
-								<td
-									class={`relative h-[100px] p-0 align-top transition-colors hover:bg-slate-200
-									`}
-								>
-									{#if day.isToday}
-										<div class=" absolute h-full w-full bg-indigo-200"></div>
-									{/if}
-
-									<div
-										class=" group absolute flex h-full w-full flex-col gap-1 p-2"
-										class:bg-white={day.isCurrentYear && !day.isAltMonth && !day.isToday}
-										class:bg-slate-50={day.isCurrentYear && day.isAltMonth && !day.isToday}
-										class:bg-slate-100={!day.isCurrentYear && !day.isToday}
-										class:text-slate-400={!day.isCurrentYear}
-									>
-										<div class="flex items-center justify-between">
-											<span class="font-semibold">{day.label}</span>
-											<button
-												type="button"
-												class="cursor-pointer rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100"
-												onclick={(event) => {
-													event.stopPropagation();
-													openAddEvent(day.iso);
-												}}
-											>
-												＋
-											</button>
-										</div>
-
-										{#if addEventFor === day.iso}
-											<div
-												class="absolute top-10 right-2 z-50 flex flex-col gap-2 rounded-md border border-slate-300 bg-white p-2 shadow-md"
-											>
-												<input
-													type="text"
-													placeholder={$t('gps.budget.eventPlaceholder')}
-													bind:value={addEventDraft}
-													bind:this={addEventInputEl}
-													class="rounded border border-slate-300 px-2 py-1"
-													onkeydown={(event) =>
-														handleAddEventKeydown(event as KeyboardEvent, day.iso)}
-												/>
-												<div class="flex justify-end gap-1">
-													<button
-														class="rounded bg-blue-600 px-2 py-1 text-white"
-														onclick={() => submitAddEvent(day.iso)}
-													>
-														{$t('gps.budget.add')}
-													</button>
-													<button
-														class="rounded border border-slate-300 px-2 py-1"
-														onclick={cancelAddEvent}
-													>
-														{$t('gps.budget.cancel')}
-													</button>
-												</div>
-											</div>
-										{/if}
-
-										<ul class="flex flex-1 flex-col gap-1 overflow-y-auto">
-											{#each day.events.slice(0, 3) as event (event.id)}
-												<li class="group flex items-center gap-1">
-													<div
-														class="flex-1 rounded-full bg-slate-100 px-2 py-1 text-left text-xs"
-														title={event.eventName}
-													>
-														{event.eventName}
-													</div>
-
-													<button
-														class="cursor-pointer text-xs text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
-														onclick={(e) => {
-															e.stopPropagation();
-															removeEvent(event.id);
-														}}
-													>
-														✕
-													</button>
-												</li>
-											{/each}
-											{#if day.events.length > 3}
-												<li
-													class="rounded-full bg-slate-100 px-2 py-0.5 text-center text-xs text-slate-700"
-												>
-													+{day.events.length - 3}
-												</li>
-											{/if}
-										</ul>
-									</div>
-								</td>
-							{/each}
-
-							<td class="relative w-full p-0 align-top">
-								{#if editingBudgetIndex === index}
-									<div class="absolute inset-0">
-										<div
-											contenteditable="true"
-											role="textbox"
-											tabindex="0"
-											spellcheck={false}
-											class="absolute inset-0 flex items-center justify-end bg-white px-6 py-2 text-right ring-2 ring-indigo-200 outline-none"
-											style="min-height:100%;"
-											data-budget-index={index}
-											bind:this={budgetEditorEl}
-											oninput={(ev) => handleEditorInput(ev)}
-											onkeydown={(ev) => handleEditorKeydown(ev as KeyboardEvent, index)}
-											onpaste={(ev) => handleEditorPaste(ev as ClipboardEvent, index)}
-											onblur={() => void commitEditing('stay')}
-										></div>
-									</div>
-								{:else}
-									<button
-										type="button"
-										class="absolute inset-0 flex w-full items-center justify-end px-6 py-2 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
-										class:bg-blue-50={selectedBudgetIndex === index}
-										data-budget-index={index}
-										tabindex={selectedBudgetIndex === index ? 0 : -1}
-										onclick={() => handleBudgetCellClick(index)}
-										ondblclick={() => void startEditing(index, { selectMode: 'all' })}
-										onkeydown={(ev) => handleSelectionKeydown(ev as KeyboardEvent, index)}
-										onpaste={(ev) => handleSelectionPaste(ev as ClipboardEvent, index)}
-									>
-										{budgetsMap[week.startIso] ?? ''}
-									</button>
-								{/if}
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
+		<div bind:this={spreadsheetContainer} class="w-full"></div>
 	</div>
 </section>
+
+<style>
+	:global(.jexcel) {
+		width: 100% !important;
+	}
+	:global(.jexcel td) {
+		vertical-align: top;
+	}
+</style>

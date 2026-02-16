@@ -82,7 +82,7 @@
 			<div class="flex flex-wrap items-center gap-3">
 				<Button
 					type="submit"
-					class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white"
+					class="w-full bg-indigo-600 text-white hover:bg-indigo-700 sm:w-auto"
 					disabled={isSaving}
 				>
 					{isSaving ? $t('settings.gps.saving') : $t('settings.gps.save')}

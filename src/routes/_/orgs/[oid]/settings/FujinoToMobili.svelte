@@ -168,7 +168,7 @@
 			<div class="flex flex-wrap items-center gap-3">
 				<Button
 					type="submit"
-					class="bg-indigo-600 hover:bg-indigo-700 text-white"
+					class="bg-indigo-600 text-white hover:bg-indigo-700"
 					disabled={isSavingDevice || !tokenInput.trim()}
 				>
 					{isSavingDevice ? $t('settings.deviceToken.saving') : $t('settings.deviceToken.save')}

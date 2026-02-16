@@ -160,7 +160,7 @@
 			<Button
 				type="button"
 				onclick={renewContentsProviderToken}
-				class="bg-indigo-600 hover:bg-indigo-700 text-white"
+				class="bg-indigo-600 text-white hover:bg-indigo-700"
 				disabled={isIssuingContentsProvider}
 			>
 				{isIssuingContentsProvider

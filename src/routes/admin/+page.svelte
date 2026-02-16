@@ -31,9 +31,7 @@
 					class="flex-grow rounded border p-2"
 					required
 				/>
-				<Button type="submit" variant="default">
-					Create
-				</Button>
+				<Button type="submit" variant="default">Create</Button>
 			</div>
 			<p class="text-xs text-gray-500">
 				Note: The Organization ID must match the ID issued by the Mobili platform.
@@ -63,13 +61,7 @@
 								value={org.name}
 								class="flex-grow rounded border p-2 font-semibold"
 							/>
-							<Button
-								type="submit"
-								variant="secondary"
-								size="sm"
-							>
-								Update Name
-							</Button>
+							<Button type="submit" variant="secondary" size="sm">Update Name</Button>
 						</form>
 
 						<form
@@ -85,13 +77,7 @@
 							}}
 						>
 							<input type="hidden" name="id" value={org.id} />
-							<Button
-								type="submit"
-								variant="destructive"
-								size="sm"
-							>
-								Delete
-							</Button>
+							<Button type="submit" variant="destructive" size="sm">Delete</Button>
 						</form>
 					</div>
 
@@ -106,13 +92,7 @@
 								class="flex-grow rounded border p-2"
 								required
 							/>
-							<Button
-								type="submit"
-								variant="default"
-								size="sm"
-							>
-								Add User
-							</Button>
+							<Button type="submit" variant="default" size="sm">Add User</Button>
 						</form>
 					</div>
 				</div>

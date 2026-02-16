@@ -30,7 +30,7 @@
 		<!-- Range buttons -->
 		<div class="mb-4 flex flex-wrap items-center justify-end gap-2">
 			<Button
-				variant={isActive(30) ? "default" : "outline"}
+				variant={isActive(30) ? 'default' : 'outline'}
 				size="sm"
 				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(30)}
@@ -38,7 +38,7 @@
 				{$t('gps.range.pastDays', { days: 30 })}
 			</Button>
 			<Button
-				variant={isActive(90) ? "default" : "outline"}
+				variant={isActive(90) ? 'default' : 'outline'}
 				size="sm"
 				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(90)}
@@ -46,7 +46,7 @@
 				{$t('gps.range.pastDays', { days: 90 })}
 			</Button>
 			<Button
-				variant={isActive(180) ? "default" : "outline"}
+				variant={isActive(180) ? 'default' : 'outline'}
 				size="sm"
 				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(180)}
@@ -54,7 +54,7 @@
 				{$t('gps.range.pastDays', { days: 180 })}
 			</Button>
 			<Button
-				variant={isActive(365) ? "default" : "outline"}
+				variant={isActive(365) ? 'default' : 'outline'}
 				size="sm"
 				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(365)}

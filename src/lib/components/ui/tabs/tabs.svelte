@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Tabs as TabsPrimitive } from "bits-ui";
+	import { Tabs as TabsPrimitive } from 'bits-ui';
 
 	let {
 		value = $bindable(),

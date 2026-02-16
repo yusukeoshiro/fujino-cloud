@@ -17,10 +17,10 @@
 	{...rest}
 />
 
-{#snippet childrenShim({ checked })}
+{#snippet childrenShim({ checked }: { checked: boolean })}
 	<div class="flex items-center justify-center">
 		{#if checked}
-			<div class="h-2.5 w-2.5 rounded-full bg-current" />
+			<div class="h-2.5 w-2.5 rounded-full bg-current"></div>
 		{/if}
 	</div>
 {/snippet}

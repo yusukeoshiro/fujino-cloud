@@ -1,4 +1,4 @@
-import Root from "./button.svelte";
+import Root from './button.svelte';
 
 export {
 	Root,

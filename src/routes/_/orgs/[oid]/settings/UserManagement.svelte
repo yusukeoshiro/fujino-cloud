@@ -58,11 +58,7 @@
 						</p>
 					{/if}
 				</div>
-				<Button
-					type="submit"
-					disabled={isInviting}
-					class="w-full sm:w-auto"
-				>
+				<Button type="submit" disabled={isInviting} class="w-full sm:w-auto">
 					<nobr>
 						{isInviting ? $t('settings.members.inviting') : $t('settings.members.invite')}
 					</nobr>
@@ -103,7 +99,7 @@
 											variant="link"
 											type="submit"
 											size="sm"
-											class="text-xs font-semibold text-red-600 hover:text-red-900 h-auto p-0"
+											class="h-auto p-0 text-xs font-semibold text-red-600 hover:text-red-900"
 											>{$t('settings.members.delete')}</Button
 										>
 									</form>

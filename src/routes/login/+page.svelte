@@ -137,11 +137,7 @@
 							>
 								{$t('login.cancel')}
 							</Button>
-							<Button
-								type="submit"
-								class="w-1/2"
-								disabled={sending}
-							>
+							<Button type="submit" class="w-1/2" disabled={sending}>
 								{#if sending}
 									<svg
 										class="mr-2 inline h-4 w-4 animate-spin"

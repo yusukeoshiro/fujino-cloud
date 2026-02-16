@@ -8,13 +8,13 @@
 	import type { PageData } from './$types';
 	import { page } from '$app/state';
 	import { t } from '$lib/i18n'; // removed locale, setLocale, supportedLocales, type Locale as they are moved to UserNav
-    import SiteHeader from '$lib/components/site-header.svelte';
+	import SiteHeader from '$lib/components/site-header.svelte';
 
 	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
 	let members = $derived(data.members ?? []);
-	
-    // activeOrg logic is now inside OrgSwitcher and MainNav, 
-    // but we still need navigateToOnlyOrg logic.
+
+	// activeOrg logic is now inside OrgSwitcher and MainNav,
+	// but we still need navigateToOnlyOrg logic.
 
 	$effect(() => {
 		navigateToOnlyOrg(page.params.oid);
@@ -33,8 +33,8 @@
 			console.error('Logout failed:', err);
 		}
 	};
-    
-    // Profile state management moved to UserNav
+
+	// Profile state management moved to UserNav
 
 	const navigateToOnlyOrg = (currentOrgId: string | null) => {
 		if (currentOrgId == null) {
@@ -45,7 +45,7 @@
 		}
 	};
 
-    // onMount logic for auth state change and member setting
+	// onMount logic for auth state change and member setting
 	onMount(() => {
 		if (members) {
 			currentMembers.set(members);
@@ -70,5 +70,3 @@
 <div class="p-3">
 	{@render children?.()}
 </div>
-
-
