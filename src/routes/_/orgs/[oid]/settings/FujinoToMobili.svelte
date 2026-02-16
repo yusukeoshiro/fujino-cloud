@@ -4,6 +4,7 @@
 	import type { PageData } from './$types';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import { Button } from '$lib/components/ui/button';
 
 	let { data }: { data: PageData } = $props();
 
@@ -165,24 +166,25 @@
 			</div>
 
 			<div class="flex flex-wrap items-center gap-3">
-				<button
+				<Button
 					type="submit"
-					class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-indigo-300"
+					class="bg-indigo-600 hover:bg-indigo-700 text-white"
 					disabled={isSavingDevice || !tokenInput.trim()}
 				>
 					{isSavingDevice ? $t('settings.deviceToken.saving') : $t('settings.deviceToken.save')}
-				</button>
+				</Button>
 			</div>
 		</form>
 		{#if $deviceTokenReady}
-			<button
+			<Button
 				type="button"
+				variant="outline"
 				onclick={deleteDeviceToken}
-				class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 focus:ring-2 focus:ring-rose-200 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:text-rose-300"
+				class="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
 				disabled={isDeletingDevice}
 			>
 				{isDeletingDevice ? $t('settings.deviceToken.deleting') : $t('settings.deviceToken.delete')}
-			</button>
+			</Button>
 		{/if}
 	</div>
 </div>

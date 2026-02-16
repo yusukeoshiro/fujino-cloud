@@ -10,6 +10,7 @@
 		DEFAULT_CSV_VENDOR_FORMAT,
 		type CsvVendorFormat,
 	} from '$lib/csv-processors/vendor-formats';
+	import { Button } from '$lib/components/ui/button';
 
 	let { data }: { data: PageData } = $props();
 
@@ -474,17 +475,18 @@
 		</div>
 		<div class="inline-flex rounded-xl bg-slate-100 p-1 text-sm font-medium text-slate-700">
 			{#each gpsCategoryOptions as option (option.value)}
-				<button
+				<Button
 					type="button"
-					class={'rounded-lg px-4 py-2 transition ' +
+					variant="ghost"
+					class={'rounded-lg px-4 py-2 transition h-auto ' +
 						(gpsCategory === option.value
-							? 'bg-white text-slate-900 shadow-sm'
-							: 'text-slate-600 hover:text-slate-800')}
+							? 'bg-white text-slate-900 shadow-sm hover:bg-white'
+							: 'text-slate-600 hover:text-slate-800 hover:bg-transparent')}
 					onclick={() => (gpsCategory = option.value)}
 					aria-pressed={gpsCategory === option.value}
 				>
 					{$t(option.labelKey)}
-				</button>
+				</Button>
 			{/each}
 		</div>
 		<div class="mt-3 grid gap-3 sm:grid-cols-2">
@@ -658,17 +660,19 @@
 
 		<div class="mt-6 flex flex-col items-center gap-3">
 			<div class="flex flex-col items-center gap-3 sm:flex-row">
-				<button
+				<Button
 					type="button"
-					class="flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+					variant="outline"
+					class="flex items-center gap-2 rounded-2xl h-auto py-3 px-5 transition disabled:cursor-not-allowed disabled:opacity-60"
 					onclick={resetPreview}
 					disabled={!result || uploading || committing}
 				>
 					{$t('gps.upload.retry')}
-				</button>
-				<button
+				</Button>
+				<Button
 					type="button"
-					class="flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+					variant="default"
+					class="flex items-center gap-2 rounded-2xl bg-blue-600 h-auto py-3 px-5 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
 					onclick={commitUpload}
 					disabled={!lastFile || uploading || committing}
 					aria-busy={committing}
@@ -696,7 +700,7 @@
 					{:else}
 						{$t('gps.upload.commit')}
 					{/if}
-				</button>
+				</Button>
 			</div>
 			{#if committing && jobMessage}
 				<div class="mt-2 text-center text-sm font-medium text-slate-600 animate-pulse">
