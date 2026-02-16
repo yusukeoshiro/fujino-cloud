@@ -21,7 +21,7 @@
 </script>
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -->
-<nav class="sticky top-0 z-[60] border-b border-slate-200 bg-white">
+<nav class="border-b border-slate-200 bg-white">
 	<ul class="flex justify-center gap-2 px-4 py-3 text-sm font-medium text-slate-600 sm:gap-6">
 		{#each items as item (item.path)}
 			<li>

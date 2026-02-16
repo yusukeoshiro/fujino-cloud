@@ -120,16 +120,16 @@
 }
 
 @layer base {
-	html {
-		scrollbar-gutter: stable;
-	}
-
-	body {
-		@apply bg-background text-foreground;
-		padding-right: 0 !important;
-	}
-
 	* {
 		@apply border-border;
 	}
+}
+
+html {
+	scrollbar-gutter: stable !important;
+}
+
+body {
+	@apply bg-background text-foreground;
+	padding-right: 0 !important;
 }
