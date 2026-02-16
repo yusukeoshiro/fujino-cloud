@@ -11,6 +11,8 @@
 		type CsvVendorFormat,
 	} from '$lib/csv-processors/vendor-formats';
 	import { Button } from '$lib/components/ui/button';
+	import { RadioGroup, RadioGroupItem } from '$lib/components/ui/radio-group';
+	import { Label } from '$lib/components/ui/label';
 
 	let { data }: { data: PageData } = $props();
 
@@ -102,10 +104,6 @@
 
 	let result = $state<UploadPreviewResponse | null>(null);
 	type GpsCategory = 'training' | 'game';
-	const gpsCategoryOptions: ReadonlyArray<{ value: GpsCategory; labelKey: string }> = [
-		{ value: 'training', labelKey: 'gps.upload.type.training' },
-		{ value: 'game', labelKey: 'gps.upload.type.game' },
-	];
 	let gpsCategory = $state<GpsCategory>('training');
 	let sessionDate = $state<string>('');
 	let vendorFormat = $state<CsvVendorFormat>(
@@ -311,7 +309,7 @@
 	function listenToJob(id: string) {
 		if (unsubscribeJob) unsubscribeJob();
 		const ref = doc(db, 'gps-upload-status', id);
-		
+
 		jobMessage = translate('gps.upload.committing');
 
 		unsubscribeJob = onSnapshot(ref, (snap) => {
@@ -326,13 +324,14 @@
 			// Update message based on stage
 			if (data.status === 'PROCESSING') {
 				if (jobStage === 'PARTICIPANTS') jobMessage = `Importing Members...`;
-				else if (jobStage === 'METRICS') jobMessage = `Importing Metrics (${Math.floor((jobProgress.processed / jobProgress.total) * 100)}%)...`;
+				else if (jobStage === 'METRICS')
+					jobMessage = `Importing Metrics (${Math.floor((jobProgress.processed / jobProgress.total) * 100)}%)...`;
 				else if (jobStage === 'EXPORTING') jobMessage = `Finalizing...`;
 				else jobMessage = translate('gps.upload.committing');
 			} else if (data.status === 'COMPLETED') {
 				committing = false;
 				if (unsubscribeJob) unsubscribeJob();
-				
+
 				if (data.errorDetails?.length > 0) {
 					jobMessage = translate('gps.upload.successWithErrors');
 					setError(jobMessage, data.errorDetails);
@@ -351,7 +350,6 @@
 			}
 		});
 	}
-
 
 	async function commitUpload() {
 		if (!lastFile) {
@@ -388,11 +386,10 @@
 				},
 			);
 			if (!res.ok) throw new Error(translate('gps.upload.commitFailed'));
-			
+
 			const { jobId: id } = await res.json();
 			jobId = id;
 			listenToJob(id);
-			
 		} catch (e: unknown) {
 			committing = false;
 			setError(
@@ -473,22 +470,31 @@
 		<div>
 			<p class="text-sm font-semibold text-slate-800">{$t('gps.upload.dataType')}</p>
 		</div>
-		<div class="inline-flex rounded-xl bg-slate-100 p-1 text-sm font-medium text-slate-700">
-			{#each gpsCategoryOptions as option (option.value)}
-				<Button
-					type="button"
-					variant="ghost"
-					class={'rounded-lg px-4 py-2 transition h-auto ' +
-						(gpsCategory === option.value
-							? 'bg-white text-slate-900 shadow-sm hover:bg-white'
-							: 'text-slate-600 hover:text-slate-800 hover:bg-transparent')}
-					onclick={() => (gpsCategory = option.value)}
-					aria-pressed={gpsCategory === option.value}
-				>
-					{$t(option.labelKey)}
-				</Button>
-			{/each}
-		</div>
+		<RadioGroup bind:value={gpsCategory} class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<!-- Training Option -->
+			<Label
+				for="option-training"
+				class="flex cursor-pointer flex-row items-center justify-between rounded-lg border-2 border-muted bg-transparent p-4 hover:bg-slate-50 [&:has([data-state=checked])]:border-primary"
+			>
+				<div class="space-y-1">
+					<p class="text-sm leading-none font-medium">{$t('gps.upload.type.training')}</p>
+					<p class="text-xs text-muted-foreground">For practice sessions</p>
+				</div>
+				<RadioGroupItem value="training" id="option-training" />
+			</Label>
+
+			<!-- Game Option -->
+			<Label
+				for="option-game"
+				class="flex cursor-pointer flex-row items-center justify-between rounded-lg border-2 border-muted bg-transparent p-4 hover:bg-slate-50 [&:has([data-state=checked])]:border-primary"
+			>
+				<div class="space-y-1">
+					<p class="text-sm leading-none font-medium">{$t('gps.upload.type.game')}</p>
+					<p class="text-xs text-muted-foreground">For official matches</p>
+				</div>
+				<RadioGroupItem value="game" id="option-game" />
+			</Label>
+		</RadioGroup>
 		<div class="mt-3 grid gap-3 sm:grid-cols-2">
 			<label class="flex flex-col gap-1 text-sm font-medium text-slate-700">
 				<span>{$t('gps.upload.sessionDate')}</span>
@@ -663,7 +669,7 @@
 				<Button
 					type="button"
 					variant="outline"
-					class="flex items-center gap-2 rounded-2xl h-auto py-3 px-5 transition disabled:cursor-not-allowed disabled:opacity-60"
+					class="flex h-auto items-center gap-2 rounded-2xl px-5 py-3 transition disabled:cursor-not-allowed disabled:opacity-60"
 					onclick={resetPreview}
 					disabled={!result || uploading || committing}
 				>
@@ -672,7 +678,7 @@
 				<Button
 					type="button"
 					variant="default"
-					class="flex items-center gap-2 rounded-2xl bg-blue-600 h-auto py-3 px-5 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+					class="flex h-auto items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
 					onclick={commitUpload}
 					disabled={!lastFile || uploading || committing}
 					aria-busy={committing}
@@ -703,7 +709,7 @@
 				</Button>
 			</div>
 			{#if committing && jobMessage}
-				<div class="mt-2 text-center text-sm font-medium text-slate-600 animate-pulse">
+				<div class="mt-2 animate-pulse text-center text-sm font-medium text-slate-600">
 					{jobMessage}
 				</div>
 			{/if}
