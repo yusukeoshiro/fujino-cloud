@@ -91,7 +91,13 @@
 	const initSpreadsheet = () => {
 		if (!spreadsheetContainer) return;
 		if (spreadsheetInstance) {
-			spreadsheetInstance.destroy();
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				jspreadsheet.destroy(spreadsheetContainer as any, true);
+			} catch (e) {
+				console.warn(e);
+			}
+			spreadsheetInstance = null;
 		}
 
 		// Prepare data: single row array
@@ -160,7 +166,12 @@
 
 	onDestroy(() => {
 		if (spreadsheetInstance) {
-			spreadsheetInstance.destroy();
+			try {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				jspreadsheet.destroy(spreadsheetContainer as any, true);
+			} catch (e) {
+				// ignore
+			}
 		}
 	});
 </script>

@@ -10,7 +10,8 @@
 
 	const menus = [
 		{
-			path: (oid: string) => `/_/orgs/${oid}/gps-conditioning`,
+			path: (oid: string) => `/_/orgs/${oid}/gps-conditioning/dashboard`,
+			basePath: (oid: string) => `/_/orgs/${oid}/gps-conditioning`,
 			value: 'gps-conditioning',
 			labelKey: 'layout.menu.gpsConditioning',
 		},
@@ -21,10 +22,12 @@
 	$effect(() => {
 		const currentPath = page.url.pathname;
 		const found = menus.find(
-			(m) => page.params.oid && currentPath.startsWith(m.path(page.params.oid)),
+			(m) => page.params.oid && currentPath.startsWith(m.basePath(page.params.oid)),
 		);
 		if (found) {
 			activeTab = found.value;
+		} else {
+			activeTab = '';
 		}
 	});
 
