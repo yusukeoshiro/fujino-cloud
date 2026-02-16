@@ -10,6 +10,7 @@
 	import { goto } from '$app/navigation';
 	import { locale, setLocale, supportedLocales, t, type Locale } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import { Button } from '$lib/components/ui/button';
 
 	const loginWithGoogle = () => {
 		const provider = new GoogleAuthProvider();
@@ -95,25 +96,28 @@
 
 			<div class="flex w-full flex-col items-stretch gap-3">
 				<!-- Google -->
-				<button
+				<!-- Google -->
+				<Button
 					type="button"
-					class="w-full rounded-lg bg-blue-500 px-4 py-3 text-center text-white transition hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:outline-none"
+					variant="outline"
+					class="w-full text-center"
 					onclick={loginWithGoogle}
 					disabled={sending}
 				>
 					{$t('login.google')}
-				</button>
+				</Button>
 
 				<!-- Either email login button or email form -->
 				{#if !showEmail}
-					<button
+					<Button
 						type="button"
-						class="w-full rounded-lg bg-gray-700 px-4 py-3 text-center text-white transition hover:bg-gray-800 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:outline-none"
+						variant="secondary"
+						class="w-full text-center"
 						onclick={() => (showEmail = true)}
 						disabled={sending}
 					>
 						{$t('login.emailToggle')}
-					</button>
+					</Button>
 				{:else}
 					<form class="flex w-full flex-col items-stretch gap-3" onsubmit={onEmailSubmit}>
 						<input
@@ -124,19 +128,16 @@
 						/>
 
 						<div class="flex gap-2">
-							<button
+							<Button
 								type="button"
-								class="w-1/2 rounded-lg border border-gray-300 bg-white px-4 py-3 text-center text-gray-700 transition hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 focus:outline-none"
+								variant="outline"
+								class="w-1/2"
 								onclick={cancelEmail}
 								disabled={sending}
 							>
 								{$t('login.cancel')}
-							</button>
-							<button
-								type="submit"
-								class="w-1/2 rounded-lg bg-gray-700 px-4 py-3 text-center text-white transition hover:bg-gray-800 focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:outline-none disabled:opacity-60"
-								disabled={sending}
-							>
+							</Button>
+							<Button type="submit" class="w-1/2" disabled={sending}>
 								{#if sending}
 									<svg
 										class="mr-2 inline h-4 w-4 animate-spin"
@@ -164,7 +165,7 @@
 								{:else}
 									{$t('login.emailSubmit')}
 								{/if}
-							</button>
+							</Button>
 						</div>
 
 						{#if error}

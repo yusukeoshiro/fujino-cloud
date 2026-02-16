@@ -1,21 +1,33 @@
 <script lang="ts">
-	import { tick } from 'svelte';
 	import type { PageData } from './$types';
 	import type {
 		TrainingBudgetConfig,
 		TrainingKeyEvent,
-		WeeklyTrainingBudget,
 	} from '$lib/services/training-budget.service';
-	import { alignToWeekStart, getCalendarYearRange } from '$lib/utils/calendar.util';
-	import { locale, t } from '$lib/i18n';
-	import { get } from 'svelte/store';
+	import { t, locale } from '$lib/i18n';
+	import { toast } from 'svelte-sonner';
+	import {
+		groupEvents,
+		mapBudgets,
+		buildWeeks,
+		isValidNumericInput,
+		randomId,
+		sanitizeInput,
+	} from './budget.utils';
+	import PageHeader from './components/PageHeader.svelte';
+	import BudgetConfig from './components/BudgetConfig.svelte';
+	import BudgetSpreadsheet from './components/BudgetSpreadsheet.svelte';
 
 	let { data }: { data: PageData } = $props();
 
 	const orgId = data.orgId;
 	const todayIso = data.today;
 
-	const config = $state<TrainingBudgetConfig>({ ...data.config });
+	let config = $state<TrainingBudgetConfig>({
+		...data.config,
+		startMonth: Number(data.config.startMonth),
+		weekStartsOn: Number(data.config.weekStartsOn),
+	});
 	let currentYear = $state<number>(data.year);
 	let budgetsMap = $state<Record<string, string>>(mapBudgets(data.budgets));
 	let events = $state<TrainingKeyEvent[]>([...data.events]);
@@ -23,9 +35,7 @@
 	let saving = $state(false);
 	let autoSaving = $state(false);
 	let loadingYear = $state(false);
-	let notification = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
-
-	const translate = (key: string, vars?: Record<string, string | number>) => get(t)(key, vars);
+	let saveQueue: Promise<void> = Promise.resolve();
 
 	const weekDayLabels = $derived([
 		$t('gps.budget.weekday.mon'),
@@ -55,24 +65,9 @@
 			eventsByDate,
 			dateLabelFormat,
 			$locale,
+			todayIso,
 		),
 	);
-
-	let selectedBudgetIndex = $state<number | null>(null);
-	let editingBudgetIndex = $state<number | null>(null);
-	let editingDraft = $state('');
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	let editingOriginalValue = '';
-	let editingSelectMode: 'all' | 'end' = 'all';
-	let budgetEditorEl = $state<HTMLElement | null>(null);
-
-	let addEventFor = $state<string | null>(null);
-	let addEventDraft = $state('');
-	let addEventInputEl = $state<HTMLInputElement | null>(null);
-
-	let saveQueue: Promise<void> = Promise.resolve();
-
-	const numericPattern = /^-?\d*(?:\.\d*)?$/;
 
 	const monthOptions = $derived(
 		Array.from({ length: 12 }).map((_, index) => ({
@@ -88,351 +83,19 @@
 		})),
 	);
 
-	$effect(() => {
-		if (!weeks.length) {
-			selectedBudgetIndex = null;
-			editingBudgetIndex = null;
-			editingDraft = '';
-			return;
-		}
-
-		if (selectedBudgetIndex !== null && selectedBudgetIndex >= weeks.length) {
-			selectedBudgetIndex = null;
-		}
-
-		if (editingBudgetIndex !== null && !weeks[editingBudgetIndex]) {
-			editingBudgetIndex = null;
-			editingDraft = '';
-			editingOriginalValue = '';
-		}
-	});
-
-	function groupEvents(list: TrainingKeyEvent[]) {
-		return list.reduce<Record<string, TrainingKeyEvent[]>>((acc, event) => {
-			if (!acc[event.eventDate]) acc[event.eventDate] = [];
-			acc[event.eventDate].push(event);
-			return acc;
-		}, {});
-	}
-
-	function mapBudgets(list: WeeklyTrainingBudget[] = []) {
-		return Object.fromEntries(list.map((item) => [item.allocatedOn, item.budget.toString()]));
-	}
-
-	function buildWeeks(
-		year: number,
-		weekStartsOn: number,
-		startMonth: number,
-		eventMap: Record<string, TrainingKeyEvent[]>,
-		labelFormat: string,
-		localeValue: string,
-	) {
-		const { start, end } = getCalendarYearRange(year, startMonth, weekStartsOn);
-		const startMonthIndex = start.year * 12 + (start.month - 1);
-		let cursor = alignToWeekStart(start, weekStartsOn);
-		const result: Array<{
-			index: number;
-			startIso: string;
-			days: Array<{
-				iso: string;
-				label: string;
-				isCurrentYear: boolean;
-				isToday: boolean;
-				events: TrainingKeyEvent[];
-				isAltMonth: boolean;
-			}>;
-		}> = [];
-		let index = 0;
-		while (cursor < end) {
-			const startIso = cursor.toISODate()!;
-			const days = Array.from({ length: 7 }, (_, dayIndex) => {
-				const date = cursor.plus({ days: dayIndex });
-				const iso = date.toISODate()!;
-				const monthIndex = date.year * 12 + (date.month - 1);
-				const isAltMonth = (((monthIndex - startMonthIndex) % 2) + 2) % 2 === 1;
-				return {
-					iso,
-					label: date.setLocale(localeValue).toFormat(labelFormat),
-					isCurrentYear: date >= start && date < end,
-					isToday: iso === todayIso,
-					events: eventMap[iso] ?? [],
-					isAltMonth,
-				};
-			});
-			result.push({ index: index + 1, startIso, days });
-			index += 1;
-			cursor = cursor.plus({ weeks: 1 });
-		}
-		return result;
-	}
-
-	const sanitizeInput = (value: string) =>
-		value
-			.replace(/\u00a0/g, ' ')
-			.replace(/\r/g, '')
-			.replace(/\n/g, '')
-			.replace(/\t/g, ' ')
-			.trim();
-
 	function updateBudgetValue(weekStart: string, rawValue: string) {
 		const sanitized = sanitizeInput(rawValue);
-		if (sanitized && !numericPattern.test(sanitized)) {
-			return;
-		}
-		budgetsMap = {
-			...budgetsMap,
-			[weekStart]: sanitized,
-		};
+		if (sanitized && !isValidNumericInput(sanitized)) return;
+		budgetsMap = { ...budgetsMap, [weekStart]: sanitized };
+		void queuePersist();
 	}
 
-	function parseClipboard(text: string) {
-		const rows = text.replace(/\r/g, '').split('\n');
-		if (rows.length && rows[rows.length - 1].trim() === '') {
-			rows.pop();
-		}
-		return rows.flatMap((row) => row.split('\t')).map((value) => sanitizeInput(value));
-	}
-
-	function handleBudgetCellClick(index: number) {
-		if (editingBudgetIndex !== null) {
-			void commitEditing('stay');
-		}
-		selectBudgetCell(index);
-	}
-
-	function selectBudgetCell(index: number | null) {
-		if (index === null || !weeks[index]) {
-			selectedBudgetIndex = null;
-			return;
-		}
-		selectedBudgetIndex = index;
-		void focusBudgetButton(index);
-	}
-
-	async function startEditing(
-		index: number,
-		options: { initialValue?: string; selectMode?: 'all' | 'end' } = {},
-	) {
-		if (!weeks[index]) return;
-		const week = weeks[index];
-		selectedBudgetIndex = index;
-		editingSelectMode = options.selectMode ?? 'all';
-		const initial =
-			options.initialValue !== undefined
-				? sanitizeInput(options.initialValue)
-				: (budgetsMap[week.startIso] ?? '');
-		if (initial && !numericPattern.test(initial)) {
-			return;
-		}
-		editingBudgetIndex = index;
-		editingOriginalValue = budgetsMap[week.startIso] ?? '';
-		editingDraft = initial;
-		await tick();
-		if (budgetEditorEl) {
-			budgetEditorEl.textContent = editingDraft; // eslint-disable-line svelte/no-dom-manipulating
-			budgetEditorEl.focus();
-			if (editingSelectMode === 'all') {
-				selectAll(budgetEditorEl);
-			} else {
-				moveCaretToEnd(budgetEditorEl);
-			}
-		}
-	}
-
-	async function commitEditing(direction: 'stay' | 'down' | 'up' = 'stay') {
-		if (editingBudgetIndex === null) return;
-		const index = editingBudgetIndex;
-		const week = weeks[index];
-		const value = sanitizeInput(editingDraft);
-		if (value && !numericPattern.test(value)) {
-			return;
-		}
-		updateBudgetValue(week.startIso, value);
-		editingBudgetIndex = null;
-		editingDraft = '';
-		editingOriginalValue = '';
-		budgetEditorEl = null;
-		queuePersist();
-		let nextIndex = index;
-		if (direction === 'down') {
-			nextIndex = Math.min(index + 1, weeks.length - 1);
-		} else if (direction === 'up') {
-			nextIndex = Math.max(index - 1, 0);
-		}
-		selectedBudgetIndex = weeks.length ? nextIndex : null;
-		if (selectedBudgetIndex !== null) {
-			await focusBudgetButton(selectedBudgetIndex);
-		}
-	}
-
-	function cancelEditing() {
-		if (editingBudgetIndex === null) return;
-		const index = editingBudgetIndex;
-		editingBudgetIndex = null;
-		editingDraft = '';
-		editingOriginalValue = '';
-		budgetEditorEl = null;
-		selectedBudgetIndex = index;
-		void focusBudgetButton(index);
-	}
-
-	function handleSelectionKeydown(event: KeyboardEvent, index: number) {
-		const { key } = event;
-		const lastIndex = weeks.length - 1;
-		switch (key) {
-			case 'ArrowDown':
-				event.preventDefault();
-				selectBudgetCell(Math.min(index + 1, lastIndex));
-				break;
-			case 'ArrowUp':
-				event.preventDefault();
-				selectBudgetCell(Math.max(index - 1, 0));
-				break;
-			case 'Enter':
-				event.preventDefault();
-				void startEditing(index, { selectMode: 'all' });
-				break;
-			case 'F2':
-				event.preventDefault();
-				void startEditing(index, { selectMode: 'end' });
-				break;
-			case 'Delete':
-			case 'Backspace':
-				event.preventDefault();
-				updateBudgetValue(weeks[index].startIso, '');
-				queuePersist();
-				break;
-			case 'Tab':
-				event.preventDefault();
-				selectBudgetCell(Math.min(index + (event.shiftKey ? -1 : 1), lastIndex));
-				break;
-			default:
-				if (key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey) {
-					const initial = sanitizeInput(key);
-					if (initial === '' && key.trim() !== '') return;
-					if (initial && !numericPattern.test(initial)) return;
-					event.preventDefault();
-					void startEditing(index, { initialValue: initial, selectMode: 'end' });
-				}
-		}
-	}
-
-	function handleSelectionPaste(event: ClipboardEvent, index: number) {
-		const text = event.clipboardData?.getData('text/plain');
-		if (!text) return;
-		const values = parseClipboard(text);
-		if (!values.length) return;
-		event.preventDefault();
-		values.forEach((value, offset) => {
-			const targetWeek = weeks[index + offset];
-			if (!targetWeek) return;
-			updateBudgetValue(targetWeek.startIso, value);
-		});
-		queuePersist();
-		selectBudgetCell(Math.min(index + values.length - 1, weeks.length - 1));
-	}
-
-	function handleEditorInput(event: Event) {
-		if (editingBudgetIndex === null) return;
-		const node = event.currentTarget as HTMLElement;
-		const text = node.textContent ?? '';
-		const sanitized = sanitizeInput(text);
-		if (sanitized && !numericPattern.test(sanitized)) {
-			node.textContent = editingDraft;
-			moveCaretToEnd(node);
-			return;
-		}
-		editingDraft = sanitized;
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	function handleEditorKeydown(event: KeyboardEvent, index: number) {
-		switch (event.key) {
-			case 'Enter':
-				event.preventDefault();
-				void commitEditing(event.shiftKey ? 'up' : 'down');
-				break;
-			case 'Escape':
-				event.preventDefault();
-				cancelEditing();
-				break;
-			case 'ArrowDown':
-				event.preventDefault();
-				void commitEditing('down');
-				break;
-			case 'ArrowUp':
-				event.preventDefault();
-				void commitEditing('up');
-				break;
-			case 'Tab':
-				event.preventDefault();
-				void commitEditing(event.shiftKey ? 'up' : 'down');
-				break;
-		}
-	}
-
-	function handleEditorPaste(event: ClipboardEvent, index: number) {
-		const text = event.clipboardData?.getData('text/plain');
-		if (!text) return;
-		const values = parseClipboard(text);
-		if (!values.length) return;
-		event.preventDefault();
-		values.forEach((value, offset) => {
-			const targetWeek = weeks[index + offset];
-			if (!targetWeek) return;
-			if (offset === 0) {
-				editingDraft = value;
-				if (budgetEditorEl) {
-					// eslint-disable-next-line svelte/no-dom-manipulating
-					budgetEditorEl.textContent = value;
-					moveCaretToEnd(budgetEditorEl);
-				}
-			} else {
-				updateBudgetValue(targetWeek.startIso, value);
-			}
-		});
-		queuePersist();
-		if (values.length > 1) {
-			void commitEditing('stay');
-			selectBudgetCell(Math.min(index + values.length - 1, weeks.length - 1));
-		}
-	}
-
-	function openAddEvent(date: string) {
-		addEventFor = date;
-		addEventDraft = '';
-		void tick().then(() => addEventInputEl?.focus());
-	}
-
-	function cancelAddEvent() {
-		addEventFor = null;
-		addEventDraft = '';
-	}
-
-	function submitAddEvent(date: string) {
-		const name = addEventDraft.trim();
+	function submitAddEvent(date: string, name: string) {
 		if (!name) return;
 		events = [...events, { id: `temp-${randomId()}`, orgId, eventDate: date, eventName: name }];
-		addEventFor = null;
-		addEventDraft = '';
 		queuePersist();
 	}
 
-	function handleAddEventKeydown(event: KeyboardEvent, date: string) {
-		// Do not treat Enter during IME composition as submission
-		if (event.isComposing) return;
-
-		switch (event.key) {
-			case 'Enter':
-				event.preventDefault();
-				submitAddEvent(date);
-				break;
-			case 'Escape':
-				event.preventDefault();
-				cancelAddEvent();
-				break;
-		}
-	}
 	function removeEvent(eventId: string) {
 		const event = events.find((item) => item.id === eventId);
 		if (!event) return;
@@ -443,7 +106,6 @@
 			next.add(event.id);
 			deletedEventIds = next;
 		}
-		addEventFor = null;
 		queuePersist();
 	}
 
@@ -458,21 +120,13 @@
 
 	async function persistChanges({ showToast = false }: { showToast?: boolean } = {}) {
 		if (!weeks.length) return;
-
-		if (showToast) {
-			saving = true;
-			notification = null;
-		} else {
-			autoSaving = true;
-		}
+		if (showToast) saving = true;
+		else autoSaving = true;
 
 		try {
 			const payload = {
 				year: currentYear,
-				config: {
-					startMonth: config.startMonth,
-					weekStartsOn: config.weekStartsOn,
-				},
+				config: { startMonth: config.startMonth, weekStartsOn: config.weekStartsOn },
 				budgets: weeks.map((week) => ({
 					allocatedOn: week.startIso,
 					value: budgetsMap[week.startIso] ?? '',
@@ -494,9 +148,7 @@
 				},
 			);
 
-			if (!response.ok) {
-				throw new Error('Failed to save training budget');
-			}
+			if (!response.ok) throw new Error('Failed to save training budget');
 
 			const data = await response.json();
 			config.startMonth = data.config.startMonth;
@@ -504,356 +156,63 @@
 			budgetsMap = mapBudgets(data.budgets);
 			events = data.events;
 			deletedEventIds = new Set();
-
-			if (showToast) {
-				notification = { text: translate('gps.budget.saved'), tone: 'success' };
-			}
+			toast.success($t('gps.budget.saved'));
 		} catch (error) {
 			console.error(error);
-			notification = { text: translate('gps.budget.saveFailed'), tone: 'error' };
+			toast.error($t('gps.budget.saveFailed'));
 		} finally {
-			if (showToast) {
-				saving = false;
-			} else {
-				autoSaving = false;
-			}
+			if (showToast) saving = false;
+			else autoSaving = false;
 		}
 	}
 
 	async function changeYear(offset: number) {
 		const nextYear = currentYear + offset;
-		await loadYear(nextYear);
-	}
-
-	async function loadYear(year: number) {
 		try {
 			loadingYear = true;
 			const response = await fetch(
-				`/api/gps-conditioning/training-budgets?orgId=${encodeURIComponent(orgId)}&year=${year}`,
-				{
-					method: 'GET',
-				},
+				`/api/gps-conditioning/training-budgets?orgId=${encodeURIComponent(orgId)}&year=${nextYear}`,
 			);
-			if (!response.ok) {
-				throw new Error('Failed to load year data');
-			}
+			if (!response.ok) throw new Error('Failed to load year data');
 			const payload = await response.json();
-			currentYear = year;
+			currentYear = nextYear;
 			config.startMonth = payload.config.startMonth;
 			config.weekStartsOn = payload.config.weekStartsOn;
 			budgetsMap = mapBudgets(payload.budgets);
 			events = payload.events;
 			deletedEventIds = new Set();
-			editingBudgetIndex = null;
-			editingDraft = '';
-			editingOriginalValue = '';
-			addEventFor = null;
-			// eslint-disable-next-line @typescript-eslint/no-unused-vars
-			const { start } = getCalendarYearRange(year, config.startMonth, config.weekStartsOn);
-			notification = null;
-			await tick();
-			selectedBudgetIndex = null;
 		} catch (error) {
 			console.error(error);
-			notification = { text: translate('gps.budget.fetchFailed'), tone: 'error' };
+			toast.error($t('gps.budget.fetchFailed'));
 		} finally {
 			loadingYear = false;
 		}
 	}
-
-	function focusBudgetButton(index: number | null) {
-		if (index === null) return Promise.resolve();
-		return tick().then(() => {
-			const button = document.querySelector<HTMLElement>(`[data-budget-index="${index}"]`);
-			button?.focus();
-		});
-	}
-
-	function selectAll(node: HTMLElement) {
-		const selection = window.getSelection();
-		if (!selection) return;
-		const range = document.createRange();
-		range.selectNodeContents(node);
-		selection.removeAllRanges();
-		selection.addRange(range);
-	}
-
-	function moveCaretToEnd(node: HTMLElement) {
-		const selection = window.getSelection();
-		if (!selection) return;
-		const range = document.createRange();
-		range.selectNodeContents(node);
-		range.collapse(false);
-		selection.removeAllRanges();
-		selection.addRange(range);
-	}
-
-	function randomId() {
-		if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-			return crypto.randomUUID();
-		}
-		return Math.random().toString(16).slice(2);
-	}
 </script>
 
 <section class="mx-auto flex max-w-screen-2xl flex-col gap-4 px-4 py-6 text-slate-900">
-	<!-- Header -->
-	<header class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-		<div>
-			<h1 class="text-xl font-semibold">{$t('gps.budget.title')}</h1>
-			<p class="text-slate-600">{$t('gps.budget.description')}</p>
-		</div>
-		<div class="flex items-center gap-2">
-			<button
-				type="button"
-				class="rounded-lg border border-slate-300 px-3 py-2 text-slate-800"
-				onclick={() => void changeYear(-1)}
-				disabled={loadingYear}
-			>
-				{$t('gps.budget.prevYear')}
-			</button>
+	<PageHeader
+		{currentYear}
+		{loadingYear}
+		{saving}
+		{autoSaving}
+		onChangeYear={changeYear}
+		onSave={() => void queuePersist({ showToast: true })}
+	/>
 
-			<span class="font-semibold">{$t('gps.budget.fiscalYear', { year: currentYear })}</span>
+	<BudgetConfig
+		bind:config
+		{monthOptions}
+		{weekStartOptions}
+		onChange={() => void queuePersist()}
+	/>
 
-			<button
-				type="button"
-				class="rounded-lg border border-slate-300 px-3 py-2 text-slate-800"
-				onclick={() => void changeYear(1)}
-				disabled={loadingYear}
-			>
-				{$t('gps.budget.nextYear')}
-			</button>
-
-			<button
-				type="button"
-				class="rounded-lg bg-blue-600 px-3 py-2 text-white disabled:bg-slate-400"
-				onclick={() => void queuePersist({ showToast: true })}
-				disabled={saving || autoSaving}
-			>
-				{saving
-					? $t('gps.budget.saving')
-					: autoSaving
-						? $t('gps.budget.autoSaving')
-						: $t('gps.budget.save')}
-			</button>
-		</div>
-	</header>
-
-	<!-- Config -->
-	<div class="flex flex-col gap-3 sm:flex-row">
-		<div>
-			<label for="start-month" class="mb-1 block text-sm text-slate-700">
-				{$t('gps.budget.startMonth')}
-			</label>
-			<select
-				id="start-month"
-				bind:value={config.startMonth}
-				onchange={() => queuePersist()}
-				class="rounded-lg border border-slate-300 px-2 py-1"
-			>
-				{#each monthOptions as option (option.value)}
-					<option value={option.value}>{option.label}</option>
-				{/each}
-			</select>
-		</div>
-
-		<div>
-			<label for="week-start" class="mb-1 block text-sm text-slate-700">
-				{$t('gps.budget.weekStart')}
-			</label>
-			<select
-				id="week-start"
-				bind:value={config.weekStartsOn}
-				onchange={() => queuePersist()}
-				class="rounded-lg border border-slate-300 px-2 py-1"
-			>
-				{#each weekStartOptions as option (option.value)}
-					<option value={option.value}>{option.label}</option>
-				{/each}
-			</select>
-		</div>
-	</div>
-
-	<!-- Notification -->
-	{#if notification}
-		<div
-			class="rounded-lg border px-3 py-2 font-medium"
-			class:bg-emerald-50={notification.tone === 'success'}
-			class:text-emerald-700={notification.tone === 'success'}
-			class:border-emerald-300={notification.tone === 'success'}
-			class:bg-red-50={notification.tone === 'error'}
-			class:text-red-700={notification.tone === 'error'}
-			class:border-red-300={notification.tone === 'error'}
-		>
-			{notification.text}
-		</div>
-	{/if}
-
-	<!-- Calendar -->
-	<div class="overflow-hidden rounded-xl border border-slate-300">
-		<div class="max-h-[70vh] overflow-auto">
-			<table class="w-full min-w-[1100px] table-fixed border-collapse text-sm">
-				<colgroup>
-					<col class="w-16" />
-					<col span="7" class="w-[70px]" />
-					<col class="w-20" />
-				</colgroup>
-
-				<thead class="sticky top-0 z-20 bg-white shadow-sm">
-					<tr>
-						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
-							{$t('gps.budget.weekNumber')}
-						</th>
-						{#each rotatedWeekdayLabels as label (label)}
-							<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">{label}</th>
-						{/each}
-						<th class="border-b border-slate-200 px-2 py-2 text-center font-semibold">
-							<nobr>{$t('gps.budget.budget')} </nobr><br />
-							<small><nobr>{$t('gps.budget.budgetHint')}</nobr> </small>
-						</th>
-					</tr>
-				</thead>
-
-				<tbody>
-					{#each weeks as week, index (week.index)}
-						<tr class="border-b border-slate-200 last:border-0">
-							<th
-								class="sticky left-0 border-r border-slate-200 bg-slate-50 px-2 py-2 whitespace-nowrap text-slate-800"
-							>
-								W{week.index}
-							</th>
-
-							{#each week.days as day (day.iso)}
-								<td
-									class={`relative h-[100px] p-0 align-top transition-colors hover:bg-slate-200
-									`}
-								>
-									{#if day.isToday}
-										<div class=" absolute h-full w-full bg-indigo-200"></div>
-									{/if}
-
-									<div
-										class=" group absolute flex h-full w-full flex-col gap-1 p-2"
-										class:bg-white={day.isCurrentYear && !day.isAltMonth && !day.isToday}
-										class:bg-slate-50={day.isCurrentYear && day.isAltMonth && !day.isToday}
-										class:bg-slate-100={!day.isCurrentYear && !day.isToday}
-										class:text-slate-400={!day.isCurrentYear}
-									>
-										<div class="flex items-center justify-between">
-											<span class="font-semibold">{day.label}</span>
-											<button
-												type="button"
-												class="cursor-pointer rounded-full bg-gray-800 px-2 py-0.5 text-xs text-white opacity-0 transition group-hover:opacity-100"
-												onclick={(event) => {
-													event.stopPropagation();
-													openAddEvent(day.iso);
-												}}
-											>
-												＋
-											</button>
-										</div>
-
-										{#if addEventFor === day.iso}
-											<div
-												class="absolute top-10 right-2 z-50 flex flex-col gap-2 rounded-md border border-slate-300 bg-white p-2 shadow-md"
-											>
-												<input
-													type="text"
-													placeholder={$t('gps.budget.eventPlaceholder')}
-													bind:value={addEventDraft}
-													bind:this={addEventInputEl}
-													class="rounded border border-slate-300 px-2 py-1"
-													onkeydown={(event) =>
-														handleAddEventKeydown(event as KeyboardEvent, day.iso)}
-												/>
-												<div class="flex justify-end gap-1">
-													<button
-														class="rounded bg-blue-600 px-2 py-1 text-white"
-														onclick={() => submitAddEvent(day.iso)}
-													>
-														{$t('gps.budget.add')}
-													</button>
-													<button
-														class="rounded border border-slate-300 px-2 py-1"
-														onclick={cancelAddEvent}
-													>
-														{$t('gps.budget.cancel')}
-													</button>
-												</div>
-											</div>
-										{/if}
-
-										<ul class="flex flex-1 flex-col gap-1 overflow-y-auto">
-											{#each day.events.slice(0, 3) as event (event.id)}
-												<li class="group flex items-center gap-1">
-													<div
-														class="flex-1 rounded-full bg-slate-100 px-2 py-1 text-left text-xs"
-														title={event.eventName}
-													>
-														{event.eventName}
-													</div>
-
-													<button
-														class="cursor-pointer text-xs text-red-600 opacity-0 transition-opacity group-hover:opacity-100"
-														onclick={(e) => {
-															e.stopPropagation();
-															removeEvent(event.id);
-														}}
-													>
-														✕
-													</button>
-												</li>
-											{/each}
-											{#if day.events.length > 3}
-												<li
-													class="rounded-full bg-slate-100 px-2 py-0.5 text-center text-xs text-slate-700"
-												>
-													+{day.events.length - 3}
-												</li>
-											{/if}
-										</ul>
-									</div>
-								</td>
-							{/each}
-
-							<td class="relative w-full p-0 align-top">
-								{#if editingBudgetIndex === index}
-									<div class="absolute inset-0">
-										<div
-											contenteditable="true"
-											role="textbox"
-											tabindex="0"
-											spellcheck={false}
-											class="absolute inset-0 flex items-center justify-end bg-white px-6 py-2 text-right ring-2 ring-indigo-200 outline-none"
-											style="min-height:100%;"
-											data-budget-index={index}
-											bind:this={budgetEditorEl}
-											oninput={(ev) => handleEditorInput(ev)}
-											onkeydown={(ev) => handleEditorKeydown(ev as KeyboardEvent, index)}
-											onpaste={(ev) => handleEditorPaste(ev as ClipboardEvent, index)}
-											onblur={() => void commitEditing('stay')}
-										></div>
-									</div>
-								{:else}
-									<button
-										type="button"
-										class="absolute inset-0 flex w-full items-center justify-end px-6 py-2 text-right hover:bg-slate-100 focus-visible:outline focus-visible:outline-blue-600"
-										class:bg-blue-50={selectedBudgetIndex === index}
-										data-budget-index={index}
-										tabindex={selectedBudgetIndex === index ? 0 : -1}
-										onclick={() => handleBudgetCellClick(index)}
-										ondblclick={() => void startEditing(index, { selectMode: 'all' })}
-										onkeydown={(ev) => handleSelectionKeydown(ev as KeyboardEvent, index)}
-										onpaste={(ev) => handleSelectionPaste(ev as ClipboardEvent, index)}
-									>
-										{budgetsMap[week.startIso] ?? ''}
-									</button>
-								{/if}
-							</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		</div>
-	</div>
+	<BudgetSpreadsheet
+		{weeks}
+		{rotatedWeekdayLabels}
+		bind:budgetsMap
+		onUpdateBudget={updateBudgetValue}
+		onAddEvent={submitAddEvent}
+		onRemoveEvent={removeEvent}
+	/>
 </section>

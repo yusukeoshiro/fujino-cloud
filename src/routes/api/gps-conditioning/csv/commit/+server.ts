@@ -45,25 +45,25 @@ export const POST: RequestHandler = async (event) => {
 		const response =
 			resolvedVendorFormat === 'KNOWS_V1'
 				? buildKnowsUnmatchedPersonsResponse(
-					unmatched.map((item) =>
-						'rows' in item
-							? { rows: item.rows, playerName: item.playerName, userId: item.userId }
-							: { rows: [item.row], playerName: item.playerName },
-					),
-					headers,
-				)
+						unmatched.map((item) =>
+							'rows' in item
+								? { rows: item.rows, playerName: item.playerName, userId: item.userId }
+								: { rows: [item.row], playerName: item.playerName },
+						),
+						headers,
+					)
 				: buildUnmatchedPersonsResponse(
-					unmatched
-						.filter(
-							(item): item is { row: number; playerName: string; jerseyNo?: string } =>
-								'row' in item,
-						)
-						.map((item) => ({
-							row: item.row,
-							playerName: item.playerName,
-							jerseyNo: 'jerseyNo' in item ? String(item.jerseyNo ?? '') : '',
-						})),
-				);
+						unmatched
+							.filter(
+								(item): item is { row: number; playerName: string; jerseyNo?: string } =>
+									'row' in item,
+							)
+							.map((item) => ({
+								row: item.row,
+								playerName: item.playerName,
+								jerseyNo: 'jerseyNo' in item ? String(item.jerseyNo ?? '') : '',
+							})),
+					);
 		if (response) return response;
 	}
 
@@ -201,13 +201,13 @@ export const POST: RequestHandler = async (event) => {
 								...(isSelected
 									? {}
 									: {
-										metadata: [
-											{
-												key: 'x-fujino-cloud-skip',
-												value: 'true',
-											},
-										],
-									}),
+											metadata: [
+												{
+													key: 'x-fujino-cloud-skip',
+													value: 'true',
+												},
+											],
+										}),
 							},
 						},
 						{ event },
@@ -232,8 +232,7 @@ export const POST: RequestHandler = async (event) => {
 					await pushError(errorMsg);
 				}
 				if (result.data?.createPerformanceAssessmentParticipant?.orgUniqueToken) {
-					record.orgUniqueToken =
-						result.data.createPerformanceAssessmentParticipant.orgUniqueToken;
+					record.orgUniqueToken = result.data.createPerformanceAssessmentParticipant.orgUniqueToken;
 				}
 			}
 

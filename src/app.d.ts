@@ -23,4 +23,13 @@ declare global {
 	}
 }
 
+
+declare module 'jspreadsheet-ce' {
+	export interface SpreadsheetInstance {
+		el: HTMLElement;
+		destroy: () => void;
+		setValueFromCoords: (x: number, y: number, value: string | number, force?: boolean) => void;
+	}
+}
+
 export {};

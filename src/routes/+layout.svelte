@@ -7,6 +7,8 @@
 	import { currentUser } from '$lib/current-user';
 	import { initLocale } from '$lib/i18n';
 
+	import { Toaster } from 'svelte-sonner';
+
 	let { children } = $props();
 
 	onMount(() => {
@@ -22,4 +24,5 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<Toaster />
 {@render children?.()}

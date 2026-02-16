@@ -3,6 +3,7 @@
 	import type { PageData } from './$types';
 	import { locale, t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import { Button } from '$lib/components/ui/button';
 
 	let { data }: { data: PageData } = $props();
 
@@ -156,10 +157,10 @@
 
 	<div class="space-y-6 px-6 py-6">
 		<div class="flex flex-wrap items-center gap-3">
-			<button
+			<Button
 				type="button"
 				onclick={renewContentsProviderToken}
-				class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-indigo-300"
+				class="bg-indigo-600 text-white hover:bg-indigo-700"
 				disabled={isIssuingContentsProvider}
 			>
 				{isIssuingContentsProvider
@@ -167,18 +168,19 @@
 					: contentsProviderApiToken.hasToken
 						? $t('settings.contentsToken.reissue')
 						: $t('settings.contentsToken.issue')}
-			</button>
+			</Button>
 			{#if contentsProviderApiToken.hasToken}
-				<button
+				<Button
 					type="button"
+					variant="outline"
 					onclick={deleteContentsProviderToken}
-					class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-50 focus:ring-2 focus:ring-rose-200 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:text-rose-300"
+					class="border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
 					disabled={isDeletingContentsProvider}
 				>
 					{isDeletingContentsProvider
 						? $t('settings.contentsToken.deleting')
 						: $t('settings.contentsToken.delete')}
-				</button>
+				</Button>
 			{/if}
 		</div>
 

@@ -5,6 +5,9 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	plugins: [houdini(), tailwindcss(), sveltekit()],
+	ssr: {
+		noExternal: ['svelte-sonner'],
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

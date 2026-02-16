@@ -3,6 +3,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { t } from '$lib/i18n';
+	import { Button } from '$lib/components/ui/button';
 
 	let { data }: { data: PageData } = $props();
 
@@ -28,42 +29,38 @@
 	<div class="mx-auto max-w-screen-2xl">
 		<!-- Range buttons -->
 		<div class="mb-4 flex flex-wrap items-center justify-end gap-2">
-			<button
-				type="button"
-				class="rounded-md border px-3 py-1.5 text-sm transition
-							 hover:bg-gray-50 active:scale-[0.99]
-							 {isActive(30) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
+			<Button
+				variant={isActive(30) ? 'default' : 'outline'}
+				size="sm"
+				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(30)}
 			>
 				{$t('gps.range.pastDays', { days: 30 })}
-			</button>
-			<button
-				type="button"
-				class="rounded-md border px-3 py-1.5 text-sm transition
-							 hover:bg-gray-50 active:scale-[0.99]
-							 {isActive(90) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
+			</Button>
+			<Button
+				variant={isActive(90) ? 'default' : 'outline'}
+				size="sm"
+				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(90)}
 			>
 				{$t('gps.range.pastDays', { days: 90 })}
-			</button>
-			<button
-				type="button"
-				class="rounded-md border px-3 py-1.5 text-sm transition
-							 hover:bg-gray-50 active:scale-[0.99]
-							 {isActive(180) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
+			</Button>
+			<Button
+				variant={isActive(180) ? 'default' : 'outline'}
+				size="sm"
+				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(180)}
 			>
 				{$t('gps.range.pastDays', { days: 180 })}
-			</button>
-			<button
-				type="button"
-				class="rounded-md border px-3 py-1.5 text-sm transition
-							 hover:bg-gray-50 active:scale-[0.99]
-							 {isActive(365) ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}"
+			</Button>
+			<Button
+				variant={isActive(365) ? 'default' : 'outline'}
+				size="sm"
+				class="transition active:scale-[0.99]"
 				onclick={() => applyRange(365)}
 			>
 				{$t('gps.range.pastDays', { days: 365 })}
-			</button>
+			</Button>
 		</div>
 
 		{#if iframUrl}

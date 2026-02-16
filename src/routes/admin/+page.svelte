@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { PageData } from './$types';
+	import { Button } from '$lib/components/ui/button';
 
 	export let data: PageData;
 	let { orgs } = data;
@@ -30,9 +31,7 @@
 					class="flex-grow rounded border p-2"
 					required
 				/>
-				<button type="submit" class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
-					Create
-				</button>
+				<Button type="submit" variant="default">Create</Button>
 			</div>
 			<p class="text-xs text-gray-500">
 				Note: The Organization ID must match the ID issued by the Mobili platform.
@@ -62,12 +61,7 @@
 								value={org.name}
 								class="flex-grow rounded border p-2 font-semibold"
 							/>
-							<button
-								type="submit"
-								class="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
-							>
-								Update Name
-							</button>
+							<Button type="submit" variant="secondary" size="sm">Update Name</Button>
 						</form>
 
 						<form
@@ -83,12 +77,7 @@
 							}}
 						>
 							<input type="hidden" name="id" value={org.id} />
-							<button
-								type="submit"
-								class="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
-							>
-								Delete
-							</button>
+							<Button type="submit" variant="destructive" size="sm">Delete</Button>
 						</form>
 					</div>
 
@@ -103,12 +92,7 @@
 								class="flex-grow rounded border p-2"
 								required
 							/>
-							<button
-								type="submit"
-								class="rounded bg-purple-500 px-3 py-1 text-sm text-white hover:bg-purple-600"
-							>
-								Add User
-							</button>
+							<Button type="submit" variant="default" size="sm">Add User</Button>
 						</form>
 					</div>
 				</div>

@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import type { PageData, ActionData } from './$types';
 	import { locale, t } from '$lib/i18n';
+	import { Button } from '$lib/components/ui/button';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -57,15 +58,11 @@
 						</p>
 					{/if}
 				</div>
-				<button
-					type="submit"
-					disabled={isInviting}
-					class="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
-				>
+				<Button type="submit" disabled={isInviting} class="w-full sm:w-auto">
 					<nobr>
 						{isInviting ? $t('settings.members.inviting') : $t('settings.members.invite')}
 					</nobr>
-				</button>
+				</Button>
 			</form>
 		</div>
 
@@ -98,10 +95,12 @@
 								{#if member.userId !== data.user?.uid}
 									<form method="POST" action="?/delete" use:enhance>
 										<input type="hidden" name="memberId" value={member.id} />
-										<button
+										<Button
+											variant="link"
 											type="submit"
-											class="text-xs font-semibold text-red-600 hover:text-red-900"
-											>{$t('settings.members.delete')}</button
+											size="sm"
+											class="h-auto p-0 text-xs font-semibold text-red-600 hover:text-red-900"
+											>{$t('settings.members.delete')}</Button
 										>
 									</form>
 								{:else}

@@ -4,6 +4,7 @@
 	import { CSV_VENDOR_FORMATS } from '$lib/csv-processors/vendor-formats';
 	import { t } from '$lib/i18n';
 	import { get } from 'svelte/store';
+	import { Button } from '$lib/components/ui/button';
 
 	let { data }: { data: PageData } = $props();
 
@@ -79,13 +80,13 @@
 			</div>
 
 			<div class="flex flex-wrap items-center gap-3">
-				<button
+				<Button
 					type="submit"
-					class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:bg-indigo-300"
+					class="w-full bg-indigo-600 text-white hover:bg-indigo-700 sm:w-auto"
 					disabled={isSaving}
 				>
 					{isSaving ? $t('settings.gps.saving') : $t('settings.gps.save')}
-				</button>
+				</Button>
 			</div>
 		</form>
 	</div>
