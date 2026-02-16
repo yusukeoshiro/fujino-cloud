@@ -290,6 +290,68 @@
 		}
 	}
 
+	// --- Async Job Handling ---
+	import { doc, onSnapshot } from 'firebase/firestore';
+	import { db } from '$lib/firebase';
+	import { onDestroy } from 'svelte';
+
+	let jobId = $state<string | null>(null);
+	let jobStatus = $state<'PROCESSING' | 'COMPLETED' | 'ERROR' | null>(null);
+	let jobStage = $state<'PARTICIPANTS' | 'METRICS' | 'EXPORTING' | null>(null);
+	let jobProgress = $state<{ processed: number; total: number }>({ processed: 0, total: 0 });
+	let unsubscribeJob: (() => void) | null = null;
+
+	onDestroy(() => {
+		if (unsubscribeJob) unsubscribeJob();
+	});
+
+	let jobMessage = $state<string>('');
+
+	function listenToJob(id: string) {
+		if (unsubscribeJob) unsubscribeJob();
+		const ref = doc(db, 'gps-upload-status', id);
+		
+		jobMessage = translate('gps.upload.committing');
+
+		unsubscribeJob = onSnapshot(ref, (snap) => {
+			if (!snap.exists()) return;
+			const data = snap.data();
+			jobStatus = data.status;
+			jobStage = data.stage;
+			if (data.totalRows) {
+				jobProgress = { processed: data.processedRows ?? 0, total: data.totalRows };
+			}
+
+			// Update message based on stage
+			if (data.status === 'PROCESSING') {
+				if (jobStage === 'PARTICIPANTS') jobMessage = `Importing Members...`;
+				else if (jobStage === 'METRICS') jobMessage = `Importing Metrics (${Math.floor((jobProgress.processed / jobProgress.total) * 100)}%)...`;
+				else if (jobStage === 'EXPORTING') jobMessage = `Finalizing...`;
+				else jobMessage = translate('gps.upload.committing');
+			} else if (data.status === 'COMPLETED') {
+				committing = false;
+				if (unsubscribeJob) unsubscribeJob();
+				
+				if (data.errorDetails?.length > 0) {
+					jobMessage = translate('gps.upload.successWithErrors');
+					setError(jobMessage, data.errorDetails);
+				} else {
+					jobMessage = translate('gps.upload.success');
+					onCommitSuccess();
+				}
+			} else if (data.status === 'ERROR') {
+				committing = false;
+				if (unsubscribeJob) unsubscribeJob();
+				jobMessage = data.errorMessage || translate('gps.upload.commitFailed');
+				// Collect all details
+				const details = data.errorDetails || [];
+				setError(jobMessage, details);
+				jobId = null;
+			}
+		});
+	}
+
+
 	async function commitUpload() {
 		if (!lastFile) {
 			setError(translate('gps.upload.selectFileFirst'));
@@ -325,8 +387,13 @@
 				},
 			);
 			if (!res.ok) throw new Error(translate('gps.upload.commitFailed'));
-			onCommitSuccess(); // ✅ your hook
+			
+			const { jobId: id } = await res.json();
+			jobId = id;
+			listenToJob(id);
+			
 		} catch (e: unknown) {
+			committing = false;
 			setError(
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				typeof (e as any)?.message === 'string'
@@ -334,8 +401,6 @@
 						(e as any).message
 					: translate('gps.upload.commitFailed'),
 			);
-		} finally {
-			committing = false; // ✅ stop spinner
 		}
 	}
 
@@ -609,7 +674,6 @@
 					aria-busy={committing}
 				>
 					{#if committing}
-						<!-- inline spinner -->
 						<svg class="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
 							<circle
 								cx="12"
@@ -634,6 +698,11 @@
 					{/if}
 				</button>
 			</div>
+			{#if committing && jobMessage}
+				<div class="mt-2 text-center text-sm font-medium text-slate-600 animate-pulse">
+					{jobMessage}
+				</div>
+			{/if}
 		</div>
 	{/if}
 </section>
