@@ -12,6 +12,7 @@
 	import jspreadsheet from 'jspreadsheet-ce';
 	import 'jspreadsheet-ce/dist/jspreadsheet.css';
 	import DayCell from './day-cell.svelte';
+	import { toast } from 'svelte-sonner';
 
 	let { data }: { data: PageData } = $props();
 
@@ -30,7 +31,6 @@
 	let saving = $state(false);
 	let autoSaving = $state(false);
 	let loadingYear = $state(false);
-	let notification = $state<{ text: string; tone: 'success' | 'error' } | null>(null);
 
 	let spreadsheetContainer: HTMLDivElement;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,6 +111,15 @@
 	function initSpreadsheet() {
 		if (!spreadsheetContainer) return;
 
+		// Save current scroll position
+		const currentScrollY = window.scrollY;
+
+		// Prevent layout shift/collapse by setting min-height
+		const rect = spreadsheetContainer.getBoundingClientRect();
+		if (rect.height > 0) {
+			spreadsheetContainer.style.minHeight = `${rect.height}px`;
+		}
+
 		// Cleanup previous
 		if (spreadsheetInstance) {
 			try {
@@ -152,6 +161,7 @@
 					const day = week.days[dayIndex];
 					if (!day) return;
 
+					// Mount DayCell
 					const comp = mount(DayCell, {
 						target: cell,
 						props: {
@@ -216,6 +226,20 @@
 		}
 
 		resizeTable();
+
+		// Restore scroll position and clean up min-height
+		if (currentScrollY > 0) {
+			window.scrollTo(0, currentScrollY);
+		}
+
+		setTimeout(() => {
+			if (currentScrollY > 0) {
+				window.scrollTo(0, currentScrollY);
+			}
+			if (spreadsheetContainer) {
+				spreadsheetContainer.style.minHeight = '';
+			}
+		}, 0);
 	}
 
 	let resizeObserver: ResizeObserver;
@@ -379,7 +403,6 @@
 
 		if (showToast) {
 			saving = true;
-			notification = null;
 		} else {
 			autoSaving = true;
 		}
@@ -423,12 +446,11 @@
 			events = data.events;
 			deletedEventIds = new Set();
 
-			if (showToast) {
-				notification = { text: translate('gps.budget.saved'), tone: 'success' };
-			}
+			// Show success message even for autosave as requested
+			toast.success(translate('gps.budget.saved'));
 		} catch (error) {
 			console.error(error);
-			notification = { text: translate('gps.budget.saveFailed'), tone: 'error' };
+			toast.error(translate('gps.budget.saveFailed'));
 		} finally {
 			if (showToast) {
 				saving = false;
@@ -465,13 +487,12 @@
 
 			deletedEventIds = new Set();
 
-			notification = null;
 			await tick();
 			// Spreadsheet update handled by effect on `weeks` or manual init?
 			// `weeks` is derived from `currentYear`, so it will change.
 		} catch (error) {
 			console.error(error);
-			notification = { text: translate('gps.budget.fetchFailed'), tone: 'error' };
+			toast.error(translate('gps.budget.fetchFailed'));
 		} finally {
 			loadingYear = false;
 		}
@@ -562,21 +583,6 @@
 			</select>
 		</div>
 	</div>
-
-	<!-- Notification -->
-	{#if notification}
-		<div
-			class="rounded-lg border px-3 py-2 font-medium"
-			class:bg-emerald-50={notification.tone === 'success'}
-			class:text-emerald-700={notification.tone === 'success'}
-			class:border-emerald-300={notification.tone === 'success'}
-			class:bg-red-50={notification.tone === 'error'}
-			class:text-red-700={notification.tone === 'error'}
-			class:border-red-300={notification.tone === 'error'}
-		>
-			{notification.text}
-		</div>
-	{/if}
 
 	<!-- Spreadsheet -->
 	<div class="overflow-hidden rounded-xl border border-slate-300 p-2">
