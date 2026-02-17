@@ -19,6 +19,8 @@ tags:
     description: External score calculation
   - name: device-input-configs
     description: Device input configuration (gate/session layouts) surfaced by the provider
+  - name: canvas-auth
+    description: Canvas SSO authentication handshake
 paths:
   /capabilities:
     get:
@@ -159,6 +161,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeviceInputConfig'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /auth/canvas:
+    post:
+      tags: [canvas-auth]
+      summary: Canvas SSO authentication handshake
+      description: >
+        Accepts a signed JWT (`signed_request`) from the Manager App.
+
+        The Provider (Guest App) MUST:
+        1. Fetch the public keys from the Issuer's JWKS endpoint (e.g. `https://api.mobili-platform.com/.well-known/jwks.json`).
+        2. Verify the JWT signature (RS256).
+        3. Validate claims (`iss`, `aud`, `exp`, `org_id`).
+        4. Establish a user session (e.g. Set-Cookie or return HTML for client-side auth).
+        5. Redirect the user to the `requested_path`.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                signed_request:
+                  type: string
+                  description: JWT signed by the Backend System containing user context.
+                requested_path:
+                  type: string
+                  description: The target path within the Guest App to redirect to after authentication.
+              required:
+                - signed_request
+                - requested_path
+      responses:
+        '303':
+          description: Session established; redirecting to requested path with Set-Cookie header.
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+                description: The full URL to redirect to (including query params).
+            Set-Cookie:
+              schema:
+                type: string
+                description: 'Session cookie (Secure; SameSite=None)'
+
+        '400':
+          description: Invalid request or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
+        '401':
+          description: Signature verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
         default:
           $ref: '#/components/responses/ErrorResponse'
 components:

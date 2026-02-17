@@ -6,6 +6,17 @@ import { deviceTokenService } from './lib/services/device-token.service';
 import { deviceTokenAccessor } from '$lib/accessors/device-token.accessor';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Workaround for SvelteKit strict origin check on /api/auth/canvas
+	// Canvas (LTI) or external tools might post without Origin header
+	if (event.url.pathname === '/api/auth/canvas' && event.request.method === 'POST') {
+		if (!event.request.headers.get('origin')) {
+			// Clone the request to avoid consuming the body
+			const request = event.request.clone();
+			request.headers.set('origin', event.url.origin);
+			Object.defineProperty(event, 'request', { value: request });
+		}
+	}
+
 	const cookie = event.cookies.get('fb.session');
 
 	if (cookie) {

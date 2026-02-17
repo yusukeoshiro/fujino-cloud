@@ -812,6 +812,7 @@ type Mutation {
   scoreMetric(data: InputDetail!): Metric!
   sendAllReportsPerformanceAssessment(data: InputSendAllReports!): PerformanceAssessment!
   sendResultEmailPerformanceAssessmentParticipant(data: InputDetail!): PerformanceAssessmentParticipant!
+  signCanvasRequest(orgId: String!): SignedCanvasRequestDto!
   syncContentSubscription(data: InputDetail!): ContentSubscription!
   syncSpreadsheetPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   updateContentProvider(data: ContentProviderUpdate!): ContentProvider!
@@ -1765,6 +1766,10 @@ type ScoreProviderListPage {
 input ScoreProviderUpdate {
   formula: String
   id: ID!
+}
+
+type SignedCanvasRequestDto {
+  signedRequest: String!
 }
 
 input SortOption {
