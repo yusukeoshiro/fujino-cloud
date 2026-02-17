@@ -344,6 +344,84 @@ type CustomClaims {
   systemRoles: [SystemRole!]
 }
 
+type CustomTab {
+  canvasAuthenticationUrl: String
+  canvasTargetUrl: String
+  createdAt: DateTime!
+  externalUrl: String
+  icon: String!
+  id: ID!
+  internalRoute: String
+  name: String!
+  nameI18n: [LocalizedString!]
+  order: Float!
+  orgId: String!
+  type: CustomTabType!
+  updatedAt: DateTime!
+}
+
+input CustomTabCreate {
+  canvasAuthenticationUrl: String
+  canvasTargetUrl: String
+  externalUrl: String
+  icon: String!
+  internalRoute: String
+  name: String!
+  nameI18n: [LocalizedStringInput!]
+  order: Float!
+  orgId: String
+  type: CustomTabType!
+}
+
+input CustomTabDelete {
+  id: ID!
+  orgId: ID!
+}
+
+input CustomTabGet {
+  id: ID!
+  orgId: ID!
+}
+
+input CustomTabList {
+  conditions: CustomTabListConditions
+  ids: [String!]
+  pageOption: PageOption
+}
+
+input CustomTabListConditions {
+  orgId: ID
+  type: CustomTabType
+}
+
+type CustomTabListPage {
+  count: Float!
+  hasNext: Boolean!
+  hasPrev: Boolean!
+  ids: [String!]!
+  nextToken: String
+  prevToken: String
+  records: [CustomTab!]!
+}
+
+enum CustomTabType {
+  CANVAS
+  EXTERNAL_LINK
+  INTERNAL_LINK
+}
+
+input CustomTabUpdate {
+  canvasAuthenticationUrl: String
+  canvasTargetUrl: String
+  externalUrl: String
+  icon: String
+  id: ID!
+  internalRoute: String
+  name: String
+  nameI18n: LocalizedStringModifier
+  order: Float
+}
+
 input DatasetOrgInput {
   orgId: String!
 }
@@ -746,6 +824,7 @@ type Mutation {
   consolidateMetricsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   createContentProvider(data: ContentProviderCreate!): ContentProvider!
   createContentSubscription(data: ContentSubscriptionCreate!): ContentSubscription!
+  createCustomTab(data: CustomTabCreate!): CustomTab!
   createDatasetOrg(data: DatasetOrgInput!): Org!
   createDeviceInputConfig(data: DeviceInputConfigCreate!): DeviceInputConfig!
   createDeviceToken(data: DeviceTokenCreate!): DeviceToken!
@@ -769,6 +848,7 @@ type Mutation {
   createUser(data: UserCreate!): User!
   deleteContentProvider(data: InputDelete!): ContentProvider!
   deleteContentSubscription(data: InputDelete!): ContentSubscription!
+  deleteCustomTab(data: CustomTabDelete!): CustomTab!
   deleteDatasetOrg(data: DatasetOrgInput!): Org!
   deleteDeviceInputConfig(data: DeviceInputConfigDelete!): DeviceInputConfig!
   deleteDeviceToken(data: InputDelete!): DeviceToken!
@@ -817,6 +897,7 @@ type Mutation {
   syncSpreadsheetPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!
   updateContentProvider(data: ContentProviderUpdate!): ContentProvider!
   updateContentSubscription(data: ContentSubscriptionUpdate!): ContentSubscription!
+  updateCustomTab(data: CustomTabUpdate!): CustomTab!
   updateDeviceInputConfig(data: DeviceInputConfigUpdate!): DeviceInputConfig!
   updateMetric(data: MetricUpdate!): Metric!
   updateMetricDefinition(data: MetricDefinitionUpdate!): MetricDefinition!
@@ -1587,6 +1668,7 @@ type Query {
   getContentProvider(data: InputDetail!): ContentProvider!
   getContentSubscription(data: InputDetail!): ContentSubscription!
   getContextualThread(data: ThreadContextGet!): Thread
+  getCustomTab(data: CustomTabGet!): CustomTab!
   getDeviceInputConfig(data: DeviceInputConfigGet!): DeviceInputConfig!
   getDeviceToken(data: InputDetail!): DeviceToken!
   getMetric(data: InputDetail!): Metric!
@@ -1608,6 +1690,7 @@ type Query {
   getUser(data: UserGet!): User!
   listContentProviders(data: ContentProviderList): ContentProviderListPage!
   listContentSubscriptions(data: ContentSubscriptionList): ContentSubscriptionListPage!
+  listCustomTabs(data: CustomTabList!): CustomTabListPage!
   listDeviceInputConfigs(data: DeviceInputConfigListDto!): DeviceInputConfigListPage!
   listDeviceTokens(data: DeviceTokenList!): DeviceTokenListPage!
   listMetricDefinitions(data: MetricDefinitionList!): MetricDefinitionListPage!

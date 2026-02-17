@@ -9,6 +9,7 @@
 	import { page } from '$app/state';
 	import { t } from '$lib/i18n'; // removed locale, setLocale, supportedLocales, type Locale as they are moved to UserNav
 	import SiteHeader from '$lib/components/site-header.svelte';
+	import UserNav from '$lib/components/user-nav.svelte';
 
 	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
 	let members = $derived(data.members ?? []);
@@ -68,6 +69,10 @@
 
 {#if !hideHeader}
 	<SiteHeader />
+{:else}
+	<div class="flex justify-end">
+		<UserNav languageOnly={true} />
+	</div>
 {/if}
 
 <div class="p-3">

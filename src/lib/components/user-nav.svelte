@@ -10,6 +10,9 @@
 	import { signOut, updateProfile, updateEmail } from 'firebase/auth';
 	import { goto } from '$app/navigation';
 	import { cn } from '$lib/utils';
+	// Props
+	let { languageOnly = false } = $props();
+
 	// Profile editing state
 	let profileName = $state('');
 	let profileEmail = $state('');
@@ -37,6 +40,8 @@
 		profileNotice = null;
 		const nextName = profileName.trim();
 		const nextEmail = profileEmail.trim();
+		// ... existing save logic ...
+		// I'll keep the logic but wrap the UI
 		if (!nextEmail || !isValidEmail(nextEmail)) {
 			profileNotice = { tone: 'error', text: $t('profile.emailInvalid') };
 			return;
@@ -87,82 +92,97 @@
 	};
 </script>
 
-<Popover.Root bind:open={isOpen}>
-	<Popover.Trigger>
-		{#snippet child({ props })}
-			<Button variant="ghost" class="relative h-8 w-8 rounded-full" {...props}>
-				<Avatar class="h-8 w-8">
-					<AvatarImage src={$currentUser?.photoURL} alt={$currentUser?.displayName ?? '@'} />
-					<AvatarFallback
-						>{$currentUser?.displayName?.[0] ?? $currentUser?.email?.[0] ?? 'U'}</AvatarFallback
-					>
-				</Avatar>
-			</Button>
-		{/snippet}
-	</Popover.Trigger>
-	<Popover.Portal>
-		<Popover.Content class="w-80" align="end" preventScroll={false}>
-			<div class="mb-4 flex flex-col space-y-1">
-				<p class="text-sm leading-none font-medium">{$currentUser?.displayName ?? 'User'}</p>
-				<p class="text-xs leading-none text-muted-foreground">
-					{$currentUser?.email}
-				</p>
-			</div>
-
-			<!-- Profile Editing Section inside Popover -->
-			<div class="space-y-4 border-t pt-4">
-				<div class="space-y-2">
-					<Label for="name">{$t('profile.nameLabel')}</Label>
-					<Input id="name" bind:value={profileName} />
-				</div>
-				<div class="space-y-2">
-					<Label for="email">{$t('profile.emailLabel')}</Label>
-					<Input id="email" bind:value={profileEmail} />
-				</div>
-				<div class="space-y-2">
-					<Label for="language">{$t('profile.languageLabel')}</Label>
-					<select
-						id="language"
-						class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-						value={$locale}
-						onchange={(event) => {
-							const target = event.currentTarget as HTMLSelectElement;
-							setLocale(target.value as Locale);
-						}}
-					>
-						{#each supportedLocales as option (option)}
-							<option value={option}>{$t(`settings.language.${option}`)}</option>
-						{/each}
-					</select>
+{#if languageOnly}
+	<select
+		class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm ring-offset-background focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+		value={$locale}
+		onchange={(event) => {
+			const target = event.currentTarget as HTMLSelectElement;
+			setLocale(target.value as Locale);
+		}}
+	>
+		{#each supportedLocales as option (option)}
+			<option value={option}>{$t(`settings.language.${option}`)}</option>
+		{/each}
+	</select>
+{:else}
+	<Popover.Root bind:open={isOpen}>
+		<Popover.Trigger>
+			{#snippet child({ props })}
+				<Button variant="ghost" class="relative h-8 w-8 rounded-full" {...props}>
+					<Avatar class="h-8 w-8">
+						<AvatarImage src={$currentUser?.photoURL} alt={$currentUser?.displayName ?? '@'} />
+						<AvatarFallback
+							>{$currentUser?.displayName?.[0] ?? $currentUser?.email?.[0] ?? 'U'}</AvatarFallback
+						>
+					</Avatar>
+				</Button>
+			{/snippet}
+		</Popover.Trigger>
+		<Popover.Portal>
+			<Popover.Content class="w-80" align="end" preventScroll={false}>
+				<div class="mb-4 flex flex-col space-y-1">
+					<p class="text-sm leading-none font-medium">{$currentUser?.displayName ?? 'User'}</p>
+					<p class="text-xs leading-none text-muted-foreground">
+						{$currentUser?.email}
+					</p>
 				</div>
 
-				{#if profileNotice}
-					<div
-						class={cn(
-							'rounded-lg border px-3 py-2 text-xs',
-							profileNotice.tone === 'success'
-								? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-								: 'border-rose-200 bg-rose-50 text-rose-700',
-						)}
-					>
-						{profileNotice.text}
+				<!-- Profile Editing Section inside Popover -->
+				<div class="space-y-4 border-t pt-4">
+					<div class="space-y-2">
+						<Label for="name">{$t('profile.nameLabel')}</Label>
+						<Input id="name" bind:value={profileName} />
 					</div>
-				{/if}
+					<div class="space-y-2">
+						<Label for="email">{$t('profile.emailLabel')}</Label>
+						<Input id="email" bind:value={profileEmail} />
+					</div>
+					<div class="space-y-2">
+						<Label for="language">{$t('profile.languageLabel')}</Label>
+						<select
+							id="language"
+							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+							value={$locale}
+							onchange={(event) => {
+								const target = event.currentTarget as HTMLSelectElement;
+								setLocale(target.value as Locale);
+							}}
+						>
+							{#each supportedLocales as option (option)}
+								<option value={option}>{$t(`settings.language.${option}`)}</option>
+							{/each}
+						</select>
+					</div>
 
-				<Button class="w-full" onclick={saveProfile} disabled={profileSaving}>
-					{profileSaving ? $t('profile.saving') : $t('profile.save')}
-				</Button>
-			</div>
+					{#if profileNotice}
+						<div
+							class={cn(
+								'rounded-lg border px-3 py-2 text-xs',
+								profileNotice.tone === 'success'
+									? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+									: 'border-rose-200 bg-rose-50 text-rose-700',
+							)}
+						>
+							{profileNotice.text}
+						</div>
+					{/if}
 
-			<div class="mt-4 border-t pt-4">
-				<Button
-					variant="ghost"
-					class="w-full justify-start px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
-					onclick={logout}
-				>
-					{$t('layout.logout')}
-				</Button>
-			</div>
-		</Popover.Content>
-	</Popover.Portal>
-</Popover.Root>
+					<Button class="w-full" onclick={saveProfile} disabled={profileSaving}>
+						{profileSaving ? $t('profile.saving') : $t('profile.save')}
+					</Button>
+				</div>
+
+				<div class="mt-4 border-t pt-4">
+					<Button
+						variant="ghost"
+						class="w-full justify-start px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+						onclick={logout}
+					>
+						{$t('layout.logout')}
+					</Button>
+				</div>
+			</Popover.Content>
+		</Popover.Portal>
+	</Popover.Root>
+{/if}
