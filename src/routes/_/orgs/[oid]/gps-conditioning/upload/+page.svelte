@@ -478,7 +478,7 @@
 			>
 				<div class="space-y-1">
 					<p class="text-sm leading-none font-medium">{$t('gps.upload.type.training')}</p>
-					<p class="text-xs text-muted-foreground">For practice sessions</p>
+					<p class="text-xs text-muted-foreground">{$t('gps.upload.type.training.description')}</p>
 				</div>
 				<RadioGroupItem value="training" id="option-training" />
 			</Label>
@@ -490,7 +490,7 @@
 			>
 				<div class="space-y-1">
 					<p class="text-sm leading-none font-medium">{$t('gps.upload.type.game')}</p>
-					<p class="text-xs text-muted-foreground">For official matches</p>
+					<p class="text-xs text-muted-foreground">{$t('gps.upload.type.game.description')}</p>
 				</div>
 				<RadioGroupItem value="game" id="option-game" />
 			</Label>
