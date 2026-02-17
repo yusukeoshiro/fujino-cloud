@@ -149,6 +149,10 @@ enum BlockingState {
   NON_BLOCKING
 }
 
+input BulkAutoRecordMetric {
+  data: [AutoRecordMetric!]!
+}
+
 type BulkDeletePersonError {
   id: ID!
   message: String!
@@ -817,6 +821,7 @@ input MetricUpdate {
 type Mutation {
   addDatasetPermissionOrg(data: DatasetPermissionInput!): Org!
   autoRecordMetric(data: AutoRecordMetric!): Metric!
+  bulkAutoRecordMetric(data: BulkAutoRecordMetric!): [Metric!]!
   bulkCreateThreadMessages(data: BulkThreadMessageCreate!): BulkMessageResult!
   bulkDeletePersons(data: InputDetails!): BulkDeletePersonsResult!
   bulkSendResultEmailsPerformanceAssessment(data: InputDetailAsync!): PerformanceAssessment!

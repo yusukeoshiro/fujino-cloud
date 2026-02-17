@@ -62,7 +62,9 @@
 		"vitest-browser-svelte": "^1.1.0"
 	},
 	"dependencies": {
+		"@google-cloud/logging-winston": "^6.0.1",
 		"firebase-admin": "^13.5.0",
-		"jwks-rsa": "^3.2.2"
+		"jwks-rsa": "^3.2.2",
+		"winston": "^3.19.0"
 	}
 }

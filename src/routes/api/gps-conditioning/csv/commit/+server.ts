@@ -1,11 +1,14 @@
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { DateTime } from 'luxon';
+import { Logger } from '$lib/server/logging';
+import type { BulkAutoRecordMetric$input } from '$houdini';
 import {
-	AutoRecordMetricMutateStore,
 	CreatePerformanceAssessmentParticipantStore,
 	CreatePerformanceAssessmentWrapperStore,
 	ExportPerformanceAssessmentStore,
 } from '$houdini';
+import { env } from '$env/dynamic/private';
+import { deviceTokenService } from '$lib/services/device-token.service';
 import { trainigMetricDefinitionIds } from '$lib/training-cols';
 import { buildUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/fitogether/fitogether-csv-processor';
 import { buildKnowsUnmatchedPersonsResponse } from '$lib/csv-processors/csv-processors/knows/knows-csv-processor';
@@ -20,12 +23,24 @@ export const POST: RequestHandler = async (event) => {
 		throw error(400, 'orgId is required');
 	}
 
+	const logger = new Logger({ orgId, service: 'gps-commit' });
+	logger.info('Request received');
+	logger.debug('Parsing form data...');
+
 	const form = await request.formData();
 	const { file, sessionType, selectedRowIndexSet, sessionDate, vendorFormat } = parseForm(form);
-	if (!file) return new Response('No file field named "file".', { status: 400 });
+
+	if (!file) {
+		logger.error('No file found in request');
+		return new Response('No file field named "file".', { status: 400 });
+	}
+
+	logger.info('Form parsed', { sessionDate, rowCount: selectedRowIndexSet?.size ?? 'ALL' });
+
 	if (!sessionDate) return new Response('sessionDate is required.', { status: 400 });
 
 	const requestedVendorFormat = await resolveVendorFormat(orgId, vendorFormat);
+	logger.info('Resolved vendor format', { requestedVendorFormat });
 
 	const {
 		parsers: parsedRows,
@@ -41,7 +56,10 @@ export const POST: RequestHandler = async (event) => {
 		sessionDate,
 	});
 
+	logger.info('CSV parsed', { rows: parsedRows.length, unmatchedCount: unmatched.length });
+
 	if (unmatched.length > 0) {
+		logger.warn('Unmatched players found', { unmatchedCount: unmatched.length });
 		const response =
 			resolvedVendorFormat === 'KNOWS_V1'
 				? buildKnowsUnmatchedPersonsResponse(
@@ -77,6 +95,8 @@ export const POST: RequestHandler = async (event) => {
 		metricValuesByRow.some((values) => hasMeaningfulValue(values[metricDefinitionId])),
 	);
 
+	logger.info('Metrics identified', { count: metricDefinitionIdsWithValues.length });
+
 	const dt = DateTime.fromISO(sessionDate);
 	if (!dt.isValid) {
 		return new Response('sessionDate must be a valid yyyy-MM-dd date.', { status: 400 });
@@ -86,6 +106,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const createPerformanceAssessment = new CreatePerformanceAssessmentWrapperStore();
 
+	logger.info('Creating PerformanceAssessment...');
 	const resultCreatePerformanceAssessment = await createPerformanceAssessment.mutate(
 		{
 			data: {
@@ -126,10 +147,9 @@ export const POST: RequestHandler = async (event) => {
 		resultCreatePerformanceAssessment.data?.createPerformanceAssessmentWrapper?.id;
 
 	if (resultCreatePerformanceAssessment.errors || !performanceAssessmentId) {
-		console.log(
-			'Failed to create performance assessment',
-			resultCreatePerformanceAssessment.errors,
-		);
+		logger.error('Failed to create performance assessment', {
+			errors: resultCreatePerformanceAssessment.errors,
+		});
 		return new Response(
 			JSON.stringify({
 				message: 'Failed to create performance assessment',
@@ -138,8 +158,10 @@ export const POST: RequestHandler = async (event) => {
 			{ headers: { 'content-type': 'application/json' }, status: 500 },
 		);
 	}
+	logger.info('PerformanceAssessment created', { performanceAssessmentId });
 
 	// --- Async Processing Start ---
+	logger.info('Starting async processing', { performanceAssessmentId });
 	const jobId = performanceAssessmentId!;
 	const jobRef = adminDb.doc(`gps-upload-status/${jobId}`);
 
@@ -170,6 +192,7 @@ export const POST: RequestHandler = async (event) => {
 			// But careful with write limits. Let's update in the batch loops.
 		};
 		try {
+			logger.info('Uploading raw CSV to storage...');
 			await uploadRawCsvToStorage({
 				orgId,
 				performanceAssessmentId,
@@ -179,19 +202,51 @@ export const POST: RequestHandler = async (event) => {
 				file,
 				rowCount: parsedRows.length,
 			});
+			logger.info('Raw CSV uploaded');
+
+			// Retrieve device token for manual GraphQL execution in background job
+			const tokenDoc = await deviceTokenService.get(orgId);
+			const token = tokenDoc?.token;
+
+			if (!token) {
+				const errorMsg = `No device token found for organization ${orgId}. Cannot execute background mutations.`;
+				logger.error(errorMsg);
+				throw new Error(errorMsg);
+			}
+
+			// Helper to execute GraphQL manually (background jobs don't have event context)
+			const executeGraphql = async (query: string, variables: any) => {
+				const response = await fetch(env.GRAPHQL_URL, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						Authorization: `Bearer ${token}`,
+					},
+					body: JSON.stringify({ query, variables }),
+				});
+				if (!response.ok) {
+					const text = await response.text();
+					throw new Error(
+						`GraphQL request failed: ${response.status} ${response.statusText} - ${text}`,
+					);
+				}
+				return await response.json();
+			};
 
 			const createParticipant = new CreatePerformanceAssessmentParticipantStore();
 			const results: { record: any; result: any; isSelected: boolean }[] = [];
 
+			logger.info('Creating participants...');
 			// Batch process participants to avoid overwhelming the DB
-			const BATCH_SIZE = 10;
+			const BATCH_SIZE = 5; // Reduced from 10 to improve stability
 			for (let i = 0; i < parsedRows.length; i += BATCH_SIZE) {
 				const batch = parsedRows.slice(i, i + BATCH_SIZE);
 				const promises = batch.map(async (record, batchIndex) => {
 					const absoluteIndex = i + batchIndex;
 					const isSelected = selectionFlags[absoluteIndex] ?? true;
-					const result = await createParticipant.mutate(
-						{
+					try {
+						// Use manual execution (background job has no event context)
+						const result = await executeGraphql(createParticipant.artifact.raw, {
 							data: {
 								orgId,
 								performanceAssessmentId,
@@ -209,26 +264,56 @@ export const POST: RequestHandler = async (event) => {
 											],
 										}),
 							},
-						},
-						{ event },
-					);
-					return { record, result, isSelected };
+						});
+
+						if (result.errors) {
+							logger.error(`Failed to create participant: ${record.fullName}`, {
+								errors: result.errors,
+								row: absoluteIndex + 1,
+							});
+						} else {
+							logger.info(`Participant created: ${record.fullName}`, {
+								participantId: result.data?.createPerformanceAssessmentParticipant?.id,
+								row: absoluteIndex + 1,
+							});
+						}
+						return { record, result, isSelected };
+					} catch (err: any) {
+						// Catch network/unexpected errors (like 'fetch failed') per row
+						logger.error(`Exception creating participant: ${record.fullName}`, {
+							error: err.message,
+							stack: err.stack,
+							row: absoluteIndex + 1,
+						});
+						// Return a dummy result or throw depending on desired behavior.
+						// To avoid crashing Promise.all, we return a failure object.
+						return { record, result: { errors: [{ message: err.message }] }, isSelected };
+					}
 				});
 				const batchResults = await Promise.all(promises);
 				results.push(...batchResults);
 
 				// Update progress
-				await jobRef.update({
-					processedRows: Math.min(i + BATCH_SIZE, parsedRows.length),
-				});
+				try {
+					await jobRef.update({
+						processedRows: Math.min(i + BATCH_SIZE, parsedRows.length),
+					});
+					logger.debug(
+						`Processed participants batch: ${Math.min(i + BATCH_SIZE, parsedRows.length)}/${parsedRows.length}`,
+					);
+				} catch (err: any) {
+					logger.warn('Failed to update job progress (participants)', { error: err.message });
+					// Continue even if progress update fails
+				}
 			}
+			logger.info('All participants processed');
 
 			// Assign orgUniqueToken to records
 			for (let i = 0; i < results.length; i++) {
 				const { record, result, isSelected } = results[i];
 				if (result.errors) {
 					const errorMsg = `Row ~${results[i].record.row ?? '?'}: Found player "${record.fullName}" but failed to link/create. ${JSON.stringify(result.errors)}`;
-					console.error(errorMsg);
+					logger.error(errorMsg);
 					await pushError(errorMsg);
 				}
 				if (result.data?.createPerformanceAssessmentParticipant?.orgUniqueToken) {
@@ -236,86 +321,118 @@ export const POST: RequestHandler = async (event) => {
 				}
 			}
 
-			const autoRecord = new AutoRecordMetricMutateStore();
-
 			// Update stage to METRICS
+			logger.info('Switching to METRICS stage');
 			await jobRef.update({
 				stage: 'METRICS',
 				processedRows: 0,
 				totalRows: parsedRows.length,
 			});
 
-			// Batch process metrics
-			for (const [rowIndex, record] of parsedRows.entries()) {
-				if (!record.orgUniqueToken) continue; // Skip if participant creation failed
+			// Collect all metrics for bulk insertion in a single request
+			logger.info('Collecting metrics for bulk insertion...');
+			const bulkDataPayload: BulkAutoRecordMetric$input['data'] = [];
 
-				const metricValues = metricValuesByRow[rowIndex];
-				const promises = metricDefinitionIdsWithValues.flatMap((metricDefinitionId) => {
+			parsedRows.forEach((record, index) => {
+				if (!record.orgUniqueToken) {
+					logger.warn(`Skipping metrics for row ${index + 1}: No orgUniqueToken`);
+					return;
+				}
+
+				const metricValues = metricValuesByRow[index];
+				metricDefinitionIdsWithValues.forEach((metricDefinitionId) => {
 					const value = metricValues[metricDefinitionId];
-					if (!hasMeaningfulValue(value)) return [];
-					return [
-						autoRecord
-							.mutate(
-								{
-									data: {
-										orgUniqueToken: record.orgUniqueToken!,
-										metricDefinitionId,
-										performanceAssessmentId,
-										value: value as number,
-										isOfficial: true,
-									},
-								},
-								{
-									event,
-								},
-							)
-							.then(async (r) => {
-								if (r.errors) {
-									const errorMsg = `Row ~${rowIndex + 1}: Failed to save metric ${metricDefinitionId}. ${JSON.stringify(r.errors)}`;
-									console.error(errorMsg);
-									await pushError(errorMsg);
-								}
-							}),
-					];
+					if (!hasMeaningfulValue(value)) return;
+
+					bulkDataPayload.push({
+						orgUniqueToken: record.orgUniqueToken!,
+						metricDefinitionId,
+						performanceAssessmentId,
+						value: value as number,
+						isOfficial: true,
+					});
 				});
+			});
 
-				await Promise.all(promises);
+			if (bulkDataPayload.length === 0) {
+				logger.warn('No valid metrics found to insert');
+			} else {
+				logger.info(`Bulk recording ${bulkDataPayload.length} metrics in a single request...`);
 
-				// Update progress occasionally (every 10 rows or so to reduce writes)
-				if ((rowIndex + 1) % 5 === 0 || rowIndex === parsedRows.length - 1) {
+				try {
+					// Use manual execution (background job has no event context)
+					const bulkMutation = `
+						mutation BulkAutoRecordMetric($data: [AutoRecordMetric!]!) {
+							bulkAutoRecordMetric(data: { data: $data }) {
+								id
+								metricDefinitionId
+								value
+							}
+						}
+					`;
+
+					const result = await executeGraphql(bulkMutation, {
+						data: bulkDataPayload,
+					});
+
+					if (result.errors) {
+						const errorMsg = `Failed to bulk record metrics. Errors: ${JSON.stringify(result.errors)}`;
+						logger.error(errorMsg);
+						await pushError(errorMsg);
+					} else {
+						const createdCount = result.data?.bulkAutoRecordMetric?.length ?? 0;
+						logger.info(`Successfully bulk recorded ${createdCount} metrics`);
+					}
+				} catch (err: any) {
+					logger.error('Exception during bulk metrics recording', { error: err.message });
+					// Continue to export even if metrics fail
+				}
+
+				// Update progress
+				try {
 					await jobRef.update({
-						processedRows: rowIndex + 1,
+						processedRows: parsedRows.length,
 						errorDetails: collectedErrors,
 					});
+				} catch (err: any) {
+					logger.warn('Failed to update job progress (metrics)', { error: err.message });
 				}
 			}
+			logger.info('All metrics processed');
 
 			// Update stage to EXPORTING
+			logger.info('Switching to EXPORTING stage');
 			await jobRef.update({
 				stage: 'EXPORTING',
 			});
 
 			const exportStore = new ExportPerformanceAssessmentStore();
-			const uploadResult = await exportStore.mutate(
-				{
+			logger.info('Triggering export...');
+			try {
+				// Use manual execution (background job has no event context)
+				const uploadResult = await executeGraphql(exportStore.artifact.raw, {
 					performanceAssessmentId,
-				},
-				{
-					event,
-				},
-			);
+				});
 
-			if (uploadResult.errors) {
-				console.error('Failed to export performance assessment', uploadResult.errors);
-				throw new Error('Failed to export performance assessment');
+				if (uploadResult.errors) {
+					logger.error('Failed to export performance assessment', { errors: uploadResult.errors });
+					throw new Error('Failed to export performance assessment');
+				}
+				logger.info('Export successful');
+			} catch (err: any) {
+				logger.error('Exception during export', { error: err.message });
+				throw err; // This is the last step, so failing here is correct behavior for job status
 			}
 
 			await jobRef.update({
 				status: 'COMPLETED',
 				completedAt: new Date(),
 			});
+			logger.info('Job COMPLETED successfully');
 		} catch (e: any) {
-			console.error('Background job failed', e);
+			// Log the full error object as the 'error' metadata for Cloud Logging analysis
+			// Also log message clearly
+			logger.error(`Background job failed: ${e.message}`, { error: e, stack: e.stack });
 			await jobRef.update({
 				status: 'ERROR',
 				errorMessage: e.message || 'Unknown error occurred',
@@ -325,6 +442,7 @@ export const POST: RequestHandler = async (event) => {
 		}
 	})();
 
+	logger.info('Initial request processing complete. Returning Job ID', { jobId });
 	return new Response(JSON.stringify({ jobId }));
 };
 

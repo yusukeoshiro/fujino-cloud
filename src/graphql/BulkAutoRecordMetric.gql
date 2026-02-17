@@ -1,0 +1,7 @@
+mutation BulkAutoRecordMetric($data: [AutoRecordMetric!]!) {
+	bulkAutoRecordMetric(data: { data: $data }) {
+		id
+		metricDefinitionId
+		value
+	}
+}
