@@ -12,6 +12,7 @@
 
 	let { children, data }: { children: Snippet<[]>; data: PageData } = $props();
 	let members = $derived(data.members ?? []);
+	let hideHeader = $state(false);
 
 	// activeOrg logic is now inside OrgSwitcher and MainNav,
 	// but we still need navigateToOnlyOrg logic.
@@ -34,8 +35,6 @@
 		}
 	};
 
-	// Profile state management moved to UserNav
-
 	const navigateToOnlyOrg = (currentOrgId: string | null) => {
 		if (currentOrgId == null) {
 			if (members.length === 1) {
@@ -45,8 +44,10 @@
 		}
 	};
 
-	// onMount logic for auth state change and member setting
+	// Check sessionStorage for hideHeader flag (SSO users)
 	onMount(() => {
+		hideHeader = sessionStorage.getItem('hideHeader') === 'true';
+
 		if (members) {
 			currentMembers.set(members);
 			navigateToOnlyOrg(page.params.oid);
@@ -65,7 +66,9 @@
 	});
 </script>
 
-<SiteHeader />
+{#if !hideHeader}
+	<SiteHeader />
+{/if}
 
 <div class="p-3">
 	{@render children?.()}

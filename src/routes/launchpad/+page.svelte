@@ -19,12 +19,11 @@
 		try {
 			const auth = getAuth();
 			await signInWithCustomToken(auth, token);
-			// Redirect to target URL
+			// Set sessionStorage flag to hide header for SSO users
+			// This persists during the session but clears on page refresh
+			sessionStorage.setItem('hideHeader', 'true');
+
 			console.log('Successfully signed in. Redirecting to:', targetUrl);
-			// Use goto for client-side navigation or window.location if full reload needed
-			// Since authentication state changes, a full reload might be safer to ensure all stores update correctly,
-			// but goto should work with Firebase Auth listener.
-			// Let's try goto first.
 			await goto(targetUrl, { replaceState: true });
 		} catch (e: any) {
 			console.error('Sign-in error:', e);
