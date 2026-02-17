@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import jwksClient from 'jwks-rsa';
 import { adminAuth } from '$lib/admin-firebase';
 import { memberService } from '$lib/services/member.service';
+import { organizationService } from '$lib/services/organization.service';
 import { env } from '$env/dynamic/private';
 
 // Disable CSRF protection for this endpoint as it receives cross-site POSTs
@@ -154,10 +155,11 @@ export const POST: RequestHandler = async ({ request, url }) => {
 
 				if (!isMember) {
 					// Add user to org members
+					const organization = await organizationService.getById(orgId);
 					await memberService.create({
 						orgId: orgId,
 						userId: firebaseUser.uid,
-						name: firebaseUser.displayName || firebaseUser.email || 'Unknown User',
+						name: organization.name,
 					});
 					console.log(`Added user ${firebaseUser.uid} to org ${orgId}`);
 				} else {
